@@ -1,19 +1,12 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/dachshund.gd" id="1_dachshund"]
+[ext_resource type="Script" path="res://scripts/racas/modelo_cachorro.gd" id="2_modelo"]
+[ext_resource type="Resource" path="res://assets/racas/salsicha.tres" id="3_salsicha"]
 
 [sub_resource type="CapsuleShape3D" id="Forma_cachorro"]
 radius = 0.28
 height = 0.6
-
-[sub_resource type="StandardMaterial3D" id="Mat_pelo"]
-albedo_color = Color(0.55, 0.3, 0.12, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_orelha"]
-albedo_color = Color(0.33, 0.17, 0.07, 1)
-
-[sub_resource type="StandardMaterial3D" id="Mat_preto"]
-albedo_color = Color(0.05, 0.04, 0.04, 1)
 
 [node name="Dachshund" type="CharacterBody3D"]
 collision_layer = 8
@@ -30,80 +23,9 @@ disabled = true
 
 [node name="Modelo" type="Node3D" parent="."]
 
-[node name="Corpo" type="CSGBox3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.36, 0)
-size = Vector3(0.9, 0.3, 0.3)
-material = SubResource("Mat_pelo")
-
-[node name="Cabeca" type="CSGBox3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0)
-size = Vector3(0.28, 0.26, 0.26)
-material = SubResource("Mat_pelo")
-
-[node name="Focinho" type="CSGBox3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.7, 0.45, 0)
-size = Vector3(0.2, 0.13, 0.16)
-material = SubResource("Mat_pelo")
-
-[node name="Nariz" type="CSGBox3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.8, 0.49, 0)
-size = Vector3(0.04, 0.05, 0.07)
-material = SubResource("Mat_preto")
-
-[node name="OlhoEsquerdo" type="CSGBox3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.64, 0.56, -0.07)
-size = Vector3(0.02, 0.04, 0.04)
-material = SubResource("Mat_preto")
-
-[node name="OlhoDireito" type="CSGBox3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.64, 0.56, 0.07)
-size = Vector3(0.02, 0.04, 0.04)
-material = SubResource("Mat_preto")
-
-[node name="OrelhaEsquerda" type="CSGBox3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.45, -0.15)
-size = Vector3(0.14, 0.22, 0.04)
-material = SubResource("Mat_orelha")
-
-[node name="OrelhaDireita" type="CSGBox3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.46, 0.45, 0.15)
-size = Vector3(0.14, 0.22, 0.04)
-material = SubResource("Mat_orelha")
-
-[node name="Rabo" type="CSGCylinder3D" parent="Modelo"]
-transform = Transform3D(0.573576, -0.819152, 0, 0.819152, 0.573576, 0, 0, 0, 1, -0.55, 0.47, 0)
-radius = 0.03
-height = 0.35
-sides = 6
-material = SubResource("Mat_pelo")
-
-[node name="PataFrenteEsquerda" type="CSGCylinder3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.12, -0.1)
-radius = 0.05
-height = 0.24
-sides = 8
-material = SubResource("Mat_pelo")
-
-[node name="PataFrenteDireita" type="CSGCylinder3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3, 0.12, 0.1)
-radius = 0.05
-height = 0.24
-sides = 8
-material = SubResource("Mat_pelo")
-
-[node name="PataTrasEsquerda" type="CSGCylinder3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.12, -0.1)
-radius = 0.05
-height = 0.24
-sides = 8
-material = SubResource("Mat_pelo")
-
-[node name="PataTrasDireita" type="CSGCylinder3D" parent="Modelo"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3, 0.12, 0.1)
-radius = 0.05
-height = 0.24
-sides = 8
-material = SubResource("Mat_pelo")
+[node name="Voxel" type="Node3D" parent="Modelo"]
+script = ExtResource("2_modelo")
+raca = ExtResource("3_salsicha")
 
 [node name="Boca" type="Marker3D" parent="Modelo"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.74, 0.42, 0)

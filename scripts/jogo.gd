@@ -6,7 +6,7 @@ extends Node3D
 ## isométrica; pegar de novo volta para o 3D.
 ## Objetos "só isométrico" (ex.: a folhagem que tampa o túnel) somem no 3D, e "só 3D"
 ## (ex.: árvores da frente, que tapariam a visão iso) só aparecem nele — a mudança de
-## perspectiva literalmente abre (ou fecha) caminhos. F1 abre o editor nesta fase.
+## perspectiva literalmente abre (ou fecha) caminhos. F1 abre o editor nesta fase; Esc pausa.
 
 @onready var cachorro: Dachshund = $Dachshund
 @onready var camera_controller: CameraController = $CameraController
@@ -23,6 +23,7 @@ var _tween_aviso: Tween
 var _proxima_fase := ""
 var _tempo_travado := 0.0
 var _dica_virar_mostrada := false
+var _pausa := MenuPausa.new()
 
 
 func _ready() -> void:
@@ -31,6 +32,7 @@ func _ready() -> void:
 	mensagem.hide()
 	cachorro.camera_referencia = camera_controller.camera
 	indicador_equilibrio.cachorro = cachorro
+	add_child(_pausa)
 	_atualizar_dica()
 
 	var cena := Fases.cena_atual()
@@ -44,9 +46,13 @@ func _ready() -> void:
 	add_child(fase)
 	move_child(fase, 0)
 	cachorro.fase = fase
-	cachorro.pode_pular = fase.tem_habilidade(Fase.HABILIDADE_PULAR)
-	cachorro.pode_cavar = fase.tem_habilidade(Fase.HABILIDADE_CAVAR)
-	cachorro.pode_latir = fase.tem_habilidade(Fase.HABILIDADE_LATIR)
+	var raca := Racas.por_id(fase.raca)
+	if raca:
+		cachorro.aplicar_raca(raca, Racas.pelagem_escolhida(raca))
+	var habilidades := fase.habilidades | (raca.habilidades_nativas if raca else 0)
+	cachorro.pode_pular = habilidades & Fase.HABILIDADE_PULAR != 0
+	cachorro.pode_cavar = habilidades & Fase.HABILIDADE_CAVAR != 0
+	cachorro.pode_latir = habilidades & Fase.HABILIDADE_LATIR != 0
 	_atualizar_dica()
 	fase.preparar_isometrica()
 
@@ -82,6 +88,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_tree().reload_current_scene()
 	elif event.is_action_pressed("alternar_editor"):
 		Fases.abrir_editor()
+	elif event.is_action_pressed("liberar_mouse"):
+		_pausa.abrir()
 	elif event.is_action_pressed("largar_graveto"):
 		_tentar_largar_graveto()
 	elif event.is_action_pressed("virar_graveto"):
@@ -90,8 +98,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		_avisar_motivo(cachorro.cavar(), "cavar", "Aqui não tem terra fofa para cavar")
 	elif event.is_action_pressed("latir") and not concluida and not cachorro.entrada_bloqueada:
 		_avisar_motivo(cachorro.latir(), "latir", "")
-	elif concluida and not _proxima_fase.is_empty() and event.is_action_pressed("ui_accept"):
-		Fases.jogar(_proxima_fase)
+	elif concluida and fase and not Fases.testando and event.is_action_pressed("ui_accept"):
+		if _proxima_fase.is_empty():
+			Fases.abrir_menu()
+		else:
+			Fases.jogar(_proxima_fase)
 
 
 func _process(delta: float) -> void:
@@ -211,7 +222,7 @@ func _atualizar_dica() -> void:
 		partes.append("F + trás: puxar bloco")
 	if em_3d:
 		partes.append_array(["Q: virar graveto", "Shift: devagar", "E: largar"])
-	partes.append_array(["R: reiniciar", "F1: editor"])
+	partes.append_array(["R: reiniciar", "Esc: pausa", "F1: editor"])
 	if not em_3d:
 		partes.append("F3: pixel")
 	dica.text = "    ".join(partes)
@@ -272,11 +283,12 @@ func _concluir() -> void:
 	if Fases.testando:
 		texto += "F1: voltar ao editor    R: jogar de novo"
 	else:
+		Fases.marcar_concluida(Fases.caminho_atual)
 		_proxima_fase = Fases.proxima()
 		if _proxima_fase.is_empty():
-			texto += "R: jogar de novo"
+			texto += "Última fase! Enter: menu    R: jogar de novo"
 		else:
-			texto += "Enter: próxima fase    R: jogar de novo"
+			texto += "Enter: próxima fase    R: jogar de novo    Esc: pausa"
 	mensagem.text = texto
 	mensagem.show()
 

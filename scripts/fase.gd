@@ -21,6 +21,9 @@ const HABILIDADE_LATIR := 4
 @export_flags("Pular", "Cavar", "Latir") var habilidades := 0
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
+## Raça do cachorro nesta fase (id de assets/racas/*.tres). A raça soma habilidades próprias
+## às da fase (ex.: o Border Collie sempre late).
+@export var raca := &"salsicha"
 
 @onready var terreno: GridMap = $Terreno
 @onready var objetos: Node3D = $Objetos
@@ -32,6 +35,12 @@ func _ready() -> void:
 	var fases := get_node_or_null(^"/root/Fases")
 	if fases and get_tree().current_scene == self:
 		fases.jogar.call_deferred(scene_file_path)
+
+
+func _validate_property(propriedade: Dictionary) -> void:
+	if propriedade.name == &"raca":
+		propriedade.hint = PROPERTY_HINT_ENUM
+		propriedade.hint_string = ",".join(Racas.ids())
 
 
 func tem_habilidade(habilidade: int) -> bool:

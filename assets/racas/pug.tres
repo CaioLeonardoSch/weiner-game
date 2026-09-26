@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="Raca" format=3]
+
+[ext_resource type="Script" path="res://scripts/racas/pelagem.gd" id="1_kr7ry"]
+[ext_resource type="Script" path="res://scripts/racas/raca.gd" id="2_hjp2n"]
+
+[sub_resource type="Resource" id="Resource_ehyrv"]
+script = ExtResource("1_kr7ry")
+nome = "Bege"
+cor_pelo = Color(0.8392157, 0.6901961, 0.4862745, 1)
+cor_cabeca = Color(0.8392157, 0.6901961, 0.4862745, 1)
+cor_orelha = Color(0.16470589, 0.13333334, 0.13333334, 1)
+cor_marcas = Color(0.8392157, 0.6901961, 0.4862745, 1)
+marcas = 0
+cor_mascara = Color(0.18039216, 0.15686275, 0.15686275, 1)
+
+[sub_resource type="Resource" id="Resource_dbo7d"]
+script = ExtResource("1_kr7ry")
+nome = "Preto"
+cor_pelo = Color(0.18039216, 0.15686275, 0.15686275, 1)
+cor_cabeca = Color(0.18039216, 0.15686275, 0.15686275, 1)
+cor_orelha = Color(0.13725491, 0.11764706, 0.11764706, 1)
+cor_marcas = Color(0.18039216, 0.15686275, 0.15686275, 1)
+marcas = 0
+cor_mascara = Color(0.18039216, 0.15686275, 0.15686275, 1)
+
+[resource]
+script = ExtResource("2_hjp2n")
+id = &"pug"
+nome = "Pug"
+descricao = "Focinho achatado, rabo enrolado. Mais devagar, mas não desiste nunca."
+comprimento_corpo = 9
+altura_corpo = 6
+largura_corpo = 7
+cabeca = Vector3i(5, 6, 7)
+comprimento_focinho = 0
+orelha = 2
+tamanho_orelha = 2
+rabo = 1
+comprimento_rabo = 6
+fator_velocidade = 0.9
+pelagens = Array[ExtResource("1_kr7ry")]([SubResource("Resource_ehyrv"), SubResource("Resource_dbo7d")])

@@ -1,0 +1,93 @@
+[gd_resource type="Resource" script_class="Raca" format=3]
+
+[ext_resource type="Script" path="res://scripts/racas/pelagem.gd" id="1_ruqho"]
+[ext_resource type="Script" path="res://scripts/racas/raca.gd" id="2_ut8ji"]
+
+[sub_resource type="Resource" id="Resource_4kjbv"]
+script = ExtResource("1_ruqho")
+nome = "Vermelho"
+cor_pelo = Color(0.6039216, 0.32156864, 0.14901961, 1)
+cor_cabeca = Color(0.6039216, 0.32156864, 0.14901961, 1)
+cor_orelha = Color(0.43137255, 0.21568628, 0.09019608, 1)
+cor_marcas = Color(0.72156864, 0.46666667, 0.24705882, 1)
+cor_mascara = Color(0.6039216, 0.32156864, 0.14901961, 1)
+
+[sub_resource type="Resource" id="Resource_pl3sj"]
+script = ExtResource("1_ruqho")
+nome = "Preto e fogo"
+cor_pelo = Color(0.18039216, 0.14901961, 0.14901961, 1)
+cor_cabeca = Color(0.18039216, 0.14901961, 0.14901961, 1)
+cor_orelha = Color(0.13725491, 0.11372549, 0.11372549, 1)
+cor_marcas = Color(0.7607843, 0.47843137, 0.22745098, 1)
+marcas = 2
+cor_mascara = Color(0.18039216, 0.14901961, 0.14901961, 1)
+
+[sub_resource type="Resource" id="Resource_ln2hq"]
+script = ExtResource("1_ruqho")
+nome = "Chocolate"
+cor_pelo = Color(0.36078432, 0.20784314, 0.13333334, 1)
+cor_cabeca = Color(0.36078432, 0.20784314, 0.13333334, 1)
+cor_orelha = Color(0.2784314, 0.15686275, 0.09411765, 1)
+cor_marcas = Color(0.76862746, 0.5411765, 0.32156864, 1)
+marcas = 2
+cor_mascara = Color(0.36078432, 0.20784314, 0.13333334, 1)
+cor_nariz = Color(0.2901961, 0.18039216, 0.13333334, 1)
+
+[sub_resource type="Resource" id="Resource_cqn7o"]
+script = ExtResource("1_ruqho")
+nome = "Malhado"
+cor_pelo = Color(0.5411765, 0.2901961, 0.13333334, 1)
+cor_cabeca = Color(0.5411765, 0.2901961, 0.13333334, 1)
+cor_orelha = Color(0.41568628, 0.20784314, 0.09411765, 1)
+cor_marcas = Color(0.65882355, 0.41960785, 0.22745098, 1)
+cor_mascara = Color(0.5411765, 0.2901961, 0.13333334, 1)
+cor_manchas = Color(0.84705883, 0.8, 0.7058824, 1)
+manchas = 0.22
+
+[sub_resource type="Resource" id="Resource_dkiig"]
+script = ExtResource("1_ruqho")
+nome = "Creme"
+cor_pelo = Color(0.8627451, 0.73333335, 0.5254902, 1)
+cor_cabeca = Color(0.8627451, 0.73333335, 0.5254902, 1)
+cor_orelha = Color(0.76862746, 0.6117647, 0.39215687, 1)
+cor_marcas = Color(0.9254902, 0.84705883, 0.68235296, 1)
+cor_mascara = Color(0.8627451, 0.73333335, 0.5254902, 1)
+
+[sub_resource type="Resource" id="Resource_xpelu"]
+script = ExtResource("1_ruqho")
+nome = "Branco"
+cor_pelo = Color(0.9254902, 0.9098039, 0.87058824, 1)
+cor_cabeca = Color(0.9254902, 0.9098039, 0.87058824, 1)
+cor_orelha = Color(0.5411765, 0.2901961, 0.13333334, 1)
+cor_marcas = Color(0.9647059, 0.9529412, 0.91764706, 1)
+cor_mascara = Color(0.9254902, 0.9098039, 0.87058824, 1)
+cor_manchas = Color(0.5411765, 0.2901961, 0.13333334, 1)
+manchas = 0.12
+
+[sub_resource type="Resource" id="Resource_nparl"]
+script = ExtResource("1_ruqho")
+nome = "Pelo longo vermelho"
+cor_pelo = Color(0.6039216, 0.32156864, 0.14901961, 1)
+cor_cabeca = Color(0.6039216, 0.32156864, 0.14901961, 1)
+cor_orelha = Color(0.43137255, 0.21568628, 0.09019608, 1)
+cor_marcas = Color(0.72156864, 0.46666667, 0.24705882, 1)
+cor_mascara = Color(0.6039216, 0.32156864, 0.14901961, 1)
+pelo_longo = true
+
+[sub_resource type="Resource" id="Resource_dfvwk"]
+script = ExtResource("1_ruqho")
+nome = "Pelo longo preto e fogo"
+cor_pelo = Color(0.18039216, 0.14901961, 0.14901961, 1)
+cor_cabeca = Color(0.18039216, 0.14901961, 0.14901961, 1)
+cor_orelha = Color(0.13725491, 0.11372549, 0.11372549, 1)
+cor_marcas = Color(0.7607843, 0.47843137, 0.22745098, 1)
+marcas = 2
+cor_mascara = Color(0.18039216, 0.14901961, 0.14901961, 1)
+pelo_longo = true
+
+[resource]
+script = ExtResource("2_ut8ji")
+descricao = "Corpo comprido, patas curtas e muita determinação. Cabe em túneis estreitos."
+altura_pata = 3
+altura_pescoco = 2
+pelagens = Array[ExtResource("1_ruqho")]([SubResource("Resource_4kjbv"), SubResource("Resource_pl3sj"), SubResource("Resource_ln2hq"), SubResource("Resource_cqn7o"), SubResource("Resource_dkiig"), SubResource("Resource_xpelu"), SubResource("Resource_nparl"), SubResource("Resource_dfvwk")])

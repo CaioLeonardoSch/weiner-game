@@ -1,6 +1,6 @@
 class_name Dachshund
 extends CharacterBody3D
-## O cachorro salsicha.
+## O cachorro do jogador (o salsicha, ou a raça que a fase escolher — ver `aplicar_raca`).
 ##
 ## Movimento livre no plano XZ, relativo à câmera (8 direções no modo isométrico,
 ## analógico/WASD na terceira pessoa). O Y fica por conta da gravidade + move_and_slide.
@@ -79,12 +79,23 @@ var _tempo_empurrando := 0.0
 
 @onready var modelo: Node3D = $Modelo
 @onready var boca: Marker3D = $Modelo/Boca
+@onready var voxel: ModeloCachorro = $Modelo/Voxel
+## Raça atual (formato, pelagem, velocidade). Ver assets/racas/.
+var raca: Raca
 @onready var colisao_graveto: CollisionShape3D = $ColisaoGraveto
 
 
 func _ready() -> void:
 	colisao_graveto.disabled = true
+	raca = voxel.raca
 	_guardar_ponto_seguro()
+
+
+## Troca a raça e a pelagem do cachorro. A boca (onde fica o graveto) acompanha o modelo.
+func aplicar_raca(nova_raca: Raca, indice_pelagem: int) -> void:
+	raca = nova_raca
+	voxel.montar(nova_raca, indice_pelagem)
+	boca.position = voxel.boca
 
 
 ## Coloca o cachorro numa posição, olhando para `yaw` (radianos; 0 = +X).
@@ -118,6 +129,8 @@ func _physics_process(delta: float) -> void:
 	velocity.z = horizontal.z + arrasto.z
 
 	move_and_slide()
+	voxel.velocidade = Vector2(get_real_velocity().x, get_real_velocity().z).length()
+	voxel.no_chao = is_on_floor()
 	_empurrar(delta, horizontal)
 	_girar_modelo(delta)
 	_checar_queda(delta)
@@ -320,6 +333,8 @@ func _velocidade_entrada() -> Vector3:
 	var direcao := direita * entrada.x - frente * entrada.y
 	_yaw_alvo = atan2(-direcao.z, direcao.x)
 	var fator := graveto.fator_velocidade() if tem_graveto and graveto else 1.0
+	if raca:
+		fator *= raca.fator_velocidade
 	if Input.is_action_pressed("andar_devagar"):
 		fator *= fator_devagar
 	return direcao * velocidade * fator

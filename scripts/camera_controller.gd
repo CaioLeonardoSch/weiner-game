@@ -119,8 +119,10 @@ func _usar_ortografica() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if estado != Estado.TERCEIRA_PESSOA:
 		return
-	if event.is_action_pressed("liberar_mouse"):
+	if event.is_action_pressed("liberar_mouse") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		# Só solta o mouse; o próximo Esc (já com o mouse solto) abre a pausa.
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("capturar_mouse"):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:

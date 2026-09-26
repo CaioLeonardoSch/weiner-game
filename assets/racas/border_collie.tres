@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="Raca" format=3]
+
+[ext_resource type="Script" path="res://scripts/racas/pelagem.gd" id="1_4ek4y"]
+[ext_resource type="Script" path="res://scripts/racas/raca.gd" id="2_va6f5"]
+
+[sub_resource type="Resource" id="Resource_fka0w"]
+script = ExtResource("1_4ek4y")
+nome = "Preto e branco"
+cor_pelo = Color(0.16470589, 0.14117648, 0.14117648, 1)
+cor_cabeca = Color(0.16470589, 0.14117648, 0.14117648, 1)
+cor_orelha = Color(0.13725491, 0.11764706, 0.11764706, 1)
+cor_marcas = Color(0.93333334, 0.91764706, 0.8784314, 1)
+marcas = 2
+cor_mascara = Color(0.16470589, 0.14117648, 0.14117648, 1)
+
+[sub_resource type="Resource" id="Resource_3w360"]
+script = ExtResource("1_4ek4y")
+nome = "Vermelho e branco"
+cor_pelo = Color(0.47843137, 0.24705882, 0.13333334, 1)
+cor_cabeca = Color(0.47843137, 0.24705882, 0.13333334, 1)
+cor_orelha = Color(0.3882353, 0.19607843, 0.101960786, 1)
+cor_marcas = Color(0.93333334, 0.91764706, 0.8784314, 1)
+marcas = 2
+cor_mascara = Color(0.47843137, 0.24705882, 0.13333334, 1)
+
+[sub_resource type="Resource" id="Resource_xpxrd"]
+script = ExtResource("1_4ek4y")
+nome = "Merle azul"
+cor_pelo = Color(0.43529412, 0.45882353, 0.5019608, 1)
+cor_cabeca = Color(0.43529412, 0.45882353, 0.5019608, 1)
+cor_orelha = Color(0.16470589, 0.14117648, 0.14117648, 1)
+cor_marcas = Color(0.93333334, 0.91764706, 0.8784314, 1)
+marcas = 2
+cor_mascara = Color(0.43529412, 0.45882353, 0.5019608, 1)
+cor_manchas = Color(0.16470589, 0.14117648, 0.14117648, 1)
+manchas = 0.25
+
+[resource]
+script = ExtResource("2_va6f5")
+id = &"border_collie"
+nome = "Border Collie"
+descricao = "Pastor incansável: late e rodeia as ovelhas até o cercado."
+comprimento_corpo = 13
+altura_corpo = 6
+altura_pata = 8
+altura_pescoco = 2
+orelha = 2
+tamanho_orelha = 3
+comprimento_rabo = 8
+angulo_rabo = -25.0
+fator_velocidade = 1.25
+habilidades_nativas = 4
+pelagens = Array[ExtResource("1_4ek4y")]([SubResource("Resource_fka0w"), SubResource("Resource_3w360"), SubResource("Resource_xpxrd")])

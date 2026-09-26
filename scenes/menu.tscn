@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/menu.gd" id="1_menu"]
+[ext_resource type="PackedScene" path="res://scenes/ambiente.tscn" id="2_ambiente"]
+[ext_resource type="PackedScene" path="res://scenes/contorno_pixel.tscn" id="3_contorno"]
+
+[node name="Menu" type="Node3D"]
+script = ExtResource("1_menu")
+
+[node name="Ambiente" parent="." instance=ExtResource("2_ambiente")]
+
+[node name="Camera3D" type="Camera3D" parent="."]
+current = true
+fov = 40.0
+far = 200.0
+
+[node name="ContornoPixel" parent="Camera3D" instance=ExtResource("3_contorno")]
+
+[node name="UI" type="CanvasLayer" parent="."]

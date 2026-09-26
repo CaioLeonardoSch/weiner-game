@@ -103,6 +103,7 @@ func _ready() -> void:
 	inspetor.pedido_duplicar.connect(_duplicar_selecionado)
 	campo_nome.text_submitted.connect(func(_texto: String) -> void: campo_nome.release_focus())
 	campo_nome.focus_exited.connect(_renomear_fase)
+	%BotaoMenu.pressed.connect(_confirmar_se_modificado.bind(Fases.abrir_menu))
 	%BotaoNova.pressed.connect(_confirmar_se_modificado.bind(_nova_fase))
 	%BotaoSalvar.pressed.connect(_salvar)
 	%BotaoSalvarComo.pressed.connect(_salvar_como)

@@ -18,6 +18,7 @@ const ROTULOS := {
 	&"tamanho": "Tamanho (m)",
 	&"position": "Posição",
 	&"habilidades": "Habilidades do cachorro",
+	&"raca": "Raça do cachorro",
 	&"peso": "Peso (1 = normal)",
 }
 const NOMES_VISIBILIDADE := ["Sempre", "Só isométrico", "Só 3D"]
@@ -60,6 +61,7 @@ func mostrar(alvo: Object) -> void:
 	elif alvo is Fase:
 		_titulo("Fase")
 		_campo(&"nome")
+		_campo(&"raca")
 		_campo(&"habilidades")
 		_campo(&"desvio_camera_3d")
 		_dica("Selecione um objeto (ferramenta Selecionar) para editar as propriedades dele.")
@@ -141,6 +143,17 @@ func _campo(propriedade: StringName) -> void:
 		opcoes.item_selected.connect(func(indice: int) -> void: _emitir(propriedade, opcoes.get_item_id(indice)))
 		_atualizadores[propriedade] = func() -> void: opcoes.select(opcoes.get_item_index(_alvo.get(propriedade)))
 		add_child(opcoes)
+	elif (tipo == TYPE_STRING or tipo == TYPE_STRING_NAME) and hint == PROPERTY_HINT_ENUM:
+		# Lista de textos (ex.: ids das raças): o valor é o próprio texto.
+		var opcoes := OptionButton.new()
+		var textos := texto_hint.split(",")
+		for texto in textos:
+			opcoes.add_item(_nome_de_opcao(propriedade, texto))
+		opcoes.item_selected.connect(func(indice: int) -> void:
+			var valor: Variant = StringName(textos[indice]) if tipo == TYPE_STRING_NAME else textos[indice]
+			_emitir(propriedade, valor))
+		_atualizadores[propriedade] = func() -> void: opcoes.select(textos.find(String(_alvo.get(propriedade))))
+		add_child(opcoes)
 	elif tipo == TYPE_INT or tipo == TYPE_FLOAT:
 		var caixa := _spin(texto_hint if hint == PROPERTY_HINT_RANGE else "", tipo == TYPE_INT)
 		caixa.value_changed.connect(func(valor: float) -> void:
@@ -181,6 +194,14 @@ func _campo(propriedade: StringName) -> void:
 				caixas[eixo].set_value_no_signal(vetor[eixo])
 		add_child(linha)
 	_atualizadores[propriedade].call()
+
+
+func _nome_de_opcao(propriedade: StringName, texto: String) -> String:
+	if propriedade == &"raca":
+		var raca := Racas.por_id(StringName(texto))
+		if raca and raca.id == StringName(texto):
+			return raca.nome
+	return texto
 
 
 func _campo_giro() -> void:
