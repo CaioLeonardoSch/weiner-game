@@ -1,0 +1,30 @@
+# Passarinho (pintarroxo) — 6 x 5 x 3 voxels de 0,07 m, olhando para +X.
+voxel 0.07
+cor p d39b3a   # pé
+cor b 7a5a3c   # costas
+cor w 5e4430   # asa
+cor r e0643a   # peito
+cor h 6b4e34   # cabeça
+cor y f2c14a   # bico
+cor e 151515   # olho
+cor t 4d3827   # rabo
+
+camada 0
+......
+..p.p.
+......
+
+camada 1-2
+..ww..
+.bbrr.
+..ww..
+
+camada 3
+......
+tbbhhy
+......
+
+camada 4
+....e.
+...hh.
+....e.

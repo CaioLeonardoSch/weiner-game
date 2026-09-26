@@ -13,10 +13,12 @@ extends Node3D
 ## exemplo, depende de o cachorro não pular o barranco. Para uma habilidade nova, acrescente
 ## o nome em @export_flags (no fim) e uma constante com o próximo bit.
 const HABILIDADE_PULAR := 1
+const HABILIDADE_CAVAR := 2
+const HABILIDADE_LATIR := 4
 
 ## Nome mostrado no jogo e no editor.
 @export var nome := "Nova fase"
-@export_flags("Pular") var habilidades := 0
+@export_flags("Pular", "Cavar", "Latir") var habilidades := 0
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
 

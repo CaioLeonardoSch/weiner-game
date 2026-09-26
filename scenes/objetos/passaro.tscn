@@ -1,0 +1,23 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objetos/passaro.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/assets/modelo_voxel.gd" id="2_modelo"]
+
+[sub_resource type="SphereShape3D" id="Forma"]
+radius = 0.3
+
+[node name="Passaro" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Modelo" type="MeshInstance3D" parent="."]
+script = ExtResource("2_modelo")
+arquivo = "res://assets/voxel/passaro.txt"
+
+[node name="Corpo" type="StaticBody3D" parent="."]
+collision_layer = 4
+collision_mask = 0
+
+[node name="Colisao" type="CollisionShape3D" parent="Corpo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+shape = SubResource("Forma")
+disabled = true

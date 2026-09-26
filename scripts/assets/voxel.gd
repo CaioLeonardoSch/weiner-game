@@ -326,3 +326,32 @@ static func flores(variante: int) -> ArrayMesh:
 				voxels[Vector3i(x, altura, z)] = _CORES_FLORES[rng.randi() % _CORES_FLORES.size()]
 		_cache[chave] = malha(voxels, 0.125)
 	return _cache[chave]
+
+
+## Bloco de pedra quase cúbico (8 voxels de 0,1125 m = 0,9 m), com quinas lascadas e musgo
+## em cima. Usado pelo objeto empurrável.
+static func bloco(variante: int) -> ArrayMesh:
+	var chave := "bloco_%d" % variante
+	if not _cache.has(chave):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash(chave)
+		var voxels := {}
+		for x in 8:
+			for y in 8:
+				for z in 8:
+					var bordas := int(x == 0 or x == 7) + int(y == 0 or y == 7) + int(z == 0 or z == 7)
+					# Quinas (3 bordas) quase sempre lascadas; arestas às vezes.
+					if bordas == 3 and rng.randf() < 0.85 or bordas == 2 and rng.randf() < 0.25:
+						continue
+					voxels[Vector3i(x, y, z)] = _CINZAS[rng.randi() % _CINZAS.size()]
+		for p: Vector3i in voxels.keys():
+			if not voxels.has(p + Vector3i.UP) and rng.randf() < 0.3:
+				voxels[p] = _MUSGO[rng.randi() % _MUSGO.size()]
+		# Uma rachadura escura numa face.
+		var rx := rng.randi_range(2, 5)
+		for y in range(1, 7):
+			var p := Vector3i(rx + (y % 2), y, 7)
+			if voxels.has(p):
+				voxels[p] = Color("55585f")
+		_cache[chave] = malha(voxels, 0.1125, Vector3(4.0, 0.0, 4.0))
+	return _cache[chave]

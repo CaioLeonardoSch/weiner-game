@@ -4,7 +4,7 @@ class_name Catalogo
 
 const PASTA := "res://scenes/objetos/"
 ## Ordem das categorias na paleta (as que não estiverem aqui vão para o fim).
-const ORDEM_CATEGORIAS := ["Regras", "Cenário"]
+const ORDEM_CATEGORIAS := ["Regras", "Cenário", "Bichos"]
 
 
 ## Cada item: {cena: PackedScene, caminho, nome, categoria}.

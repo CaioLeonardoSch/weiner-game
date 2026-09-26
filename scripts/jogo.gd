@@ -45,6 +45,8 @@ func _ready() -> void:
 	move_child(fase, 0)
 	cachorro.fase = fase
 	cachorro.pode_pular = fase.tem_habilidade(Fase.HABILIDADE_PULAR)
+	cachorro.pode_cavar = fase.tem_habilidade(Fase.HABILIDADE_CAVAR)
+	cachorro.pode_latir = fase.tem_habilidade(Fase.HABILIDADE_LATIR)
 	_atualizar_dica()
 	fase.preparar_isometrica()
 
@@ -66,6 +68,8 @@ func _ready() -> void:
 	camera_controller.configurar(cachorro)
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
 	graveto.pego.connect(_on_graveto_pego)
+	graveto.protegido.connect(_mostrar_aviso.bind("Tem um passarinho no graveto!" +
+		("  B: latir" if cachorro.pode_latir else "")))
 	dono.cachorro_chegou.connect(_on_dono_cachorro_chegou)
 	_mostrar_aviso(fase.nome)
 
@@ -79,6 +83,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_tentar_largar_graveto()
 	elif event.is_action_pressed("virar_graveto"):
 		_tentar_virar_graveto()
+	elif event.is_action_pressed("cavar") and not concluida and not cachorro.entrada_bloqueada:
+		_avisar_motivo(cachorro.cavar(), "cavar", "Aqui não tem terra fofa para cavar")
+	elif event.is_action_pressed("latir") and not concluida and not cachorro.entrada_bloqueada:
+		_avisar_motivo(cachorro.latir(), "latir", "")
 	elif concluida and not _proxima_fase.is_empty() and event.is_action_pressed("ui_accept"):
 		Fases.jogar(_proxima_fase)
 
@@ -168,6 +176,16 @@ func _tentar_virar_graveto() -> void:
 		_mostrar_aviso("Sem espaço para virar o graveto")
 
 
+## Mostra por que a ação não aconteceu (se valer a pena avisar).
+func _avisar_motivo(motivo: String, acao: String, sem_alvo: String) -> void:
+	match motivo:
+		"boca_cheia":
+			_mostrar_aviso("Com o graveto na boca não dá para %s" % acao)
+		"nada":
+			if not sem_alvo.is_empty():
+				_mostrar_aviso(sem_alvo)
+
+
 func _atualizar_dica() -> void:
 	var partes: PackedStringArray = ["WASD / ←↑↓→: andar"]
 	var em_3d := cachorro.tem_graveto
@@ -175,6 +193,10 @@ func _atualizar_dica() -> void:
 		partes.append("Mouse: câmera")
 	if cachorro.pode_pular:
 		partes.append("Espaço: pular")
+	if cachorro.pode_cavar and not cachorro.tem_graveto:
+		partes.append("C: cavar")
+	if cachorro.pode_latir and not cachorro.tem_graveto:
+		partes.append("B: latir")
 	if em_3d:
 		partes.append_array(["Q: virar graveto", "Shift: devagar", "E: largar"])
 	partes.append_array(["R: reiniciar", "F1: editor"])
