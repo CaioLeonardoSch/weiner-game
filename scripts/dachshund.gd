@@ -68,6 +68,13 @@ var _tween_graveto: Tween
 var _cavando := false
 var _espera_latido := 0.0
 var _empurrando: Empurravel
+## Na água rasa: multiplicador da velocidade e se há correnteza embaixo.
+var _lentidao_agua := 1.0
+var em_correnteza := false
+## Puxando um bloco: o cachorro recua uma célula junto com ele.
+const DURACAO_PUXAR := 0.35
+var _tempo_puxando := 0.0
+var _sentido_puxar := Vector3.ZERO
 var _tempo_empurrando := 0.0
 
 @onready var modelo: Node3D = $Modelo
@@ -98,10 +105,17 @@ func _physics_process(delta: float) -> void:
 
 	_espera_latido = maxf(_espera_latido - delta, 0.0)
 	var horizontal := Vector3.ZERO if entrada_bloqueada or _cavando else _velocidade_entrada()
+	if _tempo_puxando > 0.0:
+		_tempo_puxando -= delta
+		horizontal = _sentido_puxar / DURACAO_PUXAR
+	elif not entrada_bloqueada and Input.is_action_pressed("puxar"):
+		_tentar_puxar(horizontal)
 	horizontal += _desvio_de_encaixe(horizontal, delta)
 	horizontal += _empurrao_do_balanco(delta, horizontal)
-	velocity.x = horizontal.x
-	velocity.z = horizontal.z
+	var arrasto := _efeito_da_agua()
+	horizontal *= _lentidao_agua
+	velocity.x = horizontal.x + arrasto.x
+	velocity.z = horizontal.z + arrasto.z
 
 	move_and_slide()
 	_empurrar(delta, horizontal)
@@ -223,6 +237,48 @@ func latir() -> String:
 	return ""
 
 
+## Bloco empurrável logo à frente do focinho (ou null).
+func _bloco_na_frente() -> Empurravel:
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	var origem := global_position + Vector3.UP * 0.3
+	var raio := PhysicsRayQueryParameters3D.create(origem, origem + frente * 1.0, 4, [get_rid()])
+	var achado := get_world_3d().direct_space_state.intersect_ray(raio)
+	if achado.is_empty():
+		return null
+	return (achado.collider as Node).get_parent() as Empurravel
+
+
+## Segurando `puxar` de frente para um bloco e andando para trás: o bloco vem uma célula e
+## o cachorro recua junto. Sem graveto (a boca é que segura). Devolve o motivo se não deu.
+func _tentar_puxar(horizontal: Vector3) -> String:
+	if horizontal.length_squared() < 0.1:
+		return ""
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	if horizontal.normalized().dot(frente) > -0.7:
+		return ""
+	var bloco := _bloco_na_frente()
+	if bloco == null:
+		return ""
+	if tem_graveto:
+		return "boca_cheia"
+	# Direção da grade mais próxima de "para trás".
+	var passo := Vector3i(-int(signf(frente.x)), 0, 0) if absf(frente.x) >= absf(frente.z) \
+		else Vector3i(0, 0, -int(signf(frente.z)))
+	var recuo := Vector3(passo)
+	# O cachorro precisa de espaço e chão firme para recuar uma célula.
+	if test_move(global_transform, recuo):
+		return "sem_espaco"
+	var chao := fase.tile_em(global_position + recuo + Vector3.DOWN * 0.3) if fase else -1
+	if chao == GridMap.INVALID_CELL_ITEM or Tiles.eh_agua(chao):
+		return "sem_espaco"
+	if not bloco.pode_mover(passo, true):
+		return "sem_espaco"
+	bloco.puxar(passo)
+	_sentido_puxar = recuo
+	_tempo_puxando = DURACAO_PUXAR
+	return ""
+
+
 ## Andar contra um objeto empurrável por um instante empurra ele uma célula.
 func _empurrar(delta: float, horizontal: Vector3) -> void:
 	var alvo: Empurravel = null
@@ -270,6 +326,9 @@ func _velocidade_entrada() -> Vector3:
 
 
 func _girar_modelo(delta: float) -> void:
+	# Segurando para puxar, o cachorro não vira: fica de frente para o bloco e anda de ré.
+	if Input.is_action_pressed("puxar") or _tempo_puxando > 0.0:
+		return
 	# O modelo olha para +X quando rotation.y == 0.
 	var novo := lerp_angle(modelo.rotation.y, _yaw_alvo, 1.0 - exp(-velocidade_giro * delta))
 	if is_equal_approx(novo, modelo.rotation.y):
@@ -392,17 +451,63 @@ func _empurrao_do_balanco(delta: float, horizontal: Vector3) -> Vector3:
 	return empurrao + lado.normalized() * balanco * forca_balanco
 
 
+# --- Água rasa e correnteza ---
+
+## Água rasa deixa o cachorro mais lento; correnteza arrasta no sentido do tile. Graveto
+## pesado na boca deixa o cachorro mais firme contra a correnteza. Devolve o arrasto (m/s).
+func _efeito_da_agua() -> Vector3:
+	_lentidao_agua = 1.0
+	em_correnteza = false
+	if fase == null or not is_on_floor():
+		return Vector3.ZERO
+	var terreno := fase.terreno
+	var celula := terreno.local_to_map(terreno.to_local(global_position + Vector3.DOWN * 0.05))
+	var definicao := Tiles.definicao(terreno.get_cell_item(celula))
+	if not definicao.get("rasa", false):
+		return Vector3.ZERO
+	_lentidao_agua = definicao.get("lentidao", 1.0)
+	var forca: float = definicao.get("correnteza", 0.0)
+	if forca <= 0.0:
+		return Vector3.ZERO
+	em_correnteza = true
+	var sentido := terreno.global_basis * terreno.get_cell_item_basis(celula).x
+	sentido.y = 0.0
+	var firmeza := maxf(graveto.peso, 1.0) if tem_graveto and graveto else 1.0
+	return sentido.normalized() * forca / firmeza
+
+
 # --- Quedas ------------------------------------------------------------------------------
 
 func _checar_queda(delta: float) -> void:
-	if fase and fase.dentro_da_agua(global_position):
+	if fase and (fase.dentro_da_agua(global_position) or _na_beira_da_agua()):
 		_voltar_ao_ponto_seguro("agua")
 	elif global_position.y < -10.0:
 		_voltar_ao_ponto_seguro("queda")
-	elif is_on_floor() and not em_passagem_estreita:
+	elif is_on_floor() and not em_passagem_estreita and not em_correnteza:
 		_tempo_ponto_seguro += delta
 		if _tempo_ponto_seguro >= 0.25:
 			_guardar_ponto_seguro()
+
+
+## O centro do corpo já está sobre água funda, sem nada embaixo, mas a cápsula ainda se
+## apoia na beirada (a física deixaria o cachorro "montado" na aresta).
+func _na_beira_da_agua() -> bool:
+	# A correnteza leva o cachorro até a beira da água funda: com o centro já sobre ela e apoiado
+	# só no leito da água rasa, ele cai. Na beira de chão firme (ou de um objeto) nada muda.
+	if not is_on_floor() or not Tiles.eh_agua(fase.tile_em(global_position + Vector3.DOWN * 0.1)):
+		return false
+	var apoios := 0
+	for i in get_slide_collision_count():
+		var colisao := get_slide_collision(i)
+		if colisao.get_normal().y <= 0.7:
+			continue
+		if colisao.get_collider() != fase.terreno:
+			return false
+		var tile := fase.tile_em(colisao.get_position() + Vector3.DOWN * 0.05)
+		if not Tiles.definicao(tile).get("rasa", false):
+			return false
+		apoios += 1
+	return apoios > 0
 
 
 func _guardar_ponto_seguro() -> void:

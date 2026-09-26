@@ -3,6 +3,7 @@ class_name Empurravel
 extends ObjetoFase
 ## Bloco de pedra que o cachorro empurra andando contra ele: anda uma célula da grade por
 ## vez (estilo Sokoban, previsível), se a célula de destino estiver livre e tiver chão.
+## Segurando `puxar` de frente para ele e andando para trás, o cachorro puxa (sem graveto).
 ## Empurrado para dentro da água, afunda até ficar rente ao chão e vira passagem.
 ## Coloque no centro de uma célula (o editor já encaixa).
 
@@ -46,21 +47,44 @@ func _atualizar() -> void:
 
 ## Tenta empurrar uma célula na direção dada (só X ou Z). Verdadeiro se andou.
 func empurrar(direcao: Vector3i) -> bool:
+	return await _mover(direcao, false)
+
+
+## Puxado pelo cachorro: anda uma célula na direção dele (o cachorro recua junto, então o
+## lugar dele não conta como ocupado).
+func puxar(direcao: Vector3i) -> bool:
+	return await _mover(direcao, true)
+
+
+## Pode andar uma célula nessa direção agora?
+func pode_mover(direcao: Vector3i, ignorar_cachorro: bool) -> bool:
 	var fase := _fase()
 	if em_movimento or afundado or fase == null:
 		return false
 	var terreno := fase.terreno
-	var celula := terreno.local_to_map(terreno.to_local(global_position + Vector3.UP * 0.3))
-	var destino := celula + Vector3i(direcao.x, 0, direcao.z)
+	var destino := _celula() + Vector3i(direcao.x, 0, direcao.z)
 	if terreno.get_cell_item(destino) != GridMap.INVALID_CELL_ITEM:
 		return false
-	var chao := terreno.get_cell_item(destino + Vector3i.DOWN)
-	if chao == GridMap.INVALID_CELL_ITEM:
+	if terreno.get_cell_item(destino + Vector3i.DOWN) == GridMap.INVALID_CELL_ITEM:
 		return false
 	var alvo := terreno.to_global(terreno.map_to_local(destino))
 	alvo.y = global_position.y
-	if _ocupado(alvo, true):
+	return not _ocupado(alvo, true, ignorar_cachorro)
+
+
+func _celula() -> Vector3i:
+	var terreno := _fase().terreno
+	return terreno.local_to_map(terreno.to_local(global_position + Vector3.UP * 0.3))
+
+
+func _mover(direcao: Vector3i, ignorar_cachorro: bool) -> bool:
+	if not pode_mover(direcao, ignorar_cachorro):
 		return false
+	var terreno := _fase().terreno
+	var destino := _celula() + Vector3i(direcao.x, 0, direcao.z)
+	var chao := terreno.get_cell_item(destino + Vector3i.DOWN)
+	var alvo := terreno.to_global(terreno.map_to_local(destino))
+	alvo.y = global_position.y
 
 	em_movimento = true
 	var tween := create_tween()
@@ -77,13 +101,15 @@ func empurrar(direcao: Vector3i) -> bool:
 	return true
 
 
-## Existe alguma direção em que o cachorro consegue empurrar o bloco? (Destino livre e com
-## chão, e do lado oposto um lugar em que o cachorro possa ficar.)
+## Existe alguma direção em que o cachorro consegue empurrar ou puxar o bloco? (Destino
+## livre e com chão, e lugar para o cachorro ficar — e, ao puxar, para recuar.)
 func _algum_empurrao_possivel() -> bool:
-	var terreno := _fase().terreno
-	var celula := terreno.local_to_map(terreno.to_local(global_position + Vector3.UP * 0.3))
+	var celula := _celula()
 	for direcao: Vector3i in [Vector3i(1, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 0, -1)]:
 		if _celula_livre(celula + direcao, false) and _celula_livre(celula - direcao, true):
+			return true
+		# Puxar: o cachorro fica em celula + direcao e recua para celula + 2 * direcao.
+		if _celula_livre(celula + direcao, true) and _celula_livre(celula + direcao * 2, true):
 			return true
 	return false
 
@@ -102,7 +128,7 @@ func _celula_livre(celula: Vector3i, para_o_cachorro: bool) -> bool:
 	return not _ocupado(centro, not para_o_cachorro)
 
 
-## Encurralado num canto: some e reaparece onde começou (dá para tentar de novo sem
+## Encurralado (nem empurrar nem puxar): some e reaparece onde começou (dá para tentar de novo sem
 ## reiniciar a fase). Espera o lugar de início ficar livre.
 func _voltar_ao_inicio() -> void:
 	em_movimento = true
@@ -124,13 +150,13 @@ func _voltar_ao_inicio() -> void:
 ## Algum objeto no lugar? Sólidos sempre (pela física). Para o destino do bloco
 ## (`destino_do_bloco`), conta também o cachorro e o graveto e os passarinhos, que não têm
 ## corpo sólido mas não podem ficar embaixo da pedra.
-func _ocupado(alvo: Vector3, destino_do_bloco: bool) -> bool:
+func _ocupado(alvo: Vector3, destino_do_bloco: bool, ignorar_cachorro := false) -> bool:
 	var forma := BoxShape3D.new()
 	forma.size = Vector3(0.8, 0.7, 0.8)
 	var consulta := PhysicsShapeQueryParameters3D.new()
 	consulta.shape = forma
 	consulta.transform = Transform3D(Basis.IDENTITY, alvo + Vector3.UP * 0.45)
-	consulta.collision_mask = 2 | 4 | (8 if destino_do_bloco else 0)
+	consulta.collision_mask = 2 | 4 | (8 if destino_do_bloco and not ignorar_cachorro else 0)
 	consulta.exclude = [($Corpo as CollisionObject3D).get_rid()]
 	if not get_world_3d().direct_space_state.intersect_shape(consulta, 1).is_empty():
 		return true
