@@ -17,6 +17,8 @@ const ROTULOS := {
 	&"comprimento": "Comprimento (m)",
 	&"tamanho": "Tamanho (m)",
 	&"position": "Posição",
+	&"habilidades": "Habilidades do cachorro",
+	&"peso": "Peso (1 = normal)",
 }
 const NOMES_VISIBILIDADE := ["Sempre", "Só isométrico", "Só 3D"]
 
@@ -58,6 +60,7 @@ func mostrar(alvo: Object) -> void:
 	elif alvo is Fase:
 		_titulo("Fase")
 		_campo(&"nome")
+		_campo(&"habilidades")
 		_campo(&"desvio_camera_3d")
 		_dica("Selecione um objeto (ferramenta Selecionar) para editar as propriedades dele.")
 
@@ -112,7 +115,22 @@ func _campo(propriedade: StringName) -> void:
 	var hint: int = info.hint
 	var texto_hint: String = info.hint_string
 
-	if tipo == TYPE_INT and hint == PROPERTY_HINT_ENUM:
+	if tipo == TYPE_INT and hint == PROPERTY_HINT_FLAGS:
+		var marcas: Array[CheckBox] = []
+		for i in texto_hint.split(",").size():
+			var marca := CheckBox.new()
+			marca.text = texto_hint.split(",")[i].get_slice(":", 0)
+			var bit := 1 << i
+			marca.toggled.connect(func(ligado: bool) -> void:
+				var valor: int = _alvo.get(propriedade)
+				_emitir(propriedade, (valor | bit) if ligado else (valor & ~bit)))
+			marcas.append(marca)
+			add_child(marca)
+		_atualizadores[propriedade] = func() -> void:
+			var valor: int = _alvo.get(propriedade)
+			for i in marcas.size():
+				marcas[i].set_pressed_no_signal(valor & (1 << i) != 0)
+	elif tipo == TYPE_INT and hint == PROPERTY_HINT_ENUM:
 		var opcoes := OptionButton.new()
 		var nomes := texto_hint.split(",")
 		for i in nomes.size():

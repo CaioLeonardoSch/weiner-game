@@ -17,6 +17,9 @@ e use F6 (rodar cena atual).
 | WASD / setas | andar | mover a câmera |
 | Mouse | câmera 3D | clique esq. coloca, dir. apaga, meio gira |
 | E | largar o graveto | girar (com Q) |
+| Q | virar o graveto (atravessado ↔ ao comprido) | girar (com E) |
+| Espaço | pular (se a fase liberar) | — |
+| Shift | andar devagar (equilíbrio) | modificador (trocar tile, girar 15°) |
 | R | reiniciar | subir camada (com F: descer) |
 | **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
 | F3 | liga/desliga o pixelado | idem |
@@ -28,6 +31,29 @@ Ida em visão isométrica: a trilha é estreita, cercada por mato e floresta. O 
 caminho, então o salsicha sobe a rampa, anda pelo barranco e pula lá de cima perto do graveto.
 Ao pegar o graveto a câmera vira 3D e revela o túnel no mato (as bocas ficam tampadas por
 folhagem "só isométrica") — o único caminho de volta, porque o barranco é de mão única.
+
+## Fase 02 — "A Pinguela"
+
+O graveto agora é grande e pesado (1,4 m, peso 2). Na ida o salsicha cruza o riacho por uma
+ponte larga, passa por um vão estreito num muro de pedra e **pula** para o degrau onde está o
+graveto. Na volta, em 3D, a ponte larga não existe (era "só isométrica"): sobra a **pinguela**.
+Atravessado na boca, o graveto não passa no vão — **Q** vira o graveto ao comprido. Na
+pinguela, graveto grande desequilibra: atravessado e correndo, o cachorro cai na água; ao
+comprido ou andando devagar (Shift), passa.
+
+## O graveto
+
+- **Colisão própria**: o graveto na boca é uma forma do corpo do cachorro. Se ele não passa,
+  o cachorro não passa; o cachorro também não gira se o graveto bater em algo no giro. Uma
+  "correção de quina" desliza o cachorro para encaixar quando falta pouco (senão passar com o
+  graveto atravessado exigiria mira de milímetros).
+- **Q** alterna entre atravessado e ao comprido (apontando para a frente). Ao comprido passa em
+  vãos estreitos, mas o graveto vai longe à frente e bate em paredes ao virar.
+- **Peso**: deixa o cachorro mais lento e o pulo mais baixo.
+- **Equilíbrio**: em passagens estreitas (tile *Tábua*), carga = peso × comprimento acima de 1,2
+  faz o cachorro balançar; o balanço cresce com o quadrado da velocidade e é menor ao comprido.
+  Com o centro do corpo fora da tábua, ele cai. Ajustes no grupo "Equilíbrio" de
+  `scripts/dachshund.gd`.
 
 ## Visual pixelado
 
@@ -64,6 +90,9 @@ Num jogo exportado as fases salvas vão para `user://fases/`.
 arraste cenas de `scenes/objetos/` para dentro de `Objetos`.
 
 Toda fase precisa de um **Início do cachorro**, um **Dono** e um **Graveto** (categoria "Regras").
+Nas propriedades da fase (nada selecionado) ficam as **habilidades do cachorro** que a fase
+libera (hoje: pular) — a Fase 01 depende de o cachorro *não* pular o barranco. O comprimento e
+o peso do graveto ficam nas propriedades do Graveto.
 
 ### A mecânica da perspectiva no editor
 
@@ -125,4 +154,6 @@ por elas), 3 `objetos`, 4 `cachorro`.
 | Câmera isométrica (ângulo, zoom) e 3D | exports de `scripts/camera_controller.gd` |
 | Duração da transição de câmera | `duracao_transicao` em `scripts/camera_controller.gd` |
 | Comprimento/peso do graveto | propriedades do Graveto no editor de fases |
+| Altura do pulo, equilíbrio | exports de `scripts/dachshund.gd` (grupo "Equilíbrio") |
+| Habilidades liberadas | propriedades da fase no editor (nada selecionado) |
 | Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |

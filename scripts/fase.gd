@@ -9,8 +9,14 @@ extends Node3D
 ## Dá para editar também no editor do Godot (pintar o GridMap, arrastar objetos).
 ## Rodar esta cena direto (F6 no editor do Godot) abre o jogo nela.
 
+## Habilidades que o cachorro pode usar (flags). Cada fase escolhe as suas: a Fase 01, por
+## exemplo, depende de o cachorro não pular o barranco. Para uma habilidade nova, acrescente
+## o nome em @export_flags (no fim) e uma constante com o próximo bit.
+const HABILIDADE_PULAR := 1
+
 ## Nome mostrado no jogo e no editor.
 @export var nome := "Nova fase"
+@export_flags("Pular") var habilidades := 0
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
 
@@ -24,6 +30,10 @@ func _ready() -> void:
 	var fases := get_node_or_null(^"/root/Fases")
 	if fases and get_tree().current_scene == self:
 		fases.jogar.call_deferred(scene_file_path)
+
+
+func tem_habilidade(habilidade: int) -> bool:
+	return habilidades & habilidade != 0
 
 
 func lista_objetos() -> Array[ObjetoFase]:
@@ -66,6 +76,20 @@ func preparar_isometrica() -> void:
 ## ID do tile na posição (global), ou GridMap.INVALID_CELL_ITEM.
 func tile_em(posicao: Vector3) -> int:
 	return terreno.get_cell_item(terreno.local_to_map(terreno.to_local(posicao)))
+
+
+## Numa passagem estreita (tábua): quanto a posição está deslocada da linha do meio
+## (m, com sinal) e para que lado. Devolve {} fora de passagens estreitas.
+func passagem_estreita_em(posicao: Vector3) -> Dictionary:
+	var celula := terreno.local_to_map(terreno.to_local(posicao))
+	var id := terreno.get_cell_item(celula)
+	if not Tiles.eh_estreita(id):
+		return {}
+	var lado := terreno.global_basis * terreno.get_cell_item_basis(celula).z
+	lado.y = 0.0
+	lado = lado.normalized()
+	var centro := terreno.to_global(terreno.map_to_local(celula))
+	return {desvio = (posicao - centro).dot(lado), lado = lado, meia_largura = Tiles.meia_largura(id)}
 
 
 ## A posição está dentro de um tile de água, abaixo da superfície?

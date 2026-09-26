@@ -1,8 +1,9 @@
 # Próximas etapas
 
-O que já existe (etapas 1 e 2): visual pixelado, trilha mais linear na Fase 01 com floresta em
-volta, pipeline de assets (tiles gerados por código, modelos voxel em texto e procedurais,
-objetos que aparecem sozinhos no editor) e o editor de fases dentro do jogo (F1).
+O que já existe: visual pixelado, trilha mais linear na Fase 01 com floresta em volta, pipeline
+de assets (tiles gerados por código, modelos voxel em texto e procedurais, objetos que aparecem
+sozinhos no editor), o editor de fases dentro do jogo (F1), o graveto com colisão, peso e
+equilíbrio (etapa 3), habilidades por fase com o pulo (parte da etapa 4) e a Fase 02.
 
 Abaixo, o que ficou para depois, na ordem sugerida. Cada item diz **onde encaixa** no código
 atual, para a arquitetura não precisar mudar.
@@ -13,36 +14,28 @@ nova entra — a Fase 01, por exemplo, depende de o cachorro *não* pular o barr
 Sugestão: `@export var habilidades: Array[StringName]` em `scripts/fase.gd`, editável no painel
 da fase no editor, e o `jogo.gd` liga só as habilidades listadas.
 
-## Etapa 3 — Graveto de verdade: tamanho, peso e equilíbrio
+## Etapa 3 — Graveto de verdade ✅ (feito)
 
-O núcleo do conceito. Hoje o graveto já tem `comprimento` e `peso` (editáveis no editor); o
-comprimento só muda o visual e o peso deixa o cachorro mais lento.
+Colisão própria do graveto na boca, bloqueio de giro, correção de quina, virar o graveto ao
+comprido (Q), peso (velocidade e pulo) e equilíbrio em passagens estreitas (tile *Tábua*),
+com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso. Ficou para depois:
 
-- **Colisão do graveto na boca**: uma `ShapeCast3D` (ou forma extra no `CharacterBody3D`)
-  com o comprimento do graveto, atravessada na boca. Se o graveto não passa, o cachorro não
-  passa — túneis estreitos, árvores próximas e cercas viram o puzzle. Cuidado com a sensação de
-  "preso": prever um giro de cabeça (segurar um botão para inclinar/virar o graveto) em vez de
-  depender de sorte na colisão (ver notas de design no CONCEITO.md).
-- **Equilíbrio em passagens estreitas** (tábua sobre água, pinguela sobre penhasco): o tile
-  `Tábua` já existe. Ideia: numa superfície estreita, o cachorro ganha um "balanço" que cresce com
-  `peso × comprimento` e com a velocidade; o jogador compensa com esquerda/direita; passou do
-  limite, cai (já existe o retorno ao ponto seguro quando cai na água ou no abismo).
-  Detectar "superfície estreita": tile `TABUA` embaixo (`Fase.tile_em`) ou um objeto/área
-  `PassagemEstreita` colocado pelo editor.
-- **Formatos**: gravetos em T/Y exigem ângulo — depende do giro de cabeça acima.
-- Mostrar no HUD o tamanho/peso do graveto da fase quando ele é pego.
+- **Formatos T/Y**: gravetos com galhos exigindo ângulo. A base já existe (forma de colisão do
+  graveto no corpo); faltaria uma forma composta por formato e mais ângulos de virar
+  (hoje são dois: atravessado e ao comprido).
+- **Inclinar o graveto** (para cima/baixo) para passar por baixo/cima de obstáculos baixos.
+- **Mais passagens estreitas**: tronco caído como pinguela, beirada de penhasco. Basta marcar
+  `estreita = true` no tile (ou criar um objeto que responda a `Fase.passagem_estreita_em`).
 
-## Etapa 4 — Movimento: pular, subir e descer níveis
+## Etapa 4 — Movimento: pular, subir e descer níveis (em parte ✅)
 
-- **Pular**: ação `pular` no InputMap; impulso em `dachshund.gd`. Pulo baixo (≤ 0,6 m) para
-  subir meio bloco (`Meio bloco` já existe) sem estragar barrancos de 2 m. Peso do graveto reduz
-  a altura do pulo (ideia do CONCEITO.md).
-- **Nivelamentos diferentes** já dá para montar no editor (blocos, meio bloco, rampas). Faltam
-  tiles de canto de rampa e escada — acrescentar em `Tiles.definicoes()` (sempre com ID novo no
-  fim) e gerar a biblioteca de novo.
-- **Mais túneis**: já dá para cavar túneis no editor tirando blocos de mato/terra e tampando as
-  bocas com *Tampa de folhagem* (só isométrico). Variações úteis: tampas "só 3D" (caminhos que
-  existem na ida e fecham na volta) e túneis mais baixos que só passam com graveto curto.
+- ✅ **Habilidades por fase**: `Fase.habilidades` (flags, no painel da fase no editor).
+- ✅ **Pular** (Espaço): 0,65 m sem graveto — sobe meio bloco, não um bloco inteiro; o peso
+  do graveto reduz a altura.
+- **Nivelamentos**: faltam tiles de canto de rampa e escada — acrescentar em
+  `Tiles.definicoes()` (sempre com ID novo no fim) e gerar a biblioteca de novo.
+- **Mais túneis**: já dá para montar no editor; variações úteis: tampas "só 3D" (caminhos que
+  existem na ida e fecham na volta) e túneis baixos que só passam com o graveto ao comprido.
 
 ## Etapa 5 — Cavar
 
@@ -71,7 +64,8 @@ comprimento só muda o visual e o peso deixa o cachorro mais lento.
   - **Água rasa** (tile novo com leito a meio bloco): atravessável, mais lenta; graveto molhado
     pesa mais?
   - **Correnteza**: empurra o cachorro numa direção (variável por célula ou objeto "Corrente").
-  - **Travessia**: tábua (já existe), tronco empurrado, pedras de apoio (meio bloco).
+  - **Travessia**: tábua com equilíbrio (já existe), ponte larga (objeto *Ponte de madeira*,
+    já existe), tronco empurrado, pedras de apoio (meio bloco + pulo).
 
 ## Etapa 8 — Latir
 
