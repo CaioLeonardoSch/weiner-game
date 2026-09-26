@@ -6,7 +6,7 @@
 //
 // Franja: nas faces laterais, a faixa logo abaixo do topo usa cor_topo com borda irregular
 // (a grama "descendo" pela lateral do bloco). A distância até o topo vem no UV.y da malha
-// (ver scripts/assets/construtor_tiles.gd); malhas sem essa informação usam franja_texels = 0.
+// (ver scripts/assets/tiles.gd); malhas sem essa informação usam franja_texels = 0.
 shader_type spatial;
 render_mode diffuse_lambert, specular_disabled;
 
