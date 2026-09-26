@@ -10,8 +10,12 @@ extends ObjetoFase
 	set(valor):
 		canal = valor
 		_montar()
-## Peso necessário (salsicha = 1; graveto grande = 2; bloco de pedra = 3).
-@export_range(0.3, 6.0, 0.1) var peso_minimo := 1.0
+## Peso necessário (salsicha = 1; graveto grande = 2; bloco de pedra = 3). Aparece na placa
+## como pontinhos (um por unidade de peso), para o jogador saber o que ela pede.
+@export_range(0.3, 6.0, 0.1) var peso_minimo := 1.0:
+	set(valor):
+		peso_minimo = valor
+		_montar()
 
 const AFUNDAR := 0.04
 
@@ -103,6 +107,13 @@ func _montar() -> void:
 			else:
 				tampo[Vector3i(x, 0, z)] = Color("9ea1a8").darkened(0.08 if (x * 7 + z * 3) % 5 == 0 else 0.0)
 				tampo[Vector3i(x, 1, z)] = Color("aeb1b8")
+	# Pontinhos no tampo: quantas unidades de peso a placa pede.
+	var pontos := clampi(roundi(peso_minimo), 1, 6)
+	var inicio := -int(pontos * 3 / 2)
+	for i in pontos:
+		for dx in 2:
+			for dz in 2:
+				tampo[Vector3i(inicio + i * 3 + dx, 1, -1 + dz)] = Color("4a4d55")
 	var instancia := MeshInstance3D.new()
 	instancia.name = "Moldura"
 	instancia.mesh = Voxel.malha(moldura, 1.0 / 16.0)

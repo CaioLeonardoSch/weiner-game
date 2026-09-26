@@ -278,7 +278,7 @@ func objeto_da_acao() -> ObjetoFase:
 		var objeto := no as ObjetoFase
 		if objeto == null or not objeto.visible or objeto.acao_da_boca(self).is_empty():
 			continue
-		var ate := objeto.global_position - global_position
+		var ate := objeto.ponto_da_acao(self) - global_position
 		ate.y = 0.0
 		var distancia := ate.length()
 		if distancia < melhor_distancia and (distancia < 0.3 or ate.normalized().dot(frente) > 0.5):

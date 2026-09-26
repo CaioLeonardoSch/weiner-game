@@ -6,7 +6,11 @@ sozinhos no editor), o editor de fases dentro do jogo (F1), o graveto com colis�
 equilíbrio (etapa 3), habilidades por fase com o pulo, escadas e cantos de rampa (etapa 4),
 cavar (5), empurrar e puxar (6), água rasa e correnteza (7), latir e passarinhos (8), as
 melhorias principais do editor, o menu principal com pausa, o cachorro em voxel com raças e
-pelagens, o objetivo da fase como dado (graveto ou pastoreio) e as Fases 02 a 05.
+pelagens, o objetivo da fase como dado (graveto ou pastoreio) e as Fases 02 a 09. Do Pacote 1
+(Etapa 10) já existem o botão de ação (F), gravetos lendário e comuns, placas de pressão e
+portões por canal de cor, o graveto-ponte e o mirante. Também o menu de opções (tela, gráficos,
+áudio, teclas), a tela para monitores largos e a exportação para Windows, Linux e macOS (ver
+`docs/ANALISE_PACOTE_1.md`).
 
 Abaixo, o que ficou para depois, na ordem sugerida. Cada item diz **onde encaixa** no código
 atual, para a arquitetura não precisar mudar.
@@ -140,21 +144,21 @@ embora. Não dá para latir com o graveto na boca. Ideias para depois:
 
 ## Etapa 9 — Truques (rolar, abanar o rabo, ficar em duas patas)
 
-- Primeiro separar o modelo do cachorro em pivôs (cabeça, rabo, patas, corpo) em
-  `scenes/dachshund.tscn` e animar por código (tweens) ou com `AnimationPlayer`.
+- O modelo já é separado em pivôs (corpo, cabeça, orelhas, rabo, patas) e animado por código
+  em `ModeloCachorro`; os truques entram como animações novas ali.
 - Truques como mecânica: o dono (ou outro personagem) pede um truque para liberar algo;
   **duas patas** alcança/enxerga mais alto (e o graveto sobe junto — passa por cima de
   obstáculos baixos); **rolar** passa por baixo de algo baixo sem o graveto (larga e pega de
   novo); **abanar o rabo** para interagir com animais.
 - Ações novas no InputMap (`truque_rolar`, `truque_rabo`, `truque_duas_patas`) ou um menu radial.
 
-## Etapa 10 — Quebra-cabeças com gravetos: placas, pontes, tocas e mirantes
+## Etapa 10 — Quebra-cabeças com gravetos: placas, pontes, tocas e mirantes (em parte ✅)
 
 A ideia central: o graveto deixa de ser só o prêmio e vira também **ferramenta**. Tudo aqui
 combina com o que já existe — a troca de perspectiva, a colisão e o peso do graveto, blocos,
 água e latido.
 
-- **Gravetos comuns e o graveto lendário.** Uma fase pode ter vários gravetos. Só o
+- **Gravetos comuns e o graveto lendário. ✅** Uma fase pode ter vários gravetos. Só o
   **lendário** — dourado, com um brilho — conclui a fase ao ser entregue ao dono. Os outros,
   marrons e comuns, também mudam a perspectiva quando o cachorro os pega, mas servem de
   ferramenta no caminho: ponte, peso numa placa, algo para trocar. Largar um para pegar outro
@@ -162,7 +166,7 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   *Onde encaixa:* `Graveto.lendario` (material dourado e partículas). O `jogo.gd` hoje liga só
   `fase.primeiro(Graveto)`; passa a ligar todos, e o dono só aceita o lendário. A validação do
   editor exige exatamente um lendário.
-- **Placa de pressão e portão.** A placa abre (ou fecha) portões enquanto tem peso em cima: um
+- **Placa de pressão e portão. ✅** A placa abre (ou fecha) portões enquanto tem peso em cima: um
   bloco, uma ovelha, o próprio cachorro, um graveto largado, um bando de pássaros. O melhor
   dilema: quando só o graveto pesa o bastante, ele é **a chave e o prêmio** ao mesmo tempo — é
   preciso pôr outra coisa na placa antes de levá-lo embora. Placas "só isométrico" ou "só 3D"
@@ -170,7 +174,7 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   *Onde encaixa:* objetos `Placa` (Area3D que soma o peso do que está em cima) e `Portao`
   (colisão ligada/desligada, como `ObjetoFase.definir_ativo`), ligados por um **canal** (nome ou
   número no painel do editor). O mesmo canal serve para comporta, ponte levadiça, lanterna...
-- **O graveto vira ponte.** Largado ao comprido sobre um vão de uma célula (buraco, riacho
+- **O graveto vira ponte. ✅** Largado ao comprido sobre um vão de uma célula (buraco, riacho
   estreito), um graveto longo vira pinguela, com o equilíbrio da Tábua. Como largar volta para a
   isométrica (e as tampas voltam!), **onde** fazer a ponte importa. O cachorro atravessa e pega
   o graveto de volta pela outra ponta; um graveto curto não alcança os dois lados.
@@ -207,13 +211,13 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   pássaros, correnteza e o barco (Etapa 12).
   *Onde encaixa:* objeto `Comporta` com uma área marcada no editor; troca os tiles `AGUA` ↔
   `AGUA_RASA` do GridMap, do mesmo jeito que o cavar tira a terra fofa.
-- **Mirante: o graveto fincado.** Num ponto alto, um graveto preso (fincado no chão ou num
+- **Mirante: o graveto fincado. ✅** Num ponto alto, um graveto preso (fincado no chão ou num
   tronco) que não sai do lugar. Mordendo-o, a perspectiva muda — só para olhar: o jogador estuda
   a fase pelo outro ângulo e planeja os próximos passos; soltando, volta. Evolução: no mirante,
   girar a isométrica 90° (as faces escondidas mudam e outros caminhos aparecem).
   *Onde encaixa:* objeto `GravetoFincado`; ao morder, a câmera vai para o 3D (ou para uma vista
   panorâmica) sem ligar nem desligar passagens, e o cachorro fica parado.
-- **Botão de ação (F), conforme o que está na frente.** Um botão só, que muda de acordo com o
+- **Botão de ação (F), conforme o que está na frente. ✅** Um botão só, que muda de acordo com o
   que está por perto e para onde o cachorro está olhando: olhando para uma pedra ou um bloco,
   F + trás puxa (como hoje); para um tronco, F morde e arrasta; para uma corda, F puxa e aciona;
   para o graveto fincado, F morde (mirante); para um invasor, F morde a bunda dele. E assim por

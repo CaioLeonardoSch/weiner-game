@@ -33,8 +33,9 @@ const MATERIAL_COMUM := preload("res://assets/materiais/graveto_comum.tres")
 ## Depois de largado, por quantos segundos o graveto ignora o cachorro
 ## (senão ele seria pego de novo na hora).
 @export var tempo_para_repegar := 0.5
-## Comprimento em metros (atravessado na boca do cachorro).
-@export_range(0.4, 2.0, 0.05) var comprimento := 0.8:
+## Comprimento em metros (atravessado na boca do cachorro). A partir de 1,6 m, largado ao
+## comprido sobre um vão de uma célula, vira ponte.
+@export_range(0.4, 3.0, 0.05) var comprimento := 0.8:
 	set(valor):
 		comprimento = valor
 		_atualizar_forma()
@@ -42,6 +43,10 @@ const MATERIAL_COMUM := preload("res://assets/materiais/graveto_comum.tres")
 @export_range(0.5, 3.0, 0.1) var peso := 1.0
 
 var ja_pego := false
+## Largado sobre um vão, virou ponte: dá para atravessar por cima (com equilíbrio, como a
+## Tábua) e só se pega de volta com o botão de ação, por uma das pontas.
+var em_ponte := false
+var _corpo_ponte: StaticBody3D
 var _tempo := 0.0
 var _bloqueio := 0.0
 var _espera_aviso := 0.0
@@ -72,6 +77,7 @@ func _ready() -> void:
 	if not Engine.is_editor_hint():
 		area.body_entered.connect(_on_body_entered)
 		add_to_group(&"pesos")
+		add_to_group(&"com_acao")
 
 
 ## Largado no chão, pesa na placa; na boca, o peso entra no do cachorro.
@@ -80,7 +86,7 @@ func peso_na_placa() -> float:
 
 
 func _process(delta: float) -> void:
-	if ja_pego or Engine.is_editor_hint():
+	if ja_pego or em_ponte or Engine.is_editor_hint():
 		return
 	_bloqueio = maxf(_bloqueio - delta, 0.0)
 	_espera_aviso = maxf(_espera_aviso - delta, 0.0)
@@ -177,3 +183,73 @@ static func _criar_brilho() -> CPUParticles3D:
 	faiscas.scale_amount_max = 1.2
 	faiscas.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return faiscas
+
+
+# --- Ponte ---------------------------------------------------------------------------------
+
+## Vira ponte onde está (o jogo já o colocou sobre o vão, ao longo do eixo Z dele).
+func virar_ponte() -> void:
+	em_ponte = true
+	ja_pego = false
+	area.set_deferred("monitoring", false)
+	visual.position = Vector3.ZERO
+	visual.rotation = Vector3.ZERO
+	_corpo_ponte = StaticBody3D.new()
+	_corpo_ponte.collision_layer = 1
+	_corpo_ponte.collision_mask = 0
+	var forma := BoxShape3D.new()
+	forma.size = Vector3(0.32, 0.1, comprimento)
+	var colisao := CollisionShape3D.new()
+	colisao.shape = forma
+	# Topo quase rente ao chão das margens (3 cm): um degrau da altura do graveto seria uma
+	# parede para a cápsula do cachorro.
+	colisao.position.y = -0.08
+	_corpo_ponte.add_child(colisao)
+	add_child(_corpo_ponte)
+	add_to_group(&"pontes_graveto")
+
+
+func sair_da_ponte() -> void:
+	em_ponte = false
+	if _corpo_ponte:
+		_corpo_ponte.queue_free()
+		_corpo_ponte = null
+	remove_from_group(&"pontes_graveto")
+
+
+## Dados de passagem estreita (ver Fase.passagem_estreita_em) se `posicao` está sobre a ponte.
+func passagem_em(posicao: Vector3) -> Dictionary:
+	if not em_ponte:
+		return {}
+	var local := to_local(posicao)
+	if absf(local.z) > comprimento * 0.5 or absf(local.x) > 0.6 or local.y < -0.3 or local.y > 0.9:
+		return {}
+	var lado := global_basis.x
+	lado.y = 0.0
+	return {desvio = local.x, lado = lado.normalized(), meia_largura = 0.16}
+
+
+func acao_da_boca(cachorro: Dachshund) -> String:
+	if not em_ponte or cachorro.tem_graveto or not cachorro.is_on_floor():
+		return ""
+	# Só por uma das pontas, pisando no chão (em cima da ponte, pegar derrubaria o cachorro).
+	var ao_longo := absf(to_local(cachorro.global_position).z)
+	return "pegar o graveto" if ao_longo > comprimento * 0.5 - 0.45 else ""
+
+
+## Na ponte, a ponta mais perto do cachorro.
+func ponto_da_acao(cachorro: Dachshund) -> Vector3:
+	if not em_ponte:
+		return global_position
+	var eixo := global_basis.z.normalized() * comprimento * 0.5
+	var a := global_position + eixo
+	var b := global_position - eixo
+	return a if a.distance_to(cachorro.global_position) < b.distance_to(cachorro.global_position) else b
+
+
+func executar_acao(cachorro: Dachshund) -> void:
+	if acao_da_boca(cachorro).is_empty():
+		return
+	sair_da_ponte()
+	ja_pego = true
+	pego.emit(cachorro)

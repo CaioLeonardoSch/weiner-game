@@ -32,6 +32,8 @@ var _pausa := MenuPausa.new()
 var contador := Label.new()
 ## Ação disponível no botão F ("F: morder o mirante"), embaixo, no centro.
 var rotulo_acao := Label.new()
+## Mirante sendo usado (a câmera gira em volta dele, mostrando a fase da volta).
+var _mirante: Mirante
 
 
 func _ready() -> void:
@@ -118,6 +120,11 @@ func _preparar_objetivo() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _mirante:
+		if event.is_action_pressed("acao") or event.is_action_pressed("liberar_mouse"):
+			get_viewport().set_input_as_handled()
+			_sair_do_mirante()
+		return
 	if event.is_action_pressed("reiniciar"):
 		get_tree().reload_current_scene()
 	elif event.is_action_pressed("alternar_editor"):
@@ -212,14 +219,20 @@ func _tentar_largar_graveto() -> void:
 	cachorro.entrada_bloqueada = true
 	# Cai onde estava na boca, na mesma direção (atravessado ou ao comprido). Sem chão
 	# embaixo (beira de barranco, água), cai num ponto alcançável (ver _ponto_para_largar).
+	var ponte: Variant = _encaixe_de_ponte() if cachorro.graveto_ao_comprido else null
 	var yaw := graveto.global_basis.get_euler().y
 	var ponto: Variant = _chao_embaixo(graveto.global_position)
 	if ponto == null:
 		ponto = _ponto_para_largar()
 	cachorro.largar_graveto()
 	graveto.reparent(fase.objetos)
-	graveto.global_transform = Transform3D(Basis(Vector3.UP, yaw), ponto + Vector3.UP * 0.08)
-	graveto.soltar()
+	if ponte != null:
+		graveto.global_transform = ponte
+		graveto.virar_ponte()
+		mostrar_aviso("O graveto virou ponte!")
+	else:
+		graveto.global_transform = Transform3D(Basis(Vector3.UP, yaw), ponto + Vector3.UP * 0.08)
+		graveto.soltar()
 
 	fase.ativar(ObjetoFase.Visibilidade.SO_3D, false)
 	camera_controller.transicionar_para_iso()
@@ -230,6 +243,31 @@ func _tentar_largar_graveto() -> void:
 	await camera_controller.transicao_concluida
 	cachorro.entrada_bloqueada = false
 	_atualizar_dica()
+
+
+## Largado ao comprido com o meio sobre um vão de uma célula (água funda, buraco) e as duas
+## pontas apoiadas em chão da mesma altura, o graveto vira ponte. O encaixe alinha à grade
+## (eixo X ou Z, centro no meio do vão e da fileira) para não exigir mira. Devolve o transform
+## da ponte, ou null se ali não dá.
+func _encaixe_de_ponte() -> Variant:
+	var eixo := graveto.global_basis.z
+	eixo.y = 0.0
+	eixo = Vector3(signf(eixo.x), 0, 0) if absf(eixo.x) >= absf(eixo.z) else Vector3(0, 0, signf(eixo.z))
+	var centro := graveto.global_position
+	if _chao_embaixo(centro) != null:
+		return null
+	# Centro no meio da célula do vão, nos dois sentidos.
+	var celula := Vector3(floorf(centro.x) + 0.5, centro.y, floorf(centro.z) + 0.5)
+	centro = Vector3(celula.x, centro.y, celula.z)
+	var meio := graveto.comprimento * 0.5
+	if meio < 0.8:
+		return null
+	var ponta_a: Variant = _chao_embaixo(centro - eixo * (meio - 0.15))
+	var ponta_b: Variant = _chao_embaixo(centro + eixo * (meio - 0.15))
+	if ponta_a == null or ponta_b == null or absf((ponta_a as Vector3).y - (ponta_b as Vector3).y) > 0.15:
+		return null
+	var altura := maxf((ponta_a as Vector3).y, (ponta_b as Vector3).y) + 0.06
+	return Transform3D(Basis(Vector3.UP, atan2(eixo.x, eixo.z)), Vector3(centro.x, altura, centro.z))
 
 
 func _tentar_virar_graveto() -> void:
@@ -375,3 +413,43 @@ func _atualizar_rotulo_acao() -> void:
 		return
 	rotulo_acao.text = "%s: %s" % [Teclas.nome(&"acao"), alvo.acao_da_boca(cachorro)]
 	rotulo_acao.show()
+
+
+# --- Mirante -------------------------------------------------------------------------------
+
+## Morder o mirante: a câmera vai para o 3D em volta dele e mostra a fase como ela fica na
+## volta (só o visual). O cachorro fica parado.
+func entrar_no_mirante(mirante: Mirante) -> void:
+	if _mirante or concluida or camera_controller.estado != CameraController.Estado.ISOMETRICO:
+		return
+	_mirante = mirante
+	cachorro.entrada_bloqueada = true
+	camera_controller.ponto_de_vista = mirante.ponto_de_vista()
+	# Olhando para o graveto lendário (o caminho da fase), de um pouco mais alto.
+	var alvo := mirante.global_position + Vector3.RIGHT
+	for objeto in fase.todos(Graveto):
+		if (objeto as Graveto).lendario and not (objeto as Graveto).ja_pego:
+			alvo = objeto.global_position
+	var direcao := alvo - mirante.global_position
+	camera_controller.yaw_inicial_3d = rad_to_deg(atan2(-direcao.x, -direcao.z))
+	var pitch_normal := camera_controller.pitch_inicial_3d
+	camera_controller.pitch_inicial_3d = -28.0
+	camera_controller.braco.spring_length = 7.0
+	fase.previa_da_volta(true)
+	camera_controller.transicionar_para_3d()
+	await camera_controller.transicao_concluida
+	camera_controller.pitch_inicial_3d = pitch_normal
+	mostrar_aviso("Do mirante você vê a fase como ela fica na volta. Mouse: olhar    %s ou Esc: sair"
+		% Teclas.nome(&"acao"), 4.0)
+
+
+func _sair_do_mirante() -> void:
+	if _mirante == null or camera_controller.estado != CameraController.Estado.TERCEIRA_PESSOA:
+		return
+	camera_controller.transicionar_para_iso()
+	await camera_controller.transicao_concluida
+	camera_controller.ponto_de_vista = null
+	camera_controller.braco.spring_length = camera_controller.distancia_3d
+	fase.previa_da_volta(false)
+	_mirante = null
+	cachorro.entrada_bloqueada = false

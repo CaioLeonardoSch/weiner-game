@@ -38,8 +38,11 @@ static func nome_do_evento(evento: InputEvent) -> String:
 		var tecla := evento as InputEventKey
 		var codigo := tecla.keycode
 		if codigo == KEY_NONE and tecla.physical_keycode != KEY_NONE:
-			# Tecla física: mostra o que está impresso nela no teclado do jogador.
-			codigo = DisplayServer.keyboard_get_keycode_from_physical(tecla.physical_keycode)
+			# Tecla física: mostra o que está impresso nela no teclado do jogador (sem janela,
+			# como nos testes automáticos, fica o nome da posição no teclado americano).
+			codigo = tecla.physical_keycode
+			if DisplayServer.get_name() != "headless":
+				codigo = DisplayServer.keyboard_get_keycode_from_physical(codigo)
 		return _traduzir(OS.get_keycode_string(codigo))
 	if evento is InputEventMouseButton:
 		match (evento as InputEventMouseButton).button_index:

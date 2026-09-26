@@ -1,0 +1,58 @@
+# Fase 09 — O Passeio Completo: atravessa o riacho pela ponte (só da ida), empurra o bloco
+# para a placa vermelha (peso 3) e o portão abre; pega o graveto comprido, vira ao comprido e
+# larga sobre o riacho (vira ponte); passa o portão, pega o lendário e volta pela ponte de graveto.
+fase res://scenes/fases/fase_09.tscn
+esperar 20
+apertar mover_direita 103
+esperar 106
+apertar mover_tras 17
+esperar 20
+apertar mover_direita 65
+esperar 68
+apertar mover_frente 17
+esperar 20
+apertar mover_direita 38
+esperar 41
+apertar mover_frente 100
+esperar 110
+checar jogo.fase.canal_ativo(2)
+apertar mover_tras 60
+esperar 64
+apertar mover_direita 22
+esperar 25
+apertar mover_tras 12
+esperar 130
+checar jogo.cachorro.tem_graveto
+# Com o graveto na boca (3D): para oeste, ao norte até a linha z = -4,5, vira ao comprido.
+apertar mover_frente 25
+esperar 30
+apertar mover_direita 65
+esperar 69
+apertar mover_frente 16
+esperar 40
+apertar virar_graveto 2
+esperar 20
+checar jogo.cachorro.graveto_ao_comprido
+apertar mover_frente 25
+esperar 35
+apertar largar_graveto 2
+esperar 100
+checar not jogo.cachorro.tem_graveto
+# Isométrico: pelo vão do portão (z = -2,5) até o lendário.
+apertar mover_tras 34
+esperar 38
+apertar mover_direita 195
+esperar 199
+apertar mover_frente 12
+esperar 130
+checar jogo.cachorro.tem_graveto and jogo.cachorro.graveto.lendario
+# Volta (3D): passa o portão, alinha com a ponte de graveto e segue até o dono.
+apertar mover_esquerda 8
+esperar 20
+apertar mover_frente 150
+esperar 154
+apertar mover_direita 38
+esperar 42
+apertar mover_frente 340
+esperar 360
+checar jogo.concluida

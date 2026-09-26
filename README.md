@@ -139,6 +139,20 @@ o portão fecha — com o cachorro do lado de dentro. Qualquer placa da mesma co
 antes, é preciso levar um **graveto comum** (pesado como o lendário) para a outra placa azul,
 lá fora. O cachorro sozinho (peso 1) não basta.
 
+## Fase 08 — "A Ponte de Graveto"
+
+A ponte da ida é "só isométrica": na volta, em 3D, ela some. Antes de atravessar, o **mirante**
+(um graveto fincado num toco, com fita vermelha) mostra isso: **F** morde e a câmera mostra a
+fase como ela fica na volta; F (ou Esc) solta. Do outro lado há um **graveto comum comprido**:
+virado ao comprido (**Q**) e largado sobre o riacho, ele **vira ponte**. Aí é buscar o lendário
+e voltar pela ponte de graveto.
+
+## Fase 09 — "O Passeio Completo"
+
+Junta tudo: mirante, ponte só da ida, uma **placa vermelha que pede peso 3** (os pontinhos no
+tampo dizem quanto — só o bloco de pedra basta) segurando o portão vermelho, e o graveto
+comprido que vira a ponte da volta.
+
 ## Gravetos, placas e portões
 
 - **Graveto lendário × comum:** o dono só aceita o **lendário** (dourado, com brilho). Os
@@ -150,9 +164,15 @@ lá fora. O cachorro sozinho (peso 1) não basta.
   placas da mesma cor: basta uma acionada. O portão nunca fecha em cima de alguém.
 - **Pesos:** salsicha 1 (border collie 1,5; pug 1,8), cachorro com graveto = raça + graveto,
   graveto largado = o peso dele, bloco de pedra 3, ovelha 1,5, passarinho 0,3.
+- **Pontinhos na placa:** cada pontinho no tampo é uma unidade de peso que ela pede.
+- **Graveto-ponte:** um graveto de 1,6 m ou mais, largado **ao comprido** sobre um vão de uma
+  célula (riacho, buraco) com chão dos dois lados, encaixa na grade e vira uma pinguela (com o
+  equilíbrio da Tábua). Para pegar de volta, chegue por uma das pontas e aperte F.
+- **Mirante:** F morde e mostra a fase como fica na volta (sem ligar nem desligar nada); o
+  cachorro fica parado até soltar (F ou Esc).
 - **Botão de ação (F):** objetos que respondem ao F mostram a ação embaixo da tela
   ("F: ..."). Segurar F + andar para trás continua puxando o bloco.
-- **No editor:** Placa e Portão ficam em *Mecanismos*; linhas tracejadas na cor do canal ligam as
+- **No editor:** Placa, Portão e Mirante ficam em *Mecanismos*; linhas tracejadas na cor do canal ligam as
   placas aos portões, e a validação avisa placa sem portão (e vice-versa).
 
 ## Raças e pelagens

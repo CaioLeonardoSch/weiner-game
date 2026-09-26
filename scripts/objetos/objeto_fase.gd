@@ -53,6 +53,11 @@ func executar_acao(_cachorro: Dachshund) -> void:
 	pass
 
 
+## Onde o cachorro precisa estar perto para a ação (padrão: a origem do objeto).
+func ponto_da_acao(_cachorro: Dachshund) -> Vector3:
+	return global_position
+
+
 ## Quanto este objeto pesa sobre uma placa de pressão (0 = não conta). Objetos com peso entram
 ## no grupo "pesos" (ver Placa).
 func peso_na_placa() -> float:

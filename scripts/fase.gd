@@ -114,6 +114,16 @@ func ativar(visibilidade: ObjetoFase.Visibilidade, ativo: bool) -> void:
 			objeto.definir_ativo(ativo)
 
 
+## Só o visual da volta (mirante): esconde o que é "só isométrico" e mostra o "só 3D", sem
+## mexer na física (o cachorro fica parado olhando). `false` volta ao visual da ida.
+func previa_da_volta(ligada: bool) -> void:
+	for objeto in lista_objetos():
+		if objeto.visibilidade == ObjetoFase.Visibilidade.SO_ISO:
+			objeto.visible = not ligada
+		elif objeto.visibilidade == ObjetoFase.Visibilidade.SO_3D:
+			objeto.visible = ligada
+
+
 ## Estado da visão isométrica: tampas e afins presentes, coisas "só 3D" escondidas.
 func preparar_isometrica() -> void:
 	ativar(ObjetoFase.Visibilidade.SO_ISO, true)
@@ -131,12 +141,22 @@ func passagem_estreita_em(posicao: Vector3) -> Dictionary:
 	var celula := terreno.local_to_map(terreno.to_local(posicao))
 	var id := terreno.get_cell_item(celula)
 	if not Tiles.eh_estreita(id):
-		return {}
+		return passagem_estreita_de_objeto(posicao)
 	var lado := terreno.global_basis * terreno.get_cell_item_basis(celula).z
 	lado.y = 0.0
 	lado = lado.normalized()
 	var centro := terreno.to_global(terreno.map_to_local(celula))
 	return {desvio = (posicao - centro).dot(lado), lado = lado, meia_largura = Tiles.meia_largura(id)}
+
+
+## Passagem estreita feita por um objeto (graveto que virou ponte), no mesmo formato de
+## `passagem_estreita_em`.
+func passagem_estreita_de_objeto(posicao: Vector3) -> Dictionary:
+	for no in get_tree().get_nodes_in_group(&"pontes_graveto"):
+		var dados: Dictionary = (no as Graveto).passagem_em(posicao)
+		if not dados.is_empty():
+			return dados
+	return {}
 
 
 ## A posição está dentro de um tile de água, abaixo da superfície?

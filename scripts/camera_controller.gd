@@ -45,6 +45,8 @@ enum Estado { ISOMETRICO, TRANSICAO, TERCEIRA_PESSOA }
 @export var pitch_max := 15.0
 
 var alvo: CharacterBody3D
+## Enquanto não for nulo, a câmera gira em volta dele em vez do cachorro (mirante).
+var ponto_de_vista: Node3D
 var estado := Estado.ISOMETRICO
 ## 0 = câmera isométrica, 1 = terceira pessoa. Animado pelo tween da transição.
 var mistura := 0.0
@@ -139,12 +141,13 @@ func _physics_process(delta: float) -> void:
 		var analogico := Input.get_vector("camera_esquerda", "camera_direita", "camera_cima", "camera_baixo")
 		_girar(-analogico.x * velocidade_analogico * delta, -analogico.y * velocidade_analogico * delta)
 
-	braco.global_position = alvo.global_position + Vector3.UP * altura_pivo_3d
+	var seguido: Node3D = ponto_de_vista if ponto_de_vista else alvo
+	braco.global_position = seguido.global_position + Vector3.UP * altura_pivo_3d
 	braco.rotation = Vector3(_pitch, _yaw, 0.0)
 
 	match estado:
 		Estado.ISOMETRICO:
-			_foco_iso = _foco_iso.lerp(alvo.global_position, 1.0 - exp(-suavizacao_iso * delta))
+			_foco_iso = _foco_iso.lerp(seguido.global_position, 1.0 - exp(-suavizacao_iso * delta))
 			camera.global_transform = _alinhar_ao_pixel(_transform_iso())
 		Estado.TRANSICAO:
 			# Orbita em volta do cachorro interpolando ângulos e distância separadamente
