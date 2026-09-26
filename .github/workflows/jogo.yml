@@ -1,0 +1,101 @@
+# Testes das fases (sempre) e exportação do jogo (na main, em tags v* ou manual).
+# Uma tag como "v0.1" cria uma Release no GitHub com os .zip para Windows, Linux e macOS.
+name: Jogo
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  GODOT_VERSAO: "4.7.1"
+  GODOT: ${{ github.workspace }}/.godot-bin/godot
+
+jobs:
+  testes:
+    name: Testes das fases
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache do Godot
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: .godot-bin
+          key: godot-${{ env.GODOT_VERSAO }}-linux
+
+      - name: Baixar o Godot
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .godot-bin
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSAO}-stable/Godot_v${GODOT_VERSAO}-stable_linux.x86_64.zip"
+          unzip -q godot.zip -d .godot-bin
+          mv .godot-bin/Godot_v${GODOT_VERSAO}-stable_linux.x86_64 .godot-bin/godot
+          rm godot.zip
+
+      - name: Jogar todas as fases
+        run: ferramentas/testar_fases.sh
+
+  exportar:
+    name: Exportar (Windows, Linux, macOS)
+    needs: testes
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache do Godot e dos templates
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: |
+            .godot-bin
+            ~/.local/share/godot/export_templates
+          key: godot-${{ env.GODOT_VERSAO }}-linux-templates
+
+      - name: Baixar o Godot e os templates de exportação
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p .godot-bin
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSAO}-stable/Godot_v${GODOT_VERSAO}-stable_linux.x86_64.zip"
+          unzip -q godot.zip -d .godot-bin
+          mv .godot-bin/Godot_v${GODOT_VERSAO}-stable_linux.x86_64 .godot-bin/godot
+          rm godot.zip
+          curl -sSL -o templates.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSAO}-stable/Godot_v${GODOT_VERSAO}-stable_export_templates.tpz"
+          destino=~/.local/share/godot/export_templates/${GODOT_VERSAO}.stable
+          mkdir -p "$destino"
+          unzip -q -j templates.tpz templates/version.txt templates/linux_release.x86_64 \
+            templates/windows_release_x86_64.exe templates/macos.zip -d "$destino"
+          rm templates.tpz
+
+      - name: Exportar
+        run: ferramentas/exportar.sh
+
+      - name: Teste de fumaça do executável Linux
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb mesa-vulkan-drivers > /dev/null
+          mkdir -p fumaca && unzip -q build/WeinerGame-*-linux.zip -d fumaca
+          xvfb-run -a -s "-screen 0 1280x720x24" fumaca/WeinerGame.x86_64 -- --fumaca="$PWD/fumaca" | tee fumaca/saida.txt
+          grep -q "FUMACA ok" fumaca/saida.txt
+
+      - name: Guardar os executáveis
+        uses: actions/upload-artifact@v4
+        with:
+          name: WeinerGame
+          path: |
+            build/*.zip
+            fumaca/*.png
+
+      - name: Criar a Release (tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/*.zip
+          generate_release_notes: true

@@ -29,6 +29,9 @@ func _ready() -> void:
 	var lista := listar()
 	if not lista.is_empty():
 		caminho_atual = lista[0]
+	for argumento in OS.get_cmdline_user_args():
+		if argumento.begins_with("--fumaca="):
+			_teste_de_fumaca.call_deferred(argumento.get_slice("=", 1))
 
 
 ## Todas as fases (projeto + usuário), em ordem de nome de arquivo.
@@ -149,3 +152,34 @@ func abrir_editor() -> void:
 	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().change_scene_to_file(CENA_EDITOR)
+
+
+## Teste de fumaça do jogo exportado (`WeinerGame -- --fumaca=<pasta>`): abre o menu, joga a
+## primeira fase, salva duas fotos na pasta e confere o básico (fases e raças encontradas,
+## modelos voxel em texto carregados — eles precisam do filtro *.txt na exportação).
+## Sai com código 0 se deu tudo certo. Usado pela CI.
+func _teste_de_fumaca(pasta: String) -> void:
+	var problemas: PackedStringArray = []
+	await _esperar_quadros(60)
+	get_viewport().get_texture().get_image().save_png(pasta.path_join("fumaca_menu.png"))
+	var lista := listar()
+	if lista.size() < 5:
+		problemas.append("só %d fases encontradas" % lista.size())
+	if Racas.todas().size() < 3:
+		problemas.append("só %d raças encontradas" % Racas.todas().size())
+	if not lista.is_empty():
+		jogar(lista[0])
+		await _esperar_quadros(90)
+		get_viewport().get_texture().get_image().save_png(pasta.path_join("fumaca_fase.png"))
+		var jogo := get_tree().current_scene
+		var dono: Node = jogo.get("dono") if jogo else null
+		var malha: Mesh = dono.get_node("Modelo").mesh if dono else null
+		if malha == null or malha.get_surface_count() == 0:
+			problemas.append("o modelo voxel do dono não carregou (faltou *.txt na exportação?)")
+	print("FUMACA ", "ok" if problemas.is_empty() else "falhou: " + "; ".join(problemas))
+	get_tree().quit(0 if problemas.is_empty() else 1)
+
+
+func _esperar_quadros(quantos: int) -> void:
+	for i in quantos:
+		await get_tree().process_frame

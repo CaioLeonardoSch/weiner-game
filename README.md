@@ -52,6 +52,37 @@ tem altura fixa, então a tela larga mostra mais mundo dos lados — e a interfa
 "fim do mundo", o jogo gera em volta de cada fase um **entorno** de grama e floresta
 (`scripts/entorno.gd`, árvores em MultiMesh), que não é salvo na fase.
 
+## Exportar e compartilhar
+
+O jogo exporta para **Windows** (`WeinerGame.exe`, um arquivo só), **Linux** e **macOS**
+(presets em `export_presets.cfg`):
+
+- **Pelo editor do Godot:** Projeto → Exportar → escolha a plataforma → *Exportar Projeto*. Na
+  primeira vez o Godot pede os *templates de exportação* (Editor → Gerenciar Templates de
+  Exportação → Baixar, ~1,3 GB).
+- **Pela linha de comando:** `ferramentas/exportar.sh` (ou `ferramentas/exportar.sh Windows`)
+  gera `build/WeinerGame-<versão>-<plataforma>.zip`. A versão vem de `config/version` no
+  `project.godot`.
+- **Pelo GitHub (CI):** o workflow `.github/workflows/jogo.yml` joga todas as fases a cada push e,
+  na `main`, exporta as três plataformas (os `.zip` ficam nos artefatos da execução, em *Actions*).
+  Criando uma **tag** `v0.1`, `v0.2`... ele também publica uma **Release** com os `.zip` — é só
+  mandar o link para os amigos (se o repositório for privado, mande o `.zip`).
+
+Para os amigos: no Windows, o SmartScreen avisa que o programa não é assinado ("Mais
+informações → Executar assim mesmo"); no macOS, abra com clique direito → Abrir. O progresso e
+as opções ficam em `%APPDATA%\WeinerGame` (Windows) ou `~/.local/share/WeinerGame` (Linux).
+O jogo exportado precisa de placa de vídeo com Vulkan ou Direct3D 12.
+
+**Teste de fumaça:** `WeinerGame -- --fumaca=<pasta>` abre o menu, joga a primeira fase, salva
+duas fotos e diz `FUMACA ok` (a CI usa isso para testar o próprio executável).
+
+## Testes das fases
+
+`ferramentas/testar_fases.sh` joga cada fase com as entradas de `ferramentas/testes/rotas/*.txt`
+(sem janela, em segundos) e confere que ela termina. Ao mudar uma fase, rode de novo; se o
+caminho mudou, ajuste a rota (o formato está no topo de `ferramentas/testes/roteiro.gd`).
+Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
+
 ## Fase 01 — "O Primeiro Graveto"
 
 Ida em visão isométrica: a trilha é estreita, cercada por mato e floresta. O mato bloqueia o
