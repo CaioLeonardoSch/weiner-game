@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://shaders/agua.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/cor_rasa = Color(0.45, 0.74, 0.88, 1)
+shader_parameter/cor_funda = Color(0.3, 0.6, 0.8, 1)
