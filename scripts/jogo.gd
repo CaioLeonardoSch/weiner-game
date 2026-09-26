@@ -122,9 +122,14 @@ func _on_graveto_pego(quem: Dachshund) -> void:
 	quem.entrada_bloqueada = false
 	_atualizar_dica()
 	var texto := "Nova perspectiva!"
-	if graveto.comprimento >= 1.1 or graveto.peso >= 1.6:
-		texto += "\nGraveto %s (%.1f m) — Q vira ao comprido" % [
-			"grande e pesado" if graveto.peso >= 1.6 else "grande", graveto.comprimento]
+	var grande := graveto.comprimento >= 1.1
+	var pesado := graveto.peso >= 1.6
+	if grande and pesado:
+		texto += "\nGraveto grande e pesado (%.1f m) — Q vira ao comprido" % graveto.comprimento
+	elif grande:
+		texto += "\nGraveto grande (%.1f m) — Q vira ao comprido" % graveto.comprimento
+	elif pesado:
+		texto += "\nGraveto pesado — mais devagar, mas firme na correnteza"
 	_mostrar_aviso(texto)
 	# Caso tenha largado e pegado o graveto de novo já do lado do dono.
 	if dono.contem(cachorro):
@@ -202,6 +207,8 @@ func _atualizar_dica() -> void:
 		partes.append("C: cavar")
 	if cachorro.pode_latir and not cachorro.tem_graveto:
 		partes.append("B: latir")
+	if not cachorro.tem_graveto and fase and not fase.todos(Empurravel).is_empty():
+		partes.append("F + trás: puxar bloco")
 	if em_3d:
 		partes.append_array(["Q: virar graveto", "Shift: devagar", "E: largar"])
 	partes.append_array(["R: reiniciar", "F1: editor"])

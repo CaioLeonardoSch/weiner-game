@@ -44,7 +44,14 @@ func _desenhar_cursor() -> void:
 		return
 	match editor.modo:
 		EditorFase.Modo.TERRENO:
-			if editor.acao_do_cursor() == "apagar":
+			var retangulo = editor.retangulo_em_andamento()
+			if retangulo != null:
+				var cor := COR_APAGAR if editor.acao_do_cursor() == "apagar" else \
+					(COR_PINTAR if editor.acao_do_cursor() == "pintar" else COR_COLOCAR)
+				_caixa(retangulo, Transform3D.IDENTITY, cor, 2.0)
+				var tamanho: Vector3 = retangulo.size
+				_texto(retangulo.get_center() + Vector3.UP, "%d × %d" % [tamanho.x, tamanho.z], cor)
+			elif editor.acao_do_cursor() == "apagar":
 				if editor.atingiu_bloco:
 					_caixa(AABB(Vector3(editor.celula_atingida), Vector3.ONE), Transform3D.IDENTITY, COR_APAGAR, 2.0)
 			elif editor.acao_do_cursor() == "pintar":

@@ -20,9 +20,20 @@ const MATO_BAIXO := 7
 const AGUA := 8
 const TABUA := 9
 const TERRA_FOFA := 10
+const AGUA_RASA := 11
+const CORRENTEZA := 12
+const ESCADA_BAIXA := 13
+const ESCADA_ALTA := 14
+const CANTO_RAMPA_BAIXA := 15
+const CANTO_RAMPA_ALTA := 16
+const CANTO_INTERNO_BAIXA := 17
+const CANTO_INTERNO_ALTA := 18
 
 ## Altura (no espaço do tile, de -0.5 a 0.5) da superfície da água.
 const SUPERFICIE_AGUA := 0.35
+## Água rasa: o leito (colisão) é o topo do bloco, rente ao chão em volta, e a água fica
+## um pouco acima, cobrindo as patas.
+const SUPERFICIE_AGUA_RASA := 0.58
 
 # Perfis: polígono convexo no plano XY (anti-horário), dentro de [-0.5, 0.5],
 # extrudado ao longo de Z. As rampas sobem no sentido +X (gire no editor com Q/E).
@@ -31,16 +42,29 @@ const _MEIO := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.0), Vect
 const _RAMPA_BAIXA := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.0)]
 const _RAMPA_ALTA := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.0)]
 const _AGUA := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, SUPERFICIE_AGUA), Vector2(-0.5, SUPERFICIE_AGUA)]
+const _AGUA_RASA := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, SUPERFICIE_AGUA_RASA), Vector2(-0.5, SUPERFICIE_AGUA_RASA)]
+# Escadas: dois degraus de 0,25 m em cada célula, seguindo as rampas (a colisão é a rampa,
+# então o cachorro sobe sem pular).
+const _ESCADA_BAIXA := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, -0.125), Vector2(0.0, -0.125),
+	Vector2(0.0, -0.375), Vector2(-0.5, -0.375)]
+const _ESCADA_ALTA := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.375), Vector2(0.0, 0.375),
+	Vector2(0.0, 0.125), Vector2(-0.5, 0.125)]
 # Tábua estreita rente ao chão da célula (o topo fica na altura do chão vizinho), para
 # atravessar água ou buracos. Largura em Z: 0,36 m.
 const _TABUA := [Vector2(-0.5, -0.58), Vector2(0.5, -0.58), Vector2(0.5, -0.5), Vector2(-0.5, -0.5)]
 
 
-## Cada tile: nome (editor), perfil, material (assets/materiais/<nome>.tres), colisão
+## Cada tile: nome (editor), perfil (ou `forma`), material (assets/materiais/<nome>.tres), colisão
 ## ("perfil" = o próprio formato, "nenhuma"), z (profundidade da extrusão) e cor no editor.
 ## `agua`: o cachorro que cai dentro volta para o último ponto seguro.
 ## `estreita`: passagem estreita — com graveto grande e pesado, o cachorro se desequilibra.
 ## `cavavel`: o cachorro (com a habilidade Cavar) desfaz o bloco cavando.
+## `rasa`: água rasa, dá para atravessar a pé; `lentidao` multiplica a velocidade e
+## `correnteza` (m/s) arrasta o cachorro no sentido +X do tile (gire no editor com Q/E).
+## Colisão: "perfil" (o formato), "bloco" (cubo cheio) ou "nenhuma"; `colisao_perfil` usa
+## outro perfil para a colisão (escadas colidem como rampa).
+## Cantos de rampa (`forma` "canto_externo"/"canto_interno", `base` = altura de onde a rampa
+## sai): juntam duas rampas em L. A rampa sobe para +X e +Z (gire com Q/E no editor).
 static func definicoes() -> Array[Dictionary]:
 	return [
 		{id = GRAMA, nome = "Grama", perfil = _BLOCO, material = "grama", cor = Color("5da03a")},
@@ -54,6 +78,14 @@ static func definicoes() -> Array[Dictionary]:
 		{id = AGUA, nome = "Água", perfil = _AGUA, material = "agua", colisao = "nenhuma", agua = true, cor = Color("3d8ccf")},
 		{id = TABUA, nome = "Tábua", perfil = _TABUA, material = "madeira", z = 0.18, estreita = true, cor = Color("a8773f")},
 		{id = TERRA_FOFA, nome = "Terra fofa", perfil = _BLOCO, material = "terra_fofa", cavavel = true, cor = Color("a87b4f")},
+		{id = AGUA_RASA, nome = "Água rasa", perfil = _AGUA_RASA, material = "agua_rasa", colisao = "bloco", rasa = true, lentidao = 0.6, cor = Color("6fb6e0")},
+		{id = CORRENTEZA, nome = "Correnteza", perfil = _AGUA_RASA, material = "agua_correnteza", colisao = "bloco", rasa = true, lentidao = 0.7, correnteza = 2.2, cor = Color("4f9fd6")},
+		{id = ESCADA_BAIXA, nome = "Escada baixa", perfil = _ESCADA_BAIXA, colisao_perfil = _RAMPA_BAIXA, material = "pedra", cor = Color("9aa0a8")},
+		{id = ESCADA_ALTA, nome = "Escada alta", perfil = _ESCADA_ALTA, colisao_perfil = _RAMPA_ALTA, material = "pedra", cor = Color("8a9098")},
+		{id = CANTO_RAMPA_BAIXA, nome = "Canto de rampa baixa", forma = "canto_externo", base = -0.5, material = "grama", cor = Color("86c460")},
+		{id = CANTO_RAMPA_ALTA, nome = "Canto de rampa alta", forma = "canto_externo", base = 0.0, material = "grama", cor = Color("74b350")},
+		{id = CANTO_INTERNO_BAIXA, nome = "Canto interno baixa", forma = "canto_interno", base = -0.5, material = "grama", cor = Color("8fcf66")},
+		{id = CANTO_INTERNO_ALTA, nome = "Canto interno alta", forma = "canto_interno", base = 0.0, material = "grama", cor = Color("7dbd57")},
 	]
 
 
@@ -85,18 +117,106 @@ static func meia_largura(id: int) -> float:
 static func construir_biblioteca() -> MeshLibrary:
 	var biblioteca := MeshLibrary.new()
 	for d in definicoes():
-		var perfil := PackedVector2Array(d.perfil)
-		var z: float = d.get("z", 0.5)
-		var malha := malha_prisma(perfil, z)
+		var malha: ArrayMesh
+		var formas := []
+		match d.get("forma", "prisma"):
+			"canto_externo", "canto_interno":
+				var interno: bool = d.forma == "canto_interno"
+				malha = malha_canto(d.base, interno)
+				formas = _formas_canto(d.base, interno)
+			_:
+				malha = malha_prisma(PackedVector2Array(d.perfil), d.get("z", 0.5))
+				match d.get("colisao", "perfil"):
+					"perfil":
+						var perfil_colisao := PackedVector2Array(d.get("colisao_perfil", d.perfil))
+						formas = [_forma_convexa(malha_prisma(perfil_colisao, d.get("z", 0.5))), Transform3D.IDENTITY]
+					"bloco":
+						var caixa := BoxShape3D.new()
+						caixa.size = Vector3.ONE
+						formas = [caixa, Transform3D.IDENTITY]
 		malha.surface_set_material(0, load("res://assets/materiais/%s.tres" % d.material))
 		biblioteca.create_item(d.id)
 		biblioteca.set_item_name(d.id, d.nome)
 		biblioteca.set_item_mesh(d.id, malha)
-		if d.get("colisao", "perfil") == "perfil":
-			var forma := ConvexPolygonShape3D.new()
-			forma.points = malha.get_faces()
-			biblioteca.set_item_shapes(d.id, [forma, Transform3D.IDENTITY])
+		if not formas.is_empty():
+			biblioteca.set_item_shapes(d.id, formas)
 	return biblioteca
+
+
+static func _forma_convexa(malha: ArrayMesh) -> ConvexPolygonShape3D:
+	var forma := ConvexPolygonShape3D.new()
+	forma.points = malha.get_faces()
+	return forma
+
+
+## Canto de rampa: a superfície é o menor (canto externo) ou o maior (canto interno) entre
+## uma rampa que sobe em +X e outra que sobe em +Z, saindo da altura `base` e subindo 0,5 m.
+static func malha_canto(base: float, interno: bool) -> ArrayMesh:
+	var altura := func(x: float, z: float) -> float:
+		var u := x + 0.5
+		var v := z + 0.5
+		return base + 0.5 * (maxf(u, v) if interno else minf(u, v))
+	var cantos := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.5)]
+	var triangulos: Array[Vector3] = []
+	var topo := func(c: Vector2) -> Vector3: return Vector3(c.x, altura.call(c.x, c.y), c.y)
+	var chao := func(c: Vector2) -> Vector3: return Vector3(c.x, -0.5, c.y)
+	# Topo: duas faces planas, divididas na diagonal do canto baixo ao canto alto.
+	triangulos.append_array([topo.call(cantos[0]), topo.call(cantos[1]), topo.call(cantos[2])])
+	triangulos.append_array([topo.call(cantos[0]), topo.call(cantos[2]), topo.call(cantos[3])])
+	# Fundo e laterais.
+	triangulos.append_array([chao.call(cantos[0]), chao.call(cantos[1]), chao.call(cantos[2])])
+	triangulos.append_array([chao.call(cantos[0]), chao.call(cantos[2]), chao.call(cantos[3])])
+	for i in 4:
+		var a: Vector2 = cantos[i]
+		var b: Vector2 = cantos[(i + 1) % 4]
+		triangulos.append_array([chao.call(a), chao.call(b), topo.call(b)])
+		triangulos.append_array([chao.call(a), topo.call(b), topo.call(a)])
+	return malha_triangulos(triangulos, Vector3(0.0, -0.45, 0.0), altura)
+
+
+## Colisão dos cantos: o externo é convexo (uma forma); o interno é a união das duas rampas.
+static func _formas_canto(base: float, interno: bool) -> Array:
+	if not interno:
+		return [_forma_convexa(malha_canto(base, false)), Transform3D.IDENTITY]
+	var perfil := PackedVector2Array(_RAMPA_BAIXA if base < 0.0 else _RAMPA_ALTA)
+	var rampa := _forma_convexa(malha_prisma(perfil, 0.5))
+	# A mesma rampa girada para subir em +Z.
+	return [rampa, Transform3D.IDENTITY, rampa, Transform3D(Basis(Vector3.UP, -PI * 0.5), Vector3.ZERO)]
+
+
+## Malha a partir de uma lista de triângulos (3 vértices cada). A face da frente fica virada
+## para longe de `ponto_interno`; `altura(x, z)` dá o topo para a franja de grama (UV.y).
+static func malha_triangulos(triangulos: Array[Vector3], ponto_interno: Vector3, altura: Callable) -> ArrayMesh:
+	var vertices := PackedVector3Array()
+	var normais := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	for i in range(0, triangulos.size(), 3):
+		var a := triangulos[i]
+		var b := triangulos[i + 1]
+		var c := triangulos[i + 2]
+		var normal := (b - a).cross(c - a)
+		if normal.length_squared() < 0.000001:
+			continue  # degenerado (lateral de altura zero)
+		normal = normal.normalized()
+		if normal.dot((a + b + c) / 3.0 - ponto_interno) < 0.0:
+			normal = -normal
+		# Godot desenha a face da frente com os vértices em sentido horário.
+		if (b - a).cross(c - a).dot(normal) > 0.0:
+			var troca := b
+			b = c
+			c = troca
+		for v: Vector3 in [a, b, c]:
+			vertices.append(v)
+			normais.append(normal)
+			uvs.append(Vector2(0.0, altura.call(v.x, v.z) - v.y))
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normais
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	var malha := ArrayMesh.new()
+	malha.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return malha
 
 
 ## Prisma: `perfil` (XY) extrudado de -z a +z. Normais chapadas.
@@ -133,15 +253,15 @@ static func malha_prisma(perfil: PackedVector2Array, z: float) -> ArrayMesh:
 		adicionar_tri.call(a0, b0, b1, normal)
 		adicionar_tri.call(a0, b1, a1, normal)
 
-	# Tampas da frente e de trás (leque, o perfil é convexo).
+	# Tampas da frente e de trás (triangulação serve também para perfis côncavos, como escadas).
+	var indices := Geometry2D.triangulate_polygon(perfil)
 	for lado: float in [-1.0, 1.0]:
 		var normal := Vector3(0.0, 0.0, lado)
-		for i in range(1, perfil.size() - 1):
-			adicionar_tri.call(
-				Vector3(perfil[0].x, perfil[0].y, z * lado),
-				Vector3(perfil[i].x, perfil[i].y, z * lado),
-				Vector3(perfil[i + 1].x, perfil[i + 1].y, z * lado),
-				normal)
+		for i in range(0, indices.size(), 3):
+			var a := perfil[indices[i]]
+			var b := perfil[indices[i + 1]]
+			var c := perfil[indices[i + 2]]
+			adicionar_tri.call(Vector3(a.x, a.y, z * lado), Vector3(b.x, b.y, z * lado), Vector3(c.x, c.y, z * lado), normal)
 
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
