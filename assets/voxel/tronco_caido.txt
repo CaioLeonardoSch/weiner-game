@@ -1,0 +1,24 @@
+# Tronco caído — 16 x 3 x 4 voxels (2 x 0,375 x 0,5 m), deitado ao longo de X.
+voxel 0.125
+cor c 6b4428   # casca
+cor d 5b3920   # casca escura
+cor a c9a36a   # anel (ponta cortada)
+cor m 5f8f3e   # musgo
+
+camada 0
+................
+acdcdcccdcdccdca
+adcdccdcdcccdcda
+................
+
+camada 1
+acdccdcdccdcdcca
+adcdcdccdcdcdcda
+acdcdccdcdcccdca
+adccdcdcdcdcdcda
+
+camada 2
+................
+acmcdcmmcdcdcmca
+admmcdcdcmcdccda
+................

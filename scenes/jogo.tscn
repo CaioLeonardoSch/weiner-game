@@ -1,0 +1,65 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/jogo.gd" id="1_jogo"]
+[ext_resource type="PackedScene" path="res://scenes/ambiente.tscn" id="2_ambiente"]
+[ext_resource type="PackedScene" path="res://scenes/dachshund.tscn" id="3_dachshund"]
+[ext_resource type="Script" path="res://scripts/camera_controller.gd" id="4_camera"]
+[ext_resource type="PackedScene" path="res://scenes/contorno_pixel.tscn" id="5_contorno"]
+
+[sub_resource type="SphereShape3D" id="Forma_braco"]
+radius = 0.2
+
+[node name="Jogo" type="Node3D"]
+script = ExtResource("1_jogo")
+
+[node name="Ambiente" parent="." instance=ExtResource("2_ambiente")]
+
+[node name="Dachshund" parent="." instance=ExtResource("3_dachshund")]
+
+[node name="CameraController" type="Node3D" parent="."]
+script = ExtResource("4_camera")
+
+[node name="BracoCamera" type="SpringArm3D" parent="CameraController"]
+collision_mask = 1
+shape = SubResource("Forma_braco")
+spring_length = 4.0
+margin = 0.1
+
+[node name="Camera3D" type="Camera3D" parent="CameraController"]
+current = true
+
+[node name="ContornoPixel" parent="CameraController/Camera3D" instance=ExtResource("5_contorno")]
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Dica" type="Label" parent="HUD"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 1136.0
+offset_bottom = 40.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 18
+text = "Dica"
+
+[node name="Aviso" type="Label" parent="HUD"]
+anchor_right = 1.0
+offset_top = 90.0
+offset_bottom = 150.0
+theme_override_colors/font_color = Color(1, 0.92, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 10
+theme_override_font_sizes/font_size = 40
+text = "Nova perspectiva!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Mensagem" type="Label" parent="HUD"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 52
+text = "Fase concluída!"
+horizontal_alignment = 1
+vertical_alignment = 1
