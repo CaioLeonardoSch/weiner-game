@@ -5,8 +5,9 @@ extends Node3D
 ##
 ## Para criar um objeto novo: faça uma cena em scenes/objetos/ cuja raiz use um script
 ## que estende ObjetoFase. Ele aparece sozinho na paleta do editor (F1).
-## Sobrescreva `nome_no_editor()`, `categoria_no_editor()` e, para expor parâmetros no
-## painel do editor, `propriedades_editaveis()` (nomes de variáveis @export).
+## Sobrescreva `nome_no_editor()`, `categoria_no_editor()`, `ao_colocar_no_editor()` (para
+## sortear variações) e, para expor parâmetros no painel do editor, `propriedades_editaveis()`
+## (nomes de variáveis @export).
 ##
 ## A `visibilidade` liga o objeto à mecânica central do jogo, a mudança de perspectiva:
 ## um objeto "só isométrico" some (e perde a colisão) quando o cachorro pega o graveto;
@@ -28,6 +29,12 @@ func categoria_no_editor() -> String:
 ## Variáveis (além de visibilidade, giro e escala) que o painel do editor mostra.
 func propriedades_editaveis() -> Array[StringName]:
 	return []
+
+
+## Chamado pelo editor ao preparar um objeto para colocar: sorteie variações aqui
+## (variante, giro, escala) para cada árvore ou pedra sair diferente.
+func ao_colocar_no_editor(_rng: RandomNumberGenerator) -> void:
+	pass
 
 
 ## Objetos que são só volume (zonas, paredes invisíveis) usam 0: o editor só os seleciona

@@ -1,3 +1,4 @@
+@tool
 class_name Tiles
 ## Tiles do terreno (itens do GridMap "Terreno" de cada fase).
 ##

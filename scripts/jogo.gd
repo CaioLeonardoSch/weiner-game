@@ -30,7 +30,6 @@ func _ready() -> void:
 	aviso.hide()
 	mensagem.hide()
 	dica.text = DICA_ISO
-	camera_controller.configurar(cachorro)
 	cachorro.camera_referencia = camera_controller.camera
 
 	var cena := Fases.cena_atual()
@@ -169,6 +168,7 @@ func _concluir() -> void:
 
 
 func _mostrar_erro(texto: String) -> void:
+	camera_controller.configurar(cachorro)
 	concluida = true
 	cachorro.entrada_bloqueada = true
 	cachorro.process_mode = Node.PROCESS_MODE_DISABLED

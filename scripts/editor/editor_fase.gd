@@ -88,6 +88,7 @@ func _ready() -> void:
 	campo_nome.focus_exited.connect(_renomear_fase)
 	%BotaoNova.pressed.connect(_confirmar_se_modificado.bind(_nova_fase))
 	%BotaoSalvar.pressed.connect(_salvar)
+	%BotaoSalvarComo.pressed.connect(_salvar_como)
 	%BotaoTestar.pressed.connect(_testar)
 	%BotaoAjuda.pressed.connect(func() -> void: ajuda.visible = not ajuda.visible)
 	botao_visao.pressed.connect(_proxima_visao)
@@ -226,7 +227,17 @@ func _empacotar() -> PackedScene:
 	return cena
 
 
+## Salva por cima do arquivo da fase. Fase nova (ou só de leitura, no jogo exportado): "Salvar como".
 func _salvar() -> void:
+	if caminho.is_empty() or not _pode_gravar(caminho):
+		_salvar_como()
+	else:
+		_gravar(caminho)
+
+
+## Salva num arquivo novo com o nome da fase ("Fase 02 — A ponte!" → fase_02_a_ponte.tscn).
+## É assim que se cria uma fase a partir de outra: abrir, renomear, Salvar como.
+func _salvar_como() -> void:
 	_renomear_fase()
 	var arquivo := _nome_de_arquivo(fase.nome)
 	if arquivo.is_empty():
@@ -234,24 +245,36 @@ func _salvar() -> void:
 		return
 	var pasta := Fases.pasta_para_salvar()
 	var destino := pasta + arquivo + ".tscn"
+	var numero := 2
+	while destino != caminho and FileAccess.file_exists(destino):
+		destino = pasta + "%s_%d.tscn" % [arquivo, numero]
+		numero += 1
+	_gravar(destino)
+
+
+func _gravar(destino: String) -> void:
+	_renomear_fase()
 	var cena := _empacotar()
 	if cena == null:
 		return
-	DirAccess.make_dir_recursive_absolute(pasta)
+	DirAccess.make_dir_recursive_absolute(destino.get_base_dir())
 	var erro := ResourceSaver.save(cena, destino)
 	if erro != OK:
 		_avisar("Não consegui salvar em %s (%s)" % [destino, error_string(erro)])
 		return
-	var nova := destino != caminho
 	caminho = destino
 	Fases.caminho_atual = destino
 	modificado = false
-	_avisar(("Salva como nova fase: %s" if nova and not caminho.is_empty() else "Salva: %s") % destino)
+	_avisar("Salva: %s" % destino)
 	_atualizar_status()
 
 
-## "Fase 02 — A ponte!" → "fase_02_a_ponte". O nome do arquivo segue o nome da fase:
-## renomear e salvar cria um arquivo novo (o antigo continua lá).
+## A pasta do projeto é só leitura no jogo exportado.
+static func _pode_gravar(arquivo: String) -> bool:
+	return not (arquivo.begins_with("res://") and OS.has_feature("template"))
+
+
+## "Fase 02 — A ponte!" → "fase_02_a_ponte".
 static func _nome_de_arquivo(nome: String) -> String:
 	var texto := nome.strip_edges().to_lower()
 	var trocas := {"á": "a", "à": "a", "â": "a", "ã": "a", "é": "e", "ê": "e", "í": "i",
@@ -279,7 +302,7 @@ func _testar() -> void:
 
 func _estado() -> Dictionary:
 	return {
-		camera = camera_editor.estado(), modo = modo, tile = tile_atual, orientacao = orientacao,
+		fase = caminho, camera = camera_editor.estado(), modo = modo, tile = tile_atual, orientacao = orientacao,
 		camada = camada, objeto = entrada_objeto.get("caminho", ""), visao = visao,
 	}
 
@@ -288,7 +311,9 @@ func _restaurar_estado(estado: Dictionary) -> void:
 	if estado.is_empty():
 		_escolher_tile(tile_atual)
 		return
-	camera_editor.restaurar(estado.camera)
+	# A câmera só volta para onde estava se for a mesma fase.
+	if estado.fase == caminho:
+		camera_editor.restaurar(estado.camera)
 	camada = estado.camada
 	orientacao = estado.orientacao
 	visao = estado.visao
@@ -393,8 +418,7 @@ func _trocar_fantasma(cena: PackedScene) -> void:
 		fantasma = cena.instantiate() as ObjetoFase
 		fantasma.process_mode = Node.PROCESS_MODE_DISABLED
 		add_child(fantasma)
-		if fantasma.has_method(&"ao_colocar_no_editor"):
-			fantasma.ao_colocar_no_editor(rng)
+		fantasma.ao_colocar_no_editor(rng)
 		fantasma.hide()
 
 
@@ -751,12 +775,8 @@ func _colocar_objeto() -> void:
 		objeto.set(propriedade, fantasma.get(propriedade))
 	_registrar_adicao(objeto, "Colocar %s" % objeto.nome_no_editor())
 	_selecionar(objeto)
-	# Próximo com outra variação (árvores, pedras...), mantendo o giro escolhido.
-	if fantasma.has_method(&"ao_colocar_no_editor"):
-		var giro := fantasma.rotation.y
-		fantasma.ao_colocar_no_editor(rng)
-		if entrada_objeto.categoria == "Regras":
-			fantasma.rotation.y = giro
+	# Próximo com outra variação (árvores, pedras...); objetos sem variação mantêm o giro.
+	fantasma.ao_colocar_no_editor(rng)
 
 
 func _registrar_adicao(objeto: ObjetoFase, nome_acao: String) -> void:

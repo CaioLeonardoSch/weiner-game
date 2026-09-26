@@ -1,3 +1,4 @@
+@tool
 class_name Voxel
 ## Modelos voxel (pixel art em 3D): cada voxel é um cubinho colorido.
 ##
