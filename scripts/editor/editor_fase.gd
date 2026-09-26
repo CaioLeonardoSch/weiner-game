@@ -297,12 +297,20 @@ func _gravar(destino: String) -> void:
 func _validar() -> Dictionary:
 	var graves: PackedStringArray = []
 	var avisos: PackedStringArray = []
-	for regra in fase.requisitos():
-		var quantos := fase.todos(regra[0]).size()
-		if quantos == 0:
-			graves.append("Falta %s." % regra[1])
-		elif quantos > 1 and regra[0] in [InicioCachorro, Dono, Graveto]:
-			avisos.append("Há %d de %s — só o primeiro vale." % [quantos, regra[1]])
+	var objetivo := Objetivo.criar(fase.objetivo)
+	for falta in objetivo.faltando(fase):
+		graves.append("Falta %s." % falta)
+	avisos.append_array(objetivo.avisos(fase))
+	if fase.todos(InicioCachorro).size() > 1:
+		avisos.append("Há mais de um Início do cachorro — só o primeiro vale.")
+	var canais_placas := fase.todos(Placa).map(func(p: ObjetoFase) -> int: return (p as Placa).canal)
+	var canais_portoes := fase.todos(Portao).map(func(p: ObjetoFase) -> int: return (p as Portao).canal)
+	for canal in canais_placas:
+		if canal not in canais_portoes:
+			avisos.append("A placa %s não abre nada (nenhum portão %s)." % [Canais.nome(canal).to_lower(), Canais.nome(canal).to_lower()])
+	for canal in canais_portoes:
+		if canal not in canais_placas:
+			avisos.append("O portão %s não tem placa %s para abrir." % [Canais.nome(canal).to_lower(), Canais.nome(canal).to_lower()])
 	var inicio := fase.primeiro(InicioCachorro)
 	if inicio and not _tem_chao(inicio.global_position):
 		graves.append("O Início do cachorro está no ar ou na água.")

@@ -48,7 +48,7 @@ func _physics_process(delta: float) -> void:
 		return
 	tempo += delta
 	var cachorro: Node3D = jogo.cachorro
-	var livres: Array = jogo._ovelhas.filter(func(o): return not o.guardada)
+	var livres: Array = jogo.objetivo.ovelhas.filter(func(o): return not o.guardada)
 	if livres.is_empty():
 		_soltar()
 		return
@@ -121,4 +121,4 @@ func _physics_process(delta: float) -> void:
 	log_tempo += delta
 	if log_tempo > 10.0:
 		log_tempo = 0.0
-		print("t=%d guardadas=%d alvo=%s cachorro=%s" % [tempo, jogo._ovelhas.size() - livres.size(), ov.snapped(Vector3.ONE*0.1), dc.snapped(Vector3.ONE*0.1)])
+		print("t=%d guardadas=%d alvo=%s cachorro=%s" % [tempo, jogo.objetivo.ovelhas.size() - livres.size(), ov.snapped(Vector3.ONE*0.1), dc.snapped(Vector3.ONE*0.1)])

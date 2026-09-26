@@ -16,17 +16,22 @@ extends Node3D
 @onready var indicador_equilibrio: Control = $HUD/Area/Equilibrio
 
 var fase: Fase
+## O graveto na boca (ou o último que esteve nela).
 var graveto: Graveto
+## O primeiro dono da fase (a câmera 3D começa olhando para ele); pode não existir.
 var dono: Dono
+## O que a fase pede para terminar (ver scripts/objetivos/).
+var objetivo: Objetivo
 var concluida := false
 var _tween_aviso: Tween
 var _proxima_fase := ""
 var _tempo_travado := 0.0
 var _dica_virar_mostrada := false
 var _pausa := MenuPausa.new()
-var _ovelhas: Array[ObjetoFase] = []
 ## Contador do objetivo (ex.: ovelhas no cercado), no canto de baixo.
 var contador := Label.new()
+## Ação disponível no botão F ("F: morder o mirante"), embaixo, no centro.
+var rotulo_acao := Label.new()
 
 
 func _ready() -> void:
@@ -44,6 +49,15 @@ func _ready() -> void:
 	contador.add_theme_color_override("font_outline_color", Color.BLACK)
 	contador.add_theme_constant_override("outline_size", 8)
 	$HUD/Area.add_child(contador)
+	rotulo_acao.hide()
+	rotulo_acao.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 110)
+	rotulo_acao.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	rotulo_acao.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	rotulo_acao.add_theme_font_size_override("font_size", 26)
+	rotulo_acao.add_theme_color_override("font_color", TemaUI.COR_DESTAQUE)
+	rotulo_acao.add_theme_color_override("font_outline_color", Color.BLACK)
+	rotulo_acao.add_theme_constant_override("outline_size", 8)
+	$HUD/Area.add_child(rotulo_acao)
 	_atualizar_dica()
 
 	var cena := Fases.cena_atual()
@@ -72,10 +86,8 @@ func _ready() -> void:
 	_atualizar_dica()
 	fase.preparar_isometrica()
 
-	var faltando: PackedStringArray = []
-	for regra in fase.requisitos():
-		if fase.primeiro(regra[0]) == null:
-			faltando.append(regra[1])
+	objetivo = Objetivo.criar(fase.objetivo)
+	var faltando := objetivo.faltando(fase)
 	if not faltando.is_empty():
 		_mostrar_erro("A fase precisa de %s.\nF1: abrir o editor" % ", ".join(faltando))
 		return
@@ -86,54 +98,23 @@ func _ready() -> void:
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
 	for bloco in fase.todos(Empurravel):
 		(bloco as Empurravel).voltou_ao_inicio.connect(
-			_mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
+			mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
 	for zona in fase.todos(ZonaDica):
-		(zona as ZonaDica).ativada.connect(func(texto: String) -> void: _mostrar_aviso(_com_teclas(texto), 4.5))
+		(zona as ZonaDica).ativada.connect(func(texto: String) -> void: mostrar_aviso(_com_teclas(texto), 4.5))
 	_preparar_objetivo()
-	_mostrar_aviso(fase.nome)
+	mostrar_aviso(fase.nome)
 
 
 func _preparar_objetivo() -> void:
-	match fase.objetivo:
-		Fase.OBJETIVO_PASTOREIO:
-			_ovelhas = fase.todos(Ovelha)
-			_atualizar_contador()
-		_:
-			graveto = fase.primeiro(Graveto) as Graveto
-			dono = fase.primeiro(Dono) as Dono
-			graveto.pego.connect(_on_graveto_pego)
-			graveto.protegido.connect(_mostrar_aviso.bind("Tem um passarinho no graveto!" +
-				("  %s: latir" % Teclas.nome(&"latir") if cachorro.pode_latir else "")))
-			dono.cachorro_chegou.connect(_on_dono_cachorro_chegou)
-
-
-## Chamado a cada quadro: objetivos que não dependem de um evento (pastoreio).
-func _verificar_objetivo() -> void:
-	if concluida or fase == null or fase.objetivo != Fase.OBJETIVO_PASTOREIO:
-		return
-	var mudou := false
-	for objeto in _ovelhas:
-		var ovelha := objeto as Ovelha
-		if ovelha.guardada:
-			continue
-		for cercado in fase.todos(Cercado):
-			if (cercado as Cercado).contem(ovelha.global_position):
-				ovelha.guardada = true
-				mudou = true
-				break
-	if mudou:
-		_atualizar_contador()
-		var guardadas := _ovelhas.filter(func(o: Ovelha) -> bool: return o.guardada).size()
-		if guardadas == _ovelhas.size():
-			_concluir()
-		else:
-			_mostrar_aviso("Béé! %d de %d no cercado" % [guardadas, _ovelhas.size()])
-
-
-func _atualizar_contador() -> void:
-	var guardadas := _ovelhas.filter(func(o: Ovelha) -> bool: return o.guardada).size()
-	contador.text = "Ovelhas no cercado: %d / %d" % [guardadas, _ovelhas.size()]
-	contador.show()
+	dono = fase.primeiro(Dono) as Dono
+	for objeto in fase.todos(Graveto):
+		var um_graveto := objeto as Graveto
+		um_graveto.pego.connect(_on_graveto_pego.bind(um_graveto))
+		um_graveto.protegido.connect(func() -> void: mostrar_aviso("Tem um passarinho no graveto!" +
+			("  %s: latir" % Teclas.nome(&"latir") if cachorro.pode_latir else "")))
+		um_graveto.boca_cheia.connect(func() -> void:
+			mostrar_aviso("Boca cheia! %s larga este graveto para pegar outro" % Teclas.nome(&"largar_graveto")))
+	objetivo.preparar(self)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -143,6 +124,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		Fases.abrir_editor()
 	elif event.is_action_pressed("liberar_mouse"):
 		_pausa.abrir()
+	elif event.is_action_pressed("acao") and not concluida:
+		var alvo := cachorro.objeto_da_acao()
+		if alvo:
+			alvo.executar_acao(cachorro)
 	elif event.is_action_pressed("largar_graveto"):
 		_tentar_largar_graveto()
 	elif event.is_action_pressed("virar_graveto"):
@@ -159,15 +144,18 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
-	_verificar_objetivo()
+	if objetivo and not concluida:
+		objetivo.processar(delta)
+	_atualizar_rotulo_acao()
 	# Graveto grande emperrado num vão: lembra que dá para virar (uma vez por fase).
 	_tempo_travado = _tempo_travado + delta if cachorro.graveto_travado else 0.0
 	if _tempo_travado > 0.8 and not _dica_virar_mostrada and not cachorro.graveto_ao_comprido:
 		_dica_virar_mostrada = true
-		_mostrar_aviso("O graveto não passa atravessado — %s vira ao comprido" % Teclas.nome(&"virar_graveto"))
+		mostrar_aviso("O graveto não passa atravessado — %s vira ao comprido" % Teclas.nome(&"virar_graveto"))
 
 
-func _on_graveto_pego(quem: Dachshund) -> void:
+func _on_graveto_pego(quem: Dachshund, pego: Graveto) -> void:
+	graveto = pego
 	# Pego ainda durante a transição de largar (a física empurrou o cachorro para dentro
 	# da área, ex.: uma tampa voltando): a câmera só vai para o 3D depois que ela terminar.
 	if camera_controller.estado == CameraController.Estado.TRANSICAO:
@@ -195,14 +183,14 @@ func _on_graveto_pego(quem: Dachshund) -> void:
 		texto += "\nGraveto grande (%.1f m) — %s vira ao comprido" % [graveto.comprimento, Teclas.nome(&"virar_graveto")]
 	elif pesado:
 		texto += "\nGraveto pesado — mais devagar, mas firme na correnteza"
-	_mostrar_aviso(texto)
-	# Caso tenha largado e pegado o graveto de novo já do lado do dono.
-	if dono.contem(cachorro):
-		_concluir()
+	mostrar_aviso(texto)
+	objetivo.ao_pegar_graveto(pego)
 
 
 ## Yaw (graus) da câmera atrás do cachorro, olhando na direção do dono.
 func _yaw_olhando_para_o_dono() -> float:
+	if dono == null:
+		return camera_controller.yaw_inicial_3d
 	var direcao := dono.global_position - cachorro.global_position
 	if Vector2(direcao.x, direcao.z).length() < 0.01:
 		return camera_controller.yaw_inicial_3d
@@ -218,7 +206,7 @@ func _tentar_largar_graveto() -> void:
 		return
 	for zona in fase.todos(ZonaSemLargar):
 		if (zona as ZonaSemLargar).contem(cachorro):
-			_mostrar_aviso("Aqui não dá para largar o graveto")
+			mostrar_aviso("Aqui não dá para largar o graveto")
 			return
 
 	cachorro.entrada_bloqueada = true
@@ -248,17 +236,17 @@ func _tentar_virar_graveto() -> void:
 	if concluida or not cachorro.tem_graveto or cachorro.entrada_bloqueada:
 		return
 	if not cachorro.virar_graveto():
-		_mostrar_aviso("Sem espaço para virar o graveto")
+		mostrar_aviso("Sem espaço para virar o graveto")
 
 
 ## Mostra por que a ação não aconteceu (se valer a pena avisar).
 func _avisar_motivo(motivo: String, acao: String, sem_alvo: String) -> void:
 	match motivo:
 		"boca_cheia":
-			_mostrar_aviso("Com o graveto na boca não dá para %s" % acao)
+			mostrar_aviso("Com o graveto na boca não dá para %s" % acao)
 		"nada":
 			if not sem_alvo.is_empty():
-				_mostrar_aviso(sem_alvo)
+				mostrar_aviso(sem_alvo)
 
 
 func _atualizar_dica() -> void:
@@ -314,19 +302,14 @@ func _ponto_para_largar() -> Vector3:
 	return pe
 
 
-func _on_dono_cachorro_chegou(body: Node3D) -> void:
-	if body == cachorro and cachorro.tem_graveto:
-		_concluir()
-
-
 func _on_cachorro_voltou(motivo: String) -> void:
 	if motivo == "agua":
-		_mostrar_aviso("Splash! Salsicha não nada...")
+		mostrar_aviso("Splash! Salsicha não nada...")
 	elif motivo == "queda":
-		_mostrar_aviso("Opa! Caiu...")
+		mostrar_aviso("Opa! Caiu...")
 
 
-func _concluir() -> void:
+func concluir() -> void:
 	if concluida:
 		return
 	concluida = true
@@ -367,7 +350,7 @@ func _agendar(segundos: float, acao: Callable) -> void:
 	tween.tween_callback(acao)
 
 
-func _mostrar_aviso(texto: String, segundos := 2.0) -> void:
+func mostrar_aviso(texto: String, segundos := 2.0) -> void:
 	aviso.text = texto
 	aviso.show()
 	if _tween_aviso:
@@ -383,3 +366,12 @@ func _com_teclas(texto: String) -> String:
 	for item in Teclas.REMAPEAVEIS:
 		resultado = resultado.replace("{%s}" % item[0], Teclas.nome(item[0]))
 	return resultado
+
+
+func _atualizar_rotulo_acao() -> void:
+	var alvo := cachorro.objeto_da_acao() if fase and not concluida else null
+	if alvo == null:
+		rotulo_acao.hide()
+		return
+	rotulo_acao.text = "%s: %s" % [Teclas.nome(&"acao"), alvo.acao_da_boca(cachorro)]
+	rotulo_acao.show()

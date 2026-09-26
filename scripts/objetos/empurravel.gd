@@ -38,6 +38,13 @@ func ao_colocar_no_editor(rng: RandomNumberGenerator) -> void:
 func _ready() -> void:
 	_atualizar()
 	_inicio = transform
+	if not Engine.is_editor_hint():
+		add_to_group(&"pesos")
+
+
+## Um bloco de pedra segura qualquer placa de pressão (pesa 3).
+func peso_na_placa() -> float:
+	return 0.0 if afundado else 3.0
 
 
 func _atualizar() -> void:

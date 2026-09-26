@@ -92,11 +92,26 @@ func _ready() -> void:
 	_guardar_ponto_seguro()
 
 
-## Troca a raça e a pelagem do cachorro. A boca (onde fica o graveto) acompanha o modelo.
+## Troca a raça e a pelagem do cachorro. A boca (onde fica o graveto) acompanha o modelo, e
+## a cápsula de colisão segue as medidas da raça.
 func aplicar_raca(nova_raca: Raca, indice_pelagem: int) -> void:
 	raca = nova_raca
 	voxel.montar(nova_raca, indice_pelagem)
 	boca.position = voxel.boca
+	var forma := CapsuleShape3D.new()
+	forma.radius = nova_raca.raio_colisao
+	forma.height = maxf(nova_raca.altura_colisao, nova_raca.raio_colisao * 2.0)
+	var colisao := $Colisao as CollisionShape3D
+	colisao.shape = forma
+	colisao.position.y = forma.height * 0.5
+
+
+## Peso sobre uma placa de pressão: o da raça mais o do graveto na boca.
+func peso_total() -> float:
+	var peso := raca.peso if raca else 1.0
+	if tem_graveto and graveto:
+		peso += graveto.peso
+	return peso
 
 
 ## Coloca o cachorro numa posição, olhando para `yaw` (radianos; 0 = +X).
@@ -249,6 +264,27 @@ func latir() -> String:
 			if objeto.visible and objeto.global_position.distance_to(global_position) <= ALCANCE_LATIDO:
 				objeto.ao_ouvir_latido(global_position)
 	return ""
+
+
+## Objeto com ação do botão F (`ObjetoFase.acao_da_boca`) à frente do focinho: o mais perto
+## até 1,2 m, dentro de ~60° da direção em que o cachorro olha. Null se não houver.
+func objeto_da_acao() -> ObjetoFase:
+	if fase == null or entrada_bloqueada:
+		return null
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	var melhor: ObjetoFase = null
+	var melhor_distancia := 1.2
+	for no in get_tree().get_nodes_in_group(&"com_acao"):
+		var objeto := no as ObjetoFase
+		if objeto == null or not objeto.visible or objeto.acao_da_boca(self).is_empty():
+			continue
+		var ate := objeto.global_position - global_position
+		ate.y = 0.0
+		var distancia := ate.length()
+		if distancia < melhor_distancia and (distancia < 0.3 or ate.normalized().dot(frente) > 0.5):
+			melhor = objeto
+			melhor_distancia = distancia
+	return melhor
 
 
 ## Bloco empurrável logo à frente do focinho (ou null).

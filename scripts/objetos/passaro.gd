@@ -38,12 +38,18 @@ func _ready() -> void:
 	_atualizar()
 	if not Engine.is_editor_hint():
 		add_to_group(&"passaros")
+		add_to_group(&"pesos")
 		_tempo = randf() * 2.0
 
 
 func _atualizar() -> void:
 	if is_node_ready():
 		($Corpo/Colisao as CollisionShape3D).disabled = not bloqueia_passagem
+
+
+## Um passarinho pousado pesa pouco — um bando, um pouco mais.
+func peso_na_placa() -> float:
+	return 0.0 if voou else 0.3
 
 
 ## Está guardando `ponto` (ainda não voou e está perto)?

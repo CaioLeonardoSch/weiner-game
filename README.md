@@ -126,6 +126,35 @@ relação ao cercado para empurrar o rebanho. **Latir** (B, nativo da raça) esp
 não entram na água funda: o riacho só se atravessa pelo **vau** de água rasa. A porteira do
 cercado fica no lado oeste; dentro dele a ovelha se acalma e não sai mais.
 
+## Fase 06 — "O Portão"
+
+Uma cerca viva atravessa a trilha com um **portão amarelo**. A **placa de pressão amarela** abre
+o portão — mas só enquanto tiver peso em cima: o cachorro sozinho abre, mas o portão fecha quando
+ele sai. A saída é **empurrar o bloco de pedra** para a placa.
+
+## Fase 07 — "A Chave e o Prêmio"
+
+O **graveto lendário** (dourado) está sobre uma placa azul, segurando o portão azul aberto. Pegou,
+o portão fecha — com o cachorro do lado de dentro. Qualquer placa da mesma cor segura o portão:
+antes, é preciso levar um **graveto comum** (pesado como o lendário) para a outra placa azul,
+lá fora. O cachorro sozinho (peso 1) não basta.
+
+## Gravetos, placas e portões
+
+- **Graveto lendário × comum:** o dono só aceita o **lendário** (dourado, com brilho). Os
+  **comuns** (marrons) também trocam a perspectiva ao serem pegos, mas servem de ferramenta
+  (peso numa placa, algo para trocar). Com um graveto na boca não dá para pegar outro — largue
+  antes.
+- **Canais são cores:** uma **placa de pressão** aciona tudo da mesma cor enquanto o peso em
+  cima chega ao mínimo dela; um **portão** da mesma cor abre (ou fecha, com *inverter*). Várias
+  placas da mesma cor: basta uma acionada. O portão nunca fecha em cima de alguém.
+- **Pesos:** salsicha 1 (border collie 1,5; pug 1,8), cachorro com graveto = raça + graveto,
+  graveto largado = o peso dele, bloco de pedra 3, ovelha 1,5, passarinho 0,3.
+- **Botão de ação (F):** objetos que respondem ao F mostram a ação embaixo da tela
+  ("F: ..."). Segurar F + andar para trás continua puxando o bloco.
+- **No editor:** Placa e Portão ficam em *Mecanismos*; linhas tracejadas na cor do canal ligam as
+  placas aos portões, e a validação avisa placa sem portão (e vice-versa).
+
 ## Raças e pelagens
 
 O cachorro é um modelo **voxel gerado por código** (`scripts/racas/cachorro_voxel.gd`) a partir
@@ -205,7 +234,7 @@ depende de o cachorro *não* pular o barranco. Cada objetivo pede alguns objetos
 
 | Objetivo | Precisa de |
 |---|---|
-| Trazer o graveto ao dono | **Início do cachorro**, **Dono** e **Graveto** (categoria "Regras") |
+| Trazer o graveto ao dono | **Início do cachorro**, **Dono** e um **Graveto lendário** (categoria "Regras"); gravetos comuns são opcionais |
 | Levar as ovelhas ao cercado | **Início do cachorro**, **Ovelhas** ("Bichos") e um **Cercado** ("Regras"; tamanho no painel, porteira no lado +X — gire para mudar) |
 
 O comprimento e o peso do graveto ficam nas propriedades do Graveto.

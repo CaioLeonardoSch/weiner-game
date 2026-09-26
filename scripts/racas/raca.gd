@@ -40,6 +40,11 @@ enum Rabo { RETO, ENROLADO, CURTO }
 @export_group("Jogo")
 ## Multiplica a velocidade do cachorro.
 @export_range(0.5, 2.0) var fator_velocidade := 1.0
+## Peso numa placa de pressão (salsicha = 1). Raças gordinhas seguram placas mais pesadas.
+@export_range(0.5, 3.0, 0.1) var peso := 1.0
+## Cápsula de colisão do corpo (m): a altura decide por onde a raça passa (túneis, frestas).
+@export_range(0.15, 0.6, 0.01) var raio_colisao := 0.28
+@export_range(0.4, 1.4, 0.05) var altura_colisao := 0.6
 ## Habilidades que a raça sempre tem, somadas às que a fase libera (mesmos bits de Fase).
 @export_flags("Pular", "Cavar", "Latir") var habilidades_nativas := 0
 @export var pelagens: Array[Pelagem] = []

@@ -72,6 +72,7 @@ func _desenhar_cursor() -> void:
 
 ## Objetos invisíveis no jogo e marcas de visibilidade (só iso / só 3D).
 func _desenhar_objetos_especiais() -> void:
+	_desenhar_canais()
 	for objeto in editor.fase.lista_objetos():
 		if not objeto.visible:
 			continue
@@ -89,6 +90,23 @@ func _desenhar_objetos_especiais() -> void:
 			if not camera.is_position_behind(topo):
 				var p := camera.unproject_position(topo)
 				draw_colored_polygon(PackedVector2Array([p + Vector2(0, -5), p + Vector2(5, 0), p + Vector2(0, 5), p + Vector2(-5, 0)]), cor)
+
+
+## Linhas na cor do canal ligando cada placa aos portões que ela aciona.
+func _desenhar_canais() -> void:
+	var placas := editor.fase.todos(Placa)
+	var portoes := editor.fase.todos(Portao)
+	for placa in placas:
+		for portao in portoes:
+			if (placa as Placa).canal != (portao as Portao).canal:
+				continue
+			var cor := Canais.cor((placa as Placa).canal)
+			var a := placa.global_position + Vector3.UP * 0.1
+			var b := portao.global_position + Vector3.UP * 0.5
+			# Tracejada, para não se confundir com as caixas de seleção.
+			var partes := maxi(int(a.distance_to(b) / 0.3), 1)
+			for i in range(0, partes, 2):
+				_linha(a.lerp(b, float(i) / partes), a.lerp(b, float(i + 1) / partes), cor, 2.0)
 
 
 func _seta_orientacao(origem: Vector3, yaw: float, cor: Color) -> void:

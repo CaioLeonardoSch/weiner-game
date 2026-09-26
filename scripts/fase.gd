@@ -17,8 +17,7 @@ const HABILIDADE_CAVAR := 2
 const HABILIDADE_LATIR := 4
 
 ## O que o cachorro precisa fazer para terminar a fase. Para um objetivo novo: acrescente o
-## nome em @export_enum (no fim), uma constante, o que a fase precisa em `requisitos()` e
-## as regras em jogo.gd (`_preparar_objetivo` / `_verificar_objetivo`).
+## nome em @export_enum (no fim), uma constante e uma classe em scripts/objetivos/.
 const OBJETIVO_GRAVETO := 0
 const OBJETIVO_PASTOREIO := 1
 
@@ -31,6 +30,9 @@ const OBJETIVO_PASTOREIO := 1
 ## Raça do cachorro nesta fase (id de assets/racas/*.tres). A raça soma habilidades próprias
 ## às da fase (ex.: o Border Collie sempre late).
 @export var raca := &"salsicha"
+
+## Um canal mudou (algum acionador ligou ou o último desligou). Ver Canais.
+signal canal_mudou(canal: int, ativo: bool)
 
 @onready var terreno: GridMap = $Terreno
 @onready var objetos: Node3D = $Objetos
@@ -54,19 +56,31 @@ func tem_habilidade(habilidade: int) -> bool:
 	return habilidades_efetivas() & habilidade != 0
 
 
+# --- Canais -------------------------------------------------------------------------------
+
+## canal → {id da fonte: ativa}
+var _fontes := {}
+
+
+## Uma fonte (placa...) avisa se está acionada. O canal fica ativo se QUALQUER fonte estiver.
+func definir_fonte(canal: int, fonte: Object, ativa: bool) -> void:
+	var antes := canal_ativo(canal)
+	if not _fontes.has(canal):
+		_fontes[canal] = {}
+	_fontes[canal][fonte.get_instance_id()] = ativa
+	var depois := canal_ativo(canal)
+	if antes != depois:
+		canal_mudou.emit(canal, depois)
+
+
+func canal_ativo(canal: int) -> bool:
+	return _fontes.has(canal) and (_fontes[canal] as Dictionary).values().has(true)
+
+
 ## Habilidades da fase somadas às nativas da raça.
 func habilidades_efetivas() -> int:
 	var dados_raca := Racas.por_id(raca)
 	return habilidades | (dados_raca.habilidades_nativas if dados_raca else 0)
-
-
-## Objetos que a fase precisa ter para o objetivo dela: [[tipo, "nome para mensagens"], ...].
-func requisitos() -> Array:
-	match objetivo:
-		OBJETIVO_PASTOREIO:
-			return [[InicioCachorro, "o Início do cachorro"], [Ovelha, "uma Ovelha"], [Cercado, "um Cercado"]]
-		_:
-			return [[InicioCachorro, "o Início do cachorro"], [Dono, "o Dono"], [Graveto, "o Graveto"]]
 
 
 func lista_objetos() -> Array[ObjetoFase]:

@@ -1,0 +1,18 @@
+# Fase 06 — O Portão: empurra o bloco para a placa amarela (portão fica aberto), pega o graveto e volta.
+fase res://scenes/fases/fase_06.tscn
+esperar 20
+apertar mover_direita 103
+esperar 106
+apertar mover_frente 100
+esperar 110
+apertar mover_tras 45
+esperar 50
+apertar mover_direita 155
+esperar 160
+apertar mover_frente 14
+esperar 110
+apertar mover_esquerda 5
+esperar 10
+apertar mover_frente 400
+esperar 405
+checar jogo.concluida
