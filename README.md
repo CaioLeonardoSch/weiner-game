@@ -81,6 +81,8 @@ duas fotos e diz `FUMACA ok` (a CI usa isso para testar o próprio executável).
 `ferramentas/testar_fases.sh` joga cada fase com as entradas de `ferramentas/testes/rotas/*.txt`
 (sem janela, em segundos) e confere que ela termina. Ao mudar uma fase, rode de novo; se o
 caminho mudou, ajuste a rota (o formato está no topo de `ferramentas/testes/roteiro.gd`).
+A rota `mecanismos` testa a regra OU / E dos portões e a ferramenta Ligar do editor
+(`ferramentas/testes/teste_mecanismos.gd`).
 Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
 
 ## Fase 01 — "O Primeiro Graveto"
@@ -172,8 +174,12 @@ comprido que vira a ponte da volta.
   cachorro fica parado até soltar (F ou Esc).
 - **Botão de ação (F):** objetos que respondem ao F mostram a ação embaixo da tela
   ("F: ..."). Segurar F + andar para trás continua puxando o bloco.
-- **No editor:** Placa, Portão e Mirante ficam em *Mecanismos*; linhas tracejadas na cor do canal ligam as
-  placas aos portões, e a validação avisa placa sem portão (e vice-versa).
+- **Regra OU / E:** com várias placas da mesma cor, o portão abre com **qualquer uma** acionada
+  (OU, o padrão) ou só com **todas** ao mesmo tempo (E) — propriedade *Regra* do portão.
+- **No editor:** Placa, Portão e Mirante ficam em *Mecanismos*; linhas tracejadas na cor do canal
+  ligam as placas aos portões, e o portão que reage a mais de uma placa mostra a regra ("OU" /
+  "E"). A validação avisa placa sem portão (e vice-versa) e regra E com uma placa só. Ver
+  *Ligando mecanismos* em "Criando fases".
 
 ## Raças e pelagens
 
@@ -258,6 +264,21 @@ depende de o cachorro *não* pular o barranco. Cada objetivo pede alguns objetos
 | Levar as ovelhas ao cercado | **Início do cachorro**, **Ovelhas** ("Bichos") e um **Cercado** ("Regras"; tamanho no painel, porteira no lado +X — gire para mudar) |
 
 O comprimento e o peso do graveto ficam nas propriedades do Graveto.
+
+### Ligando mecanismos
+
+Placas e portões se ligam pela **cor** (o canal): peças da mesma cor estão ligadas. Uma peça
+nova já vem com uma cor que ninguém usa (o conta-gotas mantém a cor copiada; duplicar com Ctrl+D
+também — bom para uma segunda placa do mesmo portão). Para ligar, use a ferramenta **Ligar
+mecanismos (L)**:
+
+- **Clique numa peça e depois em outra:** a segunda fica com a cor da primeira (se só a segunda
+  já tinha ligações, a primeira é que entra no grupo dela). Uma linha sai da primeira peça até
+  o mouse enquanto você escolhe.
+- **Clicar num par já ligado** desliga a segunda peça (ela ganha uma cor livre).
+- **Shift + clique** liga e mantém a primeira peça escolhida — uma placa para vários portões.
+- **Clique direito** solta a peça de todas as ligações. **Esc** cancela.
+- Tudo entra no desfazer (Ctrl+Z). A cor também pode ser trocada à mão, no campo *Canal*.
 
 ### A mecânica da perspectiva no editor
 

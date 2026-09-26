@@ -64,6 +64,13 @@ func peso_na_placa() -> float:
 	return 0.0
 
 
+## Mecanismos ligados por canal (a cor, ver Canais): "aciona" (placa...), "reage" (portão...)
+## ou "" (não é mecanismo). Mecanismos têm a propriedade `canal`, que a ferramenta Ligar do
+## editor troca.
+func papel_no_canal() -> String:
+	return ""
+
+
 ## A fase a que este objeto pertence (ou null no editor de cenas do Godot).
 func fase_do_objeto() -> Fase:
 	var no := get_parent()

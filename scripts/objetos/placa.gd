@@ -36,6 +36,10 @@ func propriedades_editaveis() -> Array[StringName]:
 	return [&"canal", &"peso_minimo"]
 
 
+func papel_no_canal() -> String:
+	return "aciona"
+
+
 func caixa_editor() -> AABB:
 	return AABB(Vector3(-0.5, 0.0, -0.5), Vector3(1.0, 0.12, 1.0))
 
@@ -44,6 +48,8 @@ func _ready() -> void:
 	_montar()
 	if not Engine.is_editor_hint():
 		_fase = fase_do_objeto()
+		if _fase:
+			_fase.definir_fonte(canal, self, false)
 
 
 func definir_ativo(ligado: bool) -> void:

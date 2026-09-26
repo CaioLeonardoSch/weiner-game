@@ -31,8 +31,9 @@ const OBJETIVO_PASTOREIO := 1
 ## às da fase (ex.: o Border Collie sempre late).
 @export var raca := &"salsicha"
 
-## Um canal mudou (algum acionador ligou ou o último desligou). Ver Canais.
-signal canal_mudou(canal: int, ativo: bool)
+## Um canal mudou (alguma fonte ligou ou desligou). Quem reage confere com `canal_ligado`.
+## Ver Canais.
+signal canal_mudou(canal: int)
 
 @onready var terreno: GridMap = $Terreno
 @onready var objetos: Node3D = $Objetos
@@ -62,19 +63,32 @@ func tem_habilidade(habilidade: int) -> bool:
 var _fontes := {}
 
 
-## Uma fonte (placa...) avisa se está acionada. O canal fica ativo se QUALQUER fonte estiver.
+## Uma fonte (placa...) avisa se está acionada. As fontes se registram (desligadas) ao entrar
+## na fase, para a regra "todas" saber quantas são.
 func definir_fonte(canal: int, fonte: Object, ativa: bool) -> void:
-	var antes := canal_ativo(canal)
 	if not _fontes.has(canal):
 		_fontes[canal] = {}
-	_fontes[canal][fonte.get_instance_id()] = ativa
-	var depois := canal_ativo(canal)
-	if antes != depois:
-		canal_mudou.emit(canal, depois)
+	var id := fonte.get_instance_id()
+	if (_fontes[canal] as Dictionary).get(id) == ativa:
+		return
+	_fontes[canal][id] = ativa
+	canal_mudou.emit(canal)
 
 
+## Regra OU: alguma fonte do canal está acionada.
 func canal_ativo(canal: int) -> bool:
 	return _fontes.has(canal) and (_fontes[canal] as Dictionary).values().has(true)
+
+
+## Regra E: todas as fontes do canal estão acionadas (e há pelo menos uma).
+func canal_completo(canal: int) -> bool:
+	return _fontes.has(canal) and not (_fontes[canal] as Dictionary).is_empty() \
+		and not (_fontes[canal] as Dictionary).values().has(false)
+
+
+## O canal liga quem reage? `todas`: regra E; senão, regra OU.
+func canal_ligado(canal: int, todas: bool) -> bool:
+	return canal_completo(canal) if todas else canal_ativo(canal)
 
 
 ## Habilidades da fase somadas às nativas da raça.

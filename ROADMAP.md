@@ -174,6 +174,11 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   *Onde encaixa:* objetos `Placa` (Area3D que soma o peso do que está em cima) e `Portao`
   (colisão ligada/desligada, como `ObjetoFase.definir_ativo`), ligados por um **canal** (nome ou
   número no painel do editor). O mesmo canal serve para comporta, ponte levadiça, lanterna...
+  Feito também: regra OU / E no portão e a ferramenta **Ligar (L)** do editor. Próximos passos:
+  mostrar no próprio portão (para o jogador) quantas placas a regra E pede — lampadinhas que
+  acendem uma por placa; **atraso ao fechar** (fica aberto N segundos: corrida contra o tempo);
+  **alavanca** (F liga e desliga, sem precisar de peso); e outros que reagem ao canal (ponte
+  levadiça, comporta, plataforma), todos via `ObjetoFase.papel_no_canal()`.
 - **O graveto vira ponte. ✅** Largado ao comprido sobre um vão de uma célula (buraco, riacho
   estreito), um graveto longo vira pinguela, com o equilíbrio da Tábua. Como largar volta para a
   isométrica (e as tampas voltam!), **onde** fazer a ponte importa. O cachorro atravessa e pega

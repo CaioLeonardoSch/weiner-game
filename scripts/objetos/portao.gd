@@ -2,7 +2,8 @@
 class_name Portao
 extends ObjetoFase
 ## Portão de madeira ligado a um canal (a cor dos postes): abre enquanto o canal está ativo
-## (ou fecha, com `inverter`). Aberto, desce para dentro do chão e deixa passar.
+## (ou fecha, com `inverter`). Com várias placas da cor, `regra` diz se basta uma (OU) ou se
+## precisa de todas (E). Aberto, desce para dentro do chão e deixa passar.
 ## Nunca fecha em cima de ninguém: espera o vão ficar livre. Com `travar_aberto`, uma vez
 ## aberto fica aberto (bom para as primeiras fases).
 ## Largura em células, ao longo do X local (gire o objeto para mudar a direção).
@@ -19,6 +20,10 @@ extends ObjetoFase
 @export var inverter := false
 ## Uma vez aberto, não fecha mais.
 @export var travar_aberto := false
+## Com várias placas da mesma cor: abre com qualquer uma acionada (OU) ou só com todas (E).
+@export_enum("Qualquer placa (OU)", "Todas as placas (E)") var regra := 0
+
+const REGRA_TODAS := 1
 
 const ALTURA := 1.0
 const ESPESSURA := 0.375
@@ -41,7 +46,11 @@ func categoria_no_editor() -> String:
 
 
 func propriedades_editaveis() -> Array[StringName]:
-	return [&"canal", &"largura", &"inverter", &"travar_aberto"]
+	return [&"canal", &"regra", &"largura", &"inverter", &"travar_aberto"]
+
+
+func papel_no_canal() -> String:
+	return "reage"
 
 
 func caixa_editor() -> AABB:
@@ -55,17 +64,21 @@ func _ready() -> void:
 	_fase = fase_do_objeto()
 	if _fase:
 		_fase.canal_mudou.connect(_on_canal_mudou)
-		_quer_abrir = _fase.canal_ativo(canal) != inverter
+		_quer_abrir = _deve_abrir()
 		if _quer_abrir:
 			_abrir(true)
 
 
-func _on_canal_mudou(qual: int, ativo: bool) -> void:
+func _on_canal_mudou(qual: int) -> void:
 	if qual != canal:
 		return
-	_quer_abrir = ativo != inverter
+	_quer_abrir = _deve_abrir()
 	if _quer_abrir and not aberto:
 		_abrir(false)
+
+
+func _deve_abrir() -> bool:
+	return _fase.canal_ligado(canal, regra == REGRA_TODAS) != inverter
 
 
 func _physics_process(_delta: float) -> void:

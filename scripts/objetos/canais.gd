@@ -2,7 +2,8 @@ class_name Canais
 ## Canais ligam quem aciona (placa de pressão; depois alavancas, pássaros no contrapeso) a quem
 ## reage (portão; depois comporta, ponte levadiça...). Cada canal é uma COR: a placa azul abre
 ## o portão azul — o jogador vê o que liga com o quê sem precisar de explicação.
-## O estado dos canais de uma fase fica na própria Fase (`definir_fonte`, `canal_ativo`).
+## O estado dos canais de uma fase fica na própria Fase (`definir_fonte`, `canal_ligado`).
+## No editor, a ferramenta Ligar (L) liga duas peças escolhendo a cor por você.
 
 const LISTA := [
 	["Amarelo", Color("f2c94c")],
