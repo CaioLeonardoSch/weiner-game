@@ -4,6 +4,12 @@ extends CharacterBody3D
 ##
 ## Movimento livre no plano XZ, relativo à câmera (8 direções no modo isométrico,
 ## analógico/WASD na terceira pessoa). O Y fica por conta da gravidade + move_and_slide.
+##
+## O graveto na boca tem colisão própria (a forma `ColisaoGraveto` do corpo): se ele não
+## passa, o cachorro não passa, e o cachorro não gira se o graveto bater em algo no giro.
+## `virar_graveto()` alterna entre atravessado (padrão) e ao comprido (apontando para a
+## frente) — o jeito de passar por vãos estreitos com um graveto grande.
+## Em passagens estreitas (tábua), graveto grande e pesado desequilibra o cachorro.
 
 ## Caiu num lugar sem volta (água, abismo) e foi levado de volta para terra firme.
 signal voltou_ao_ponto_seguro(motivo: String)
@@ -11,6 +17,19 @@ signal voltou_ao_ponto_seguro(motivo: String)
 @export var velocidade := 3.5
 ## Velocidade com que o modelo gira para a direção do movimento.
 @export var velocidade_giro := 10.0
+## Multiplicador da velocidade segurando `andar_devagar`.
+@export var fator_devagar := 0.4
+## Altura do pulo (m) sem graveto. Passa de meio bloco (0,5 m), não de um bloco inteiro.
+@export var altura_pulo := 0.65
+
+@export_group("Equilíbrio")
+## Carga (peso × comprimento do graveto) que ainda não desequilibra. O graveto padrão
+## (0,8 m, peso 1) fica abaixo disso.
+@export var carga_sem_balanco := 1.2
+## Empurrão lateral máximo (m/s) do balanço.
+@export var forca_balanco := 2.1
+## Ao comprido o peso fica alinhado com o corpo: balança menos.
+@export var fator_ao_comprido := 0.35
 
 ## Câmera usada como referência de direção (definida pelo jogo).
 var camera_referencia: Camera3D
@@ -18,8 +37,17 @@ var camera_referencia: Camera3D
 var fase: Fase
 var tem_graveto := false
 var graveto: Graveto
+## Graveto apontando para a frente (true) ou atravessado na boca (false).
+var graveto_ao_comprido := false
 ## Quando true, ignora a entrada do jogador (transição de câmera, fim de fase).
 var entrada_bloqueada := false
+## Habilidade liberada pela fase.
+var pode_pular := false
+## Balanço atual, de -1 a 1 (para o HUD). Só muda em passagens estreitas.
+var balanco := 0.0
+var em_passagem_estreita := false
+## O graveto está impedindo o cachorro de andar (e não há encaixe para o lado).
+var graveto_travado := false
 
 var _gravidade: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _yaw_alvo := 0.0
@@ -27,12 +55,19 @@ var _yaw_alvo := 0.0
 ## reaparecer bem na beirada de onde caiu).
 var _pontos_seguros: Array[Vector3] = []
 var _tempo_ponto_seguro := 0.0
+var _fase_balanco := 0.0
+var _tempo_fora_da_passagem := 0.0
+## Forma um pouco menor que a do graveto, para testar giros sem contar o simples encostar.
+var _forma_teste := CapsuleShape3D.new()
+var _tween_graveto: Tween
 
 @onready var modelo: Node3D = $Modelo
 @onready var boca: Marker3D = $Modelo/Boca
+@onready var colisao_graveto: CollisionShape3D = $ColisaoGraveto
 
 
 func _ready() -> void:
+	colisao_graveto.disabled = true
 	_guardar_ponto_seguro()
 
 
@@ -49,8 +84,12 @@ func posicionar(posicao: Vector3, yaw: float) -> void:
 func _physics_process(delta: float) -> void:
 	if not is_on_floor():
 		velocity.y -= _gravidade * delta
+	elif pode_pular and not entrada_bloqueada and Input.is_action_just_pressed("pular"):
+		velocity.y = sqrt(2.0 * _gravidade * altura_pulo_atual())
 
 	var horizontal := Vector3.ZERO if entrada_bloqueada else _velocidade_entrada()
+	horizontal += _desvio_de_encaixe(horizontal, delta)
+	horizontal += _empurrao_do_balanco(delta, horizontal)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
 
@@ -59,19 +98,54 @@ func _physics_process(delta: float) -> void:
 	_checar_queda(delta)
 
 
+## Altura do pulo agora: o peso do graveto puxa para baixo.
+func altura_pulo_atual() -> float:
+	if tem_graveto and graveto:
+		return altura_pulo / (1.0 + maxf(graveto.peso - 1.0, 0.0) * 0.35)
+	return altura_pulo
+
+
 func pegar_graveto(novo_graveto: Graveto) -> void:
 	tem_graveto = true
 	graveto = novo_graveto
+	graveto_ao_comprido = false
 	# Graveto atravessado na boca: a cena do graveto já deixa ele deitado no eixo Z,
 	# que é "de lado" em relação ao focinho (o modelo olha para +X).
 	graveto.reparent(boca, false)
-	graveto.transform = Transform3D.IDENTITY
+	graveto.transform = _transform_visual_graveto(false)
+
+	var forma := CapsuleShape3D.new()
+	forma.radius = 0.07
+	forma.height = graveto.comprimento
+	colisao_graveto.shape = forma
+	_forma_teste.radius = forma.radius - 0.02
+	_forma_teste.height = forma.height - 0.06
+	_atualizar_colisao_graveto()
+	colisao_graveto.disabled = false
 
 
 ## Só marca que soltou; quem reposiciona o graveto no chão é o jogo.
 func largar_graveto() -> void:
 	tem_graveto = false
 	graveto = null
+	graveto_ao_comprido = false
+	colisao_graveto.set_deferred("disabled", true)
+	if _tween_graveto:
+		_tween_graveto.kill()
+
+
+## Alterna entre atravessado e ao comprido. Falso se não houver espaço para virar.
+func virar_graveto() -> bool:
+	if not tem_graveto or not _graveto_cabe(modelo.rotation.y, not graveto_ao_comprido):
+		return false
+	graveto_ao_comprido = not graveto_ao_comprido
+	_atualizar_colisao_graveto()
+	if _tween_graveto:
+		_tween_graveto.kill()
+	_tween_graveto = create_tween()
+	_tween_graveto.tween_property(graveto, "transform", _transform_visual_graveto(graveto_ao_comprido), 0.2) \
+		.set_trans(Tween.TRANS_SINE)
+	return true
 
 
 func _velocidade_entrada() -> Vector3:
@@ -90,20 +164,142 @@ func _velocidade_entrada() -> Vector3:
 	var direcao := direita * entrada.x - frente * entrada.y
 	_yaw_alvo = atan2(-direcao.z, direcao.x)
 	var fator := graveto.fator_velocidade() if tem_graveto and graveto else 1.0
+	if Input.is_action_pressed("andar_devagar"):
+		fator *= fator_devagar
 	return direcao * velocidade * fator
 
 
 func _girar_modelo(delta: float) -> void:
 	# O modelo olha para +X quando rotation.y == 0.
-	modelo.rotation.y = lerp_angle(modelo.rotation.y, _yaw_alvo, 1.0 - exp(-velocidade_giro * delta))
+	var novo := lerp_angle(modelo.rotation.y, _yaw_alvo, 1.0 - exp(-velocidade_giro * delta))
+	if is_equal_approx(novo, modelo.rotation.y):
+		return
+	# Com o graveto na boca, só gira se o graveto não bater em nada no caminho.
+	if tem_graveto and not _graveto_cabe(novo, graveto_ao_comprido):
+		return
+	modelo.rotation.y = novo
+	if tem_graveto:
+		_atualizar_colisao_graveto()
 
+
+# --- Graveto -----------------------------------------------------------------------------
+
+## Posição do graveto em relação à boca: atravessado (centrado) ou ao comprido
+## (apontando para a frente, quase inteiro fora do focinho).
+func _transform_visual_graveto(ao_comprido: bool) -> Transform3D:
+	if not ao_comprido:
+		return Transform3D.IDENTITY
+	var comprimento := graveto.comprimento if graveto else 0.8
+	return Transform3D(Basis(Vector3.UP, PI * 0.5), Vector3(comprimento * 0.5 - 0.1, 0.0, 0.0))
+
+
+## Transform da forma de colisão do graveto (no espaço do corpo) para um giro do modelo.
+func _transform_colisao_graveto(yaw: float, ao_comprido: bool) -> Transform3D:
+	var no_modelo := Transform3D(Basis.IDENTITY, boca.position) * _transform_visual_graveto(ao_comprido)
+	# A cápsula é vertical (eixo Y); o graveto fica deitado ao longo do Z da cena dele.
+	no_modelo.basis = no_modelo.basis * Basis(Vector3.RIGHT, PI * 0.5)
+	return Transform3D(Basis(Vector3.UP, yaw), Vector3.ZERO) * no_modelo
+
+
+func _atualizar_colisao_graveto() -> void:
+	colisao_graveto.transform = _transform_colisao_graveto(modelo.rotation.y, graveto_ao_comprido)
+
+
+## O graveto cabe com este giro (e deslocando o cachorro, se pedido)?
+func _graveto_cabe(yaw: float, ao_comprido: bool, deslocamento := Vector3.ZERO) -> bool:
+	var consulta := PhysicsShapeQueryParameters3D.new()
+	consulta.shape = _forma_teste
+	consulta.transform = Transform3D(Basis.IDENTITY, global_position + deslocamento) \
+		* _transform_colisao_graveto(yaw, ao_comprido)
+	consulta.collision_mask = collision_mask
+	consulta.exclude = [get_rid()]
+	return get_world_3d().direct_space_state.intersect_shape(consulta, 1).is_empty()
+
+
+## Correção de quina: se é o graveto que bate na entrada de um vão, mas ele passaria um
+## pouco mais para o lado, desliza o cachorro para lá (como os jogos de plataforma fazem
+## nas quinas). Sem isso, passar com o graveto atravessado exigiria mira de milímetros.
+func _desvio_de_encaixe(horizontal: Vector3, delta: float) -> Vector3:
+	if not tem_graveto or horizontal.length_squared() < 0.01:
+		graveto_travado = false
+		return Vector3.ZERO
+	var direcao := horizontal.normalized()
+	var passo := direcao * 0.08
+	var yaw := modelo.rotation.y
+	# Só quando quem bate é o graveto (o corpo passaria).
+	graveto_travado = false
+	if _graveto_cabe(yaw, graveto_ao_comprido, passo):
+		return Vector3.ZERO
+	var lado := Vector3(-direcao.z, 0.0, direcao.x)
+	for i in range(1, 9):
+		var distancia := i * 0.05
+		for sentido: float in [1.0, -1.0]:
+			var desvio := lado * distancia * sentido
+			if not test_move(global_transform, desvio) \
+					and _graveto_cabe(yaw, graveto_ao_comprido, desvio + passo):
+				return lado * sentido * minf(horizontal.length(), distancia / delta)
+	graveto_travado = true
+	return Vector3.ZERO
+
+
+# --- Equilíbrio --------------------------------------------------------------------------
+
+## Em passagens estreitas, um graveto grande e pesado faz o cachorro balançar de um lado
+## para o outro; o balanço cresce com a velocidade. O jogador compensa andando devagar,
+## virando o graveto ao comprido e corrigindo para o lado contrário.
+## Com o centro do corpo fora da tábua, o cachorro escorrega (com ou sem graveto).
+func _empurrao_do_balanco(delta: float, horizontal: Vector3) -> Vector3:
+	var passagem := fase.passagem_estreita_em(global_position + Vector3.UP * 0.2) if fase else {}
+	em_passagem_estreita = not passagem.is_empty()
+
+	# Centro do corpo fora da tábua: escorrega e, logo depois, cai (a física deixaria a
+	# cápsula "montada" na aresta).
+	var empurrao := Vector3.ZERO
+	if em_passagem_estreita and absf(passagem.desvio) > passagem.meia_largura + 0.06:
+		empurrao = passagem.lado * signf(passagem.desvio) * 2.5
+		_tempo_fora_da_passagem += delta
+		if _tempo_fora_da_passagem > 0.2:
+			_tempo_fora_da_passagem = 0.0
+			var embaixo := fase.tile_em(global_position + Vector3.DOWN * 0.6)
+			_voltar_ao_ponto_seguro.call_deferred("agua" if Tiles.eh_agua(embaixo) else "queda")
+	else:
+		_tempo_fora_da_passagem = 0.0
+
+	if not em_passagem_estreita:
+		balanco = move_toward(balanco, 0.0, delta * 2.0)
+		modelo.rotation.x = balanco * 0.4
+		return Vector3.ZERO
+
+	var carga := graveto.peso * graveto.comprimento if tem_graveto and graveto else 0.0
+	var excesso := maxf(carga - carga_sem_balanco, 0.0)
+	if excesso <= 0.0 or not is_on_floor():
+		balanco = move_toward(balanco, 0.0, delta * 2.0)
+		modelo.rotation.x = balanco * 0.4
+		return empurrao
+
+	# Rápido balança muito mais que devagar (cresce com o quadrado da velocidade).
+	var ritmo := clampf(horizontal.length() / velocidade, 0.0, 1.0)
+	_fase_balanco += delta * (2.5 + 1.0 * ritmo)
+	var amplitude := clampf(excesso * 0.5, 0.0, 1.0) * (0.08 + 0.92 * ritmo * ritmo)
+	amplitude *= 0.75 + 0.25 * sin(_fase_balanco * 0.37)
+	if graveto_ao_comprido:
+		amplitude *= fator_ao_comprido
+	balanco = lerpf(balanco, sin(_fase_balanco) * amplitude, 1.0 - exp(-6.0 * delta))
+	modelo.rotation.x = balanco * 0.4
+	# Empurra para o lado do corpo (eixo Z do modelo).
+	var lado := modelo.global_basis.z
+	lado.y = 0.0
+	return empurrao + lado.normalized() * balanco * forca_balanco
+
+
+# --- Quedas ------------------------------------------------------------------------------
 
 func _checar_queda(delta: float) -> void:
 	if fase and fase.dentro_da_agua(global_position):
 		_voltar_ao_ponto_seguro("agua")
 	elif global_position.y < -10.0:
 		_voltar_ao_ponto_seguro("queda")
-	elif is_on_floor():
+	elif is_on_floor() and not em_passagem_estreita:
 		_tempo_ponto_seguro += delta
 		if _tempo_ponto_seguro >= 0.25:
 			_guardar_ponto_seguro()
@@ -119,6 +315,7 @@ func _guardar_ponto_seguro() -> void:
 func _voltar_ao_ponto_seguro(motivo: String) -> void:
 	global_position = _pontos_seguros[0] + Vector3.UP * 0.2
 	velocity = Vector3.ZERO
+	balanco = 0.0
 	var ponto := _pontos_seguros[0]
 	_pontos_seguros.clear()
 	_pontos_seguros.append(ponto)

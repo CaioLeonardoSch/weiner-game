@@ -25,6 +25,9 @@ script = ExtResource("1_dachshund")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
 shape = SubResource("Forma_cachorro")
 
+[node name="ColisaoGraveto" type="CollisionShape3D" parent="."]
+disabled = true
+
 [node name="Modelo" type="Node3D" parent="."]
 
 [node name="Corpo" type="CSGBox3D" parent="Modelo"]

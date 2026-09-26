@@ -13,9 +13,7 @@ extends Node3D
 @onready var aviso: Label = $HUD/Aviso
 @onready var mensagem: Label = $HUD/Mensagem
 @onready var dica: Label = $HUD/Dica
-
-const DICA_ISO := "WASD / ←↑↓→: andar    R: reiniciar    F1: editor de fases    F3: pixel"
-const DICA_3D := "WASD / ←↑↓→: andar    Mouse: câmera    E: largar graveto    Esc: soltar mouse    R: reiniciar    F1: editor"
+@onready var indicador_equilibrio: Control = $HUD/Equilibrio
 
 var fase: Fase
 var graveto: Graveto
@@ -23,14 +21,17 @@ var dono: Dono
 var concluida := false
 var _tween_aviso: Tween
 var _proxima_fase := ""
+var _tempo_travado := 0.0
+var _dica_virar_mostrada := false
 
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	aviso.hide()
 	mensagem.hide()
-	dica.text = DICA_ISO
 	cachorro.camera_referencia = camera_controller.camera
+	indicador_equilibrio.cachorro = cachorro
+	_atualizar_dica()
 
 	var cena := Fases.cena_atual()
 	if cena == null:
@@ -43,6 +44,8 @@ func _ready() -> void:
 	add_child(fase)
 	move_child(fase, 0)
 	cachorro.fase = fase
+	cachorro.pode_pular = fase.tem_habilidade(Fase.HABILIDADE_PULAR)
+	_atualizar_dica()
 	fase.preparar_isometrica()
 
 	var inicio := fase.primeiro(InicioCachorro)
@@ -74,8 +77,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		Fases.abrir_editor()
 	elif event.is_action_pressed("largar_graveto"):
 		_tentar_largar_graveto()
+	elif event.is_action_pressed("virar_graveto"):
+		_tentar_virar_graveto()
 	elif concluida and not _proxima_fase.is_empty() and event.is_action_pressed("ui_accept"):
 		Fases.jogar(_proxima_fase)
+
+
+func _process(delta: float) -> void:
+	# Graveto grande emperrado num vão: lembra que dá para virar (uma vez por fase).
+	_tempo_travado = _tempo_travado + delta if cachorro.graveto_travado else 0.0
+	if _tempo_travado > 0.8 and not _dica_virar_mostrada and not cachorro.graveto_ao_comprido:
+		_dica_virar_mostrada = true
+		_mostrar_aviso("O graveto não passa atravessado — Q vira ao comprido")
 
 
 func _on_graveto_pego(quem: Dachshund) -> void:
@@ -92,8 +105,12 @@ func _on_graveto_pego(quem: Dachshund) -> void:
 	# Os objetos "só 3D" aparecem no fim: no meio do caminho a câmera passaria por eles.
 	fase.ativar(ObjetoFase.Visibilidade.SO_3D, true)
 	quem.entrada_bloqueada = false
-	dica.text = DICA_3D
-	_mostrar_aviso("Nova perspectiva!")
+	_atualizar_dica()
+	var texto := "Nova perspectiva!"
+	if graveto.comprimento >= 1.1 or graveto.peso >= 1.6:
+		texto += "\nGraveto %s (%.1f m) — Q vira ao comprido" % [
+			"grande e pesado" if graveto.peso >= 1.6 else "grande", graveto.comprimento]
+	_mostrar_aviso(texto)
 	# Caso tenha largado e pegado o graveto de novo já do lado do dono.
 	if dono.contem(cachorro):
 		_concluir()
@@ -117,13 +134,13 @@ func _tentar_largar_graveto() -> void:
 			return
 
 	cachorro.entrada_bloqueada = true
-	var boca := cachorro.boca.global_position
+	# No chão, onde estava na boca e na mesma direção (atravessado ou ao comprido).
+	var onde := graveto.global_transform
 	cachorro.largar_graveto()
 	graveto.reparent(fase.objetos)
-	# No chão, na frente do focinho, ainda atravessado em relação ao cachorro.
 	graveto.global_transform = Transform3D(
-		Basis(Vector3.UP, cachorro.modelo.rotation.y),
-		Vector3(boca.x, cachorro.global_position.y + 0.08, boca.z))
+		Basis(Vector3.UP, onde.basis.get_euler().y),
+		Vector3(onde.origin.x, cachorro.global_position.y + 0.08, onde.origin.z))
 	graveto.soltar()
 
 	fase.ativar(ObjetoFase.Visibilidade.SO_3D, false)
@@ -134,7 +151,29 @@ func _tentar_largar_graveto() -> void:
 
 	await camera_controller.transicao_concluida
 	cachorro.entrada_bloqueada = false
-	dica.text = DICA_ISO
+	_atualizar_dica()
+
+
+func _tentar_virar_graveto() -> void:
+	if concluida or not cachorro.tem_graveto or cachorro.entrada_bloqueada:
+		return
+	if not cachorro.virar_graveto():
+		_mostrar_aviso("Sem espaço para virar o graveto")
+
+
+func _atualizar_dica() -> void:
+	var partes: PackedStringArray = ["WASD / ←↑↓→: andar"]
+	var em_3d := cachorro.tem_graveto
+	if em_3d:
+		partes.append("Mouse: câmera")
+	if cachorro.pode_pular:
+		partes.append("Espaço: pular")
+	if em_3d:
+		partes.append_array(["Q: virar graveto", "Shift: devagar", "E: largar"])
+	partes.append_array(["R: reiniciar", "F1: editor"])
+	if not em_3d:
+		partes.append("F3: pixel")
+	dica.text = "    ".join(partes)
 
 
 func _on_dono_cachorro_chegou(body: Node3D) -> void:
@@ -145,6 +184,8 @@ func _on_dono_cachorro_chegou(body: Node3D) -> void:
 func _on_cachorro_voltou(motivo: String) -> void:
 	if motivo == "agua":
 		_mostrar_aviso("Splash! Salsicha não nada...")
+	elif motivo == "queda":
+		_mostrar_aviso("Opa! Caiu...")
 
 
 func _concluir() -> void:

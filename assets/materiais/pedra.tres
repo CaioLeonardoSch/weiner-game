@@ -4,8 +4,8 @@
 
 [resource]
 shader = ExtResource("1_shader")
-shader_parameter/cor_lado = Color(0.55, 0.56, 0.6, 1)
-shader_parameter/cor_topo = Color(0.62, 0.63, 0.66, 1)
+shader_parameter/cor_lado = Color(0.46, 0.47, 0.51, 1)
+shader_parameter/cor_topo = Color(0.55, 0.56, 0.6, 1)
 shader_parameter/variacao = 0.12
 shader_parameter/fracao_escuros = 0.25
 shader_parameter/fracao_claros = 0.15

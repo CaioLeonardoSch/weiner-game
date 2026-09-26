@@ -38,6 +38,7 @@ const _TABUA := [Vector2(-0.5, -0.58), Vector2(0.5, -0.58), Vector2(0.5, -0.5), 
 ## Cada tile: nome (editor), perfil, material (assets/materiais/<nome>.tres), colisão
 ## ("perfil" = o próprio formato, "nenhuma"), z (profundidade da extrusão) e cor no editor.
 ## `agua`: o cachorro que cai dentro volta para o último ponto seguro.
+## `estreita`: passagem estreita — com graveto grande e pesado, o cachorro se desequilibra.
 static func definicoes() -> Array[Dictionary]:
 	return [
 		{id = GRAMA, nome = "Grama", perfil = _BLOCO, material = "grama", cor = Color("5da03a")},
@@ -49,7 +50,7 @@ static func definicoes() -> Array[Dictionary]:
 		{id = MEIO_BLOCO, nome = "Meio bloco", perfil = _MEIO, material = "grama", cor = Color("92c96e")},
 		{id = MATO_BAIXO, nome = "Mato baixo", perfil = _MEIO, material = "mato", cor = Color("4d9a45")},
 		{id = AGUA, nome = "Água", perfil = _AGUA, material = "agua", colisao = "nenhuma", agua = true, cor = Color("3d8ccf")},
-		{id = TABUA, nome = "Tábua", perfil = _TABUA, material = "madeira", z = 0.18, cor = Color("a8773f")},
+		{id = TABUA, nome = "Tábua", perfil = _TABUA, material = "madeira", z = 0.18, estreita = true, cor = Color("a8773f")},
 	]
 
 
@@ -62,6 +63,15 @@ static func definicao(id: int) -> Dictionary:
 
 static func eh_agua(id: int) -> bool:
 	return definicao(id).get("agua", false)
+
+
+static func eh_estreita(id: int) -> bool:
+	return definicao(id).get("estreita", false)
+
+
+## Meia largura (m) da passagem estreita, no eixo Z do tile.
+static func meia_largura(id: int) -> float:
+	return definicao(id).get("z", 0.5)
 
 
 ## Monta a MeshLibrary a partir das definições.
