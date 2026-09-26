@@ -88,6 +88,7 @@ var raca: Raca
 func _ready() -> void:
 	colisao_graveto.disabled = true
 	raca = voxel.raca
+	add_to_group(&"cachorro")
 	_guardar_ponto_seguro()
 
 

@@ -355,3 +355,50 @@ static func bloco(variante: int) -> ArrayMesh:
 				voxels[p] = Color("55585f")
 		_cache[chave] = malha(voxels, 0.1125, Vector3(4.0, 0.0, 4.0))
 	return _cache[chave]
+
+
+const _LAS := [Color("eeeae2"), Color("e4e0d6"), Color("f4f2ec"), Color("dcd8cc")]
+const _LAS_NEGRAS := [Color("3a3434"), Color("332e2e"), Color("423b3a")]
+const _CARA_OVELHA := Color("3a3434")
+
+
+## Ovelha (voxel de 1/16 m) olhando para +X: lã fofa, cara e patas escuras. A variante 7 é
+## a ovelha negra.
+static func ovelha(variante: int) -> ArrayMesh:
+	var chave := "ovelha_%d" % variante
+	if not _cache.has(chave):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash(chave)
+		var las: Array = _LAS_NEGRAS if variante == 7 else _LAS
+		var voxels := {}
+		# Patas.
+		for x in [-4, -3, 2, 3]:
+			for z in [-2, -1, 1, 2]:
+				for y in 4:
+					voxels[Vector3i(x, y, z)] = _CARA_OVELHA.darkened(0.1)
+		# Corpo de lã: caixa com as quinas comidas e tufos por cima.
+		for x in range(-5, 5):
+			for y in range(4, 10):
+				for z in range(-3, 4):
+					var bordas := int(x == -5 or x == 4) + int(y == 4 or y == 9) + int(z == -3 or z == 3)
+					if bordas >= 2 and rng.randf() < 0.7:
+						continue
+					voxels[Vector3i(x, y, z)] = las[rng.randi() % las.size()]
+		for i in 7:
+			voxels[Vector3i(rng.randi_range(-4, 3), 10, rng.randi_range(-2, 2))] = las[rng.randi() % las.size()]
+		voxels[Vector3i(-6, 8, 0)] = las[0]
+		# Cabeça escura com um topete de lã, orelhas e olhos claros.
+		for x in range(5, 8):
+			for y in range(6, 9):
+				for z in range(-1, 2):
+					voxels[Vector3i(x, y, z)] = _CARA_OVELHA
+		for x in range(4, 7):
+			for z in range(-1, 2):
+				voxels[Vector3i(x, 9, z)] = las[rng.randi() % las.size()]
+		for z in [-2, 2]:
+			voxels[Vector3i(5, 8, z)] = _CARA_OVELHA.darkened(0.15)
+		for z in [-1, 1]:
+			voxels[Vector3i(7, 8, z)] = Color("f0ece0")
+		voxels[Vector3i(8, 6, 0)] = Color("241f1f")
+		_cache[chave] = malha(voxels, 1.0 / 16.0, Vector3(0.5, 0.0, 0.5))
+	return _cache[chave]

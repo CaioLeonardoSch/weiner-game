@@ -16,11 +16,18 @@ const HABILIDADE_PULAR := 1
 const HABILIDADE_CAVAR := 2
 const HABILIDADE_LATIR := 4
 
+## O que o cachorro precisa fazer para terminar a fase. Para um objetivo novo: acrescente o
+## nome em @export_enum (no fim), uma constante, o que a fase precisa em `requisitos()` e
+## as regras em jogo.gd (`_preparar_objetivo` / `_verificar_objetivo`).
+const OBJETIVO_GRAVETO := 0
+const OBJETIVO_PASTOREIO := 1
+
 ## Nome mostrado no jogo e no editor.
 @export var nome := "Nova fase"
 @export_flags("Pular", "Cavar", "Latir") var habilidades := 0
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
+@export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao cercado") var objetivo := OBJETIVO_GRAVETO
 ## Raça do cachorro nesta fase (id de assets/racas/*.tres). A raça soma habilidades próprias
 ## às da fase (ex.: o Border Collie sempre late).
 @export var raca := &"salsicha"
@@ -44,7 +51,22 @@ func _validate_property(propriedade: Dictionary) -> void:
 
 
 func tem_habilidade(habilidade: int) -> bool:
-	return habilidades & habilidade != 0
+	return habilidades_efetivas() & habilidade != 0
+
+
+## Habilidades da fase somadas às nativas da raça.
+func habilidades_efetivas() -> int:
+	var dados_raca := Racas.por_id(raca)
+	return habilidades | (dados_raca.habilidades_nativas if dados_raca else 0)
+
+
+## Objetos que a fase precisa ter para o objetivo dela: [[tipo, "nome para mensagens"], ...].
+func requisitos() -> Array:
+	match objetivo:
+		OBJETIVO_PASTOREIO:
+			return [[InicioCachorro, "o Início do cachorro"], [Ovelha, "uma Ovelha"], [Cercado, "um Cercado"]]
+		_:
+			return [[InicioCachorro, "o Início do cachorro"], [Dono, "o Dono"], [Graveto, "o Graveto"]]
 
 
 func lista_objetos() -> Array[ObjetoFase]:

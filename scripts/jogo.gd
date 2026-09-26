@@ -24,6 +24,9 @@ var _proxima_fase := ""
 var _tempo_travado := 0.0
 var _dica_virar_mostrada := false
 var _pausa := MenuPausa.new()
+var _ovelhas: Array[ObjetoFase] = []
+## Contador do objetivo (ex.: ovelhas no cercado), no canto de baixo.
+var contador := Label.new()
 
 
 func _ready() -> void:
@@ -33,6 +36,13 @@ func _ready() -> void:
 	cachorro.camera_referencia = camera_controller.camera
 	indicador_equilibrio.cachorro = cachorro
 	add_child(_pausa)
+	contador.hide()
+	contador.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 16)
+	contador.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	contador.add_theme_font_size_override("font_size", 24)
+	contador.add_theme_color_override("font_outline_color", Color.BLACK)
+	contador.add_theme_constant_override("outline_size", 8)
+	$HUD.add_child(contador)
 	_atualizar_dica()
 
 	var cena := Fases.cena_atual()
@@ -49,38 +59,73 @@ func _ready() -> void:
 	var raca := Racas.por_id(fase.raca)
 	if raca:
 		cachorro.aplicar_raca(raca, Racas.pelagem_escolhida(raca))
-	var habilidades := fase.habilidades | (raca.habilidades_nativas if raca else 0)
+	var habilidades := fase.habilidades_efetivas()
 	cachorro.pode_pular = habilidades & Fase.HABILIDADE_PULAR != 0
 	cachorro.pode_cavar = habilidades & Fase.HABILIDADE_CAVAR != 0
 	cachorro.pode_latir = habilidades & Fase.HABILIDADE_LATIR != 0
 	_atualizar_dica()
 	fase.preparar_isometrica()
 
-	var inicio := fase.primeiro(InicioCachorro)
-	graveto = fase.primeiro(Graveto) as Graveto
-	dono = fase.primeiro(Dono) as Dono
 	var faltando: PackedStringArray = []
-	if inicio == null:
-		faltando.append("Início do cachorro")
-	if graveto == null:
-		faltando.append("Graveto")
-	if dono == null:
-		faltando.append("Dono")
+	for regra in fase.requisitos():
+		if fase.primeiro(regra[0]) == null:
+			faltando.append(regra[1])
 	if not faltando.is_empty():
-		_mostrar_erro("A fase precisa de: %s.\nF1: abrir o editor" % ", ".join(faltando))
+		_mostrar_erro("A fase precisa de %s.\nF1: abrir o editor" % ", ".join(faltando))
 		return
 
+	var inicio := fase.primeiro(InicioCachorro)
 	cachorro.posicionar(inicio.global_position, inicio.global_rotation.y)
 	camera_controller.configurar(cachorro)
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
-	graveto.pego.connect(_on_graveto_pego)
 	for bloco in fase.todos(Empurravel):
 		(bloco as Empurravel).voltou_ao_inicio.connect(
 			_mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
-	graveto.protegido.connect(_mostrar_aviso.bind("Tem um passarinho no graveto!" +
-		("  B: latir" if cachorro.pode_latir else "")))
-	dono.cachorro_chegou.connect(_on_dono_cachorro_chegou)
+	_preparar_objetivo()
 	_mostrar_aviso(fase.nome)
+
+
+func _preparar_objetivo() -> void:
+	match fase.objetivo:
+		Fase.OBJETIVO_PASTOREIO:
+			_ovelhas = fase.todos(Ovelha)
+			_atualizar_contador()
+		_:
+			graveto = fase.primeiro(Graveto) as Graveto
+			dono = fase.primeiro(Dono) as Dono
+			graveto.pego.connect(_on_graveto_pego)
+			graveto.protegido.connect(_mostrar_aviso.bind("Tem um passarinho no graveto!" +
+				("  B: latir" if cachorro.pode_latir else "")))
+			dono.cachorro_chegou.connect(_on_dono_cachorro_chegou)
+
+
+## Chamado a cada quadro: objetivos que não dependem de um evento (pastoreio).
+func _verificar_objetivo() -> void:
+	if concluida or fase == null or fase.objetivo != Fase.OBJETIVO_PASTOREIO:
+		return
+	var mudou := false
+	for objeto in _ovelhas:
+		var ovelha := objeto as Ovelha
+		if ovelha.guardada:
+			continue
+		for cercado in fase.todos(Cercado):
+			if (cercado as Cercado).contem(ovelha.global_position):
+				ovelha.guardada = true
+				mudou = true
+				break
+	if mudou:
+		_atualizar_contador()
+		var guardadas := _ovelhas.filter(func(o: Ovelha) -> bool: return o.guardada).size()
+		if guardadas == _ovelhas.size():
+			_concluir()
+		else:
+			_mostrar_aviso("Béé! %d de %d no cercado" % [guardadas, _ovelhas.size()])
+
+
+func _atualizar_contador() -> void:
+	var guardadas := _ovelhas.filter(func(o: Ovelha) -> bool: return o.guardada).size()
+	contador.text = "Ovelhas no cercado: %d / %d" % [guardadas, _ovelhas.size()]
+	contador.show()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -106,6 +151,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	_verificar_objetivo()
 	# Graveto grande emperrado num vão: lembra que dá para virar (uma vez por fase).
 	_tempo_travado = _tempo_travado + delta if cachorro.graveto_travado else 0.0
 	if _tempo_travado > 0.8 and not _dica_virar_mostrada and not cachorro.graveto_ao_comprido:

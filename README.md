@@ -8,9 +8,11 @@ próximas etapas (túneis, pulo, cavar, empurrar, riachos, latir, truques, peso 
 
 ## Rodando
 
-Abrir a pasta no **Godot 4.7** e rodar (F5). A cena principal é `scenes/jogo.tscn`, que
-carrega a primeira fase de `scenes/fases/`. Para jogar uma fase específica, abra a cena dela
-e use F6 (rodar cena atual).
+Abrir a pasta no **Godot 4.7** e rodar (F5). O jogo abre no **menu principal**
+(`scenes/menu.tscn`): continuar de onde parou, escolher uma fase (✓ nas concluídas), escolher a
+pelagem do cachorro (com prévia ao fundo) ou abrir o **editor de fases** — numa fase existente ou
+numa nova, do zero. Para jogar uma fase direto, abra a cena dela e use F6 (rodar cena atual).
+O progresso (fases concluídas, pelagens escolhidas) fica em `user://progresso.cfg`.
 
 | Tecla | Jogo | Editor de fases |
 |---|---|---|
@@ -27,6 +29,7 @@ e use F6 (rodar cena atual).
 | G | — | conta-gotas (pega o tile/objeto sob o cursor) |
 | Shift | andar devagar (equilíbrio) | modificador (trocar tile, girar 15°) |
 | R | reiniciar | subir camada (com F: descer) |
+| Esc | pausa (continuar, reiniciar, editar, menu) | ferramenta Selecionar / desmarcar |
 | **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
 | F3 | liga/desliga o pixelado | idem |
 | H | — | lista de atalhos do editor |
@@ -64,6 +67,31 @@ um rio de **correnteza** (água rasa que arrasta o cachorro rio abaixo — se el
 é preciso **puxar** (segurar F e andar para trás) para tirá-lo e depois empurrá-lo para dentro
 do canal. Uma **escada** sobe ao platô do graveto, que é pesado — e graveto pesado deixa o
 cachorro mais firme na correnteza na volta.
+
+## Fase 05 — "O Pastor"
+
+Primeira fase com outra raça (**Border Collie**) e outro objetivo: **levar as ovelhas ao
+cercado**. As ovelhas fogem do cachorro que chega perto — é preciso ficar *atrás* delas em
+relação ao cercado para empurrar o rebanho. **Latir** (B, nativo da raça) espanta de vez. Elas
+não entram na água funda: o riacho só se atravessa pelo **vau** de água rasa. A porteira do
+cercado fica no lado oeste; dentro dele a ovelha se acalma e não sai mais.
+
+## Raças e pelagens
+
+O cachorro é um modelo **voxel gerado por código** (`scripts/racas/cachorro_voxel.gd`) a partir
+de dois dados:
+
+- **Raça** (`assets/racas/*.tres`, recurso `Raca`): proporções (corpo, patas, cabeça, focinho),
+  tipo de orelha (caída, em pé, dobrada) e de rabo (reto, enrolado, curto), fator de velocidade
+  e **habilidades nativas** (somadas às da fase). Hoje: salsicha, pug e border collie.
+- **Pelagem** (recurso `Pelagem`, dentro da raça): cores do pelo, cabeça, orelhas, marcas
+  (barriga/patas/focinho/sobrancelhas), máscara, manchas (malhado/merle) e pelo longo.
+
+Para criar uma raça: duplique um `.tres` em `assets/racas/`, mude `id`, `nome` e as medidas no
+inspetor do Godot — ela aparece sozinha no menu (tela Cachorro) e nas propriedades da fase.
+Para uma pelagem nova, acrescente um item em `pelagens`. O modelo sai em partes com pivôs
+(corpo, cabeça, orelhas, rabo, patas) animadas por código em `ModeloCachorro` (andar, abanar
+o rabo, balançar as orelhas).
 
 ## O graveto
 
@@ -120,10 +148,16 @@ variações sorteadas — o "pincel de floresta"; **G** é o conta-gotas. Ao **T
 a fase (falta início, dono ou graveto; início sem chão...) e pede confirmação se houver problema
 grave; ao salvar, mostra os avisos.
 
-Toda fase precisa de um **Início do cachorro**, um **Dono** e um **Graveto** (categoria "Regras").
-Nas propriedades da fase (nada selecionado) ficam as **habilidades do cachorro** que a fase
-libera (pular, cavar, latir) — a Fase 01 depende de o cachorro *não* pular o barranco. O comprimento e
-o peso do graveto ficam nas propriedades do Graveto.
+Nas propriedades da fase (nada selecionado) ficam o **objetivo**, a **raça** do cachorro e as
+**habilidades** que a fase libera (pular, cavar, latir; a raça pode somar as dela) — a Fase 01
+depende de o cachorro *não* pular o barranco. Cada objetivo pede alguns objetos:
+
+| Objetivo | Precisa de |
+|---|---|
+| Trazer o graveto ao dono | **Início do cachorro**, **Dono** e **Graveto** (categoria "Regras") |
+| Levar as ovelhas ao cercado | **Início do cachorro**, **Ovelhas** ("Bichos") e um **Cercado** ("Regras"; tamanho no painel, porteira no lado +X — gire para mudar) |
+
+O comprimento e o peso do graveto ficam nas propriedades do Graveto.
 
 ### A mecânica da perspectiva no editor
 
@@ -161,13 +195,16 @@ Nada de arquivos externos: tudo é gerado pelo próprio Godot.
 ## Estrutura
 
 ```
+scenes/menu.tscn              menu principal (cena inicial)
 scenes/jogo.tscn              jogo: cachorro, câmera, HUD (a fase é carregada por código)
 scenes/editor/editor_fase.tscn  editor de fases (F1)
 scenes/fases/                 fases (conteúdo: terreno + objetos)
 scenes/objetos/               objetos que o editor coloca
 scripts/jogo.gd               regras: pegar/largar graveto, perspectiva, vitória
 scripts/fase.gd               raiz de uma fase (consultas: objetos, tiles, água)
-scripts/autoload/fases.gd     qual fase jogar/editar; troca jogo ↔ editor
+scripts/autoload/fases.gd     qual fase jogar/editar; troca menu ↔ jogo ↔ editor; progresso
+scripts/racas/                raça, pelagem, gerador voxel e modelo animado do cachorro
+scripts/ui/                   tema dos menus e menu de pausa
 scripts/autoload/visual.gd    pixelado (F3)
 scripts/assets/               tiles, voxel
 scripts/editor/               editor de fases
@@ -195,3 +232,5 @@ por elas), 3 `objetos`, 4 `cachorro`.
 | Força da correnteza, lentidão da água rasa | `correnteza` / `lentidao` em `Tiles.definicoes()` |
 | Tempo segurando para puxar | `DURACAO_PUXAR` em `scripts/dachshund.gd` |
 | Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |
+| Medidas, velocidade e cores de uma raça | `assets/racas/*.tres` (inspetor do Godot) |
+| Medo e velocidade das ovelhas | constantes no topo de `scripts/objetos/ovelha.gd` |

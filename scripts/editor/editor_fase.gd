@@ -297,11 +297,11 @@ func _gravar(destino: String) -> void:
 func _validar() -> Dictionary:
 	var graves: PackedStringArray = []
 	var avisos: PackedStringArray = []
-	for regra in [[InicioCachorro, "o Início do cachorro"], [Dono, "o Dono"], [Graveto, "o Graveto"]]:
+	for regra in fase.requisitos():
 		var quantos := fase.todos(regra[0]).size()
 		if quantos == 0:
 			graves.append("Falta %s." % regra[1])
-		elif quantos > 1:
+		elif quantos > 1 and regra[0] in [InicioCachorro, Dono, Graveto]:
 			avisos.append("Há %d de %s — só o primeiro vale." % [quantos, regra[1]])
 	var inicio := fase.primeiro(InicioCachorro)
 	if inicio and not _tem_chao(inicio.global_position):
@@ -1042,6 +1042,9 @@ func _alterar_propriedade(alvo: Object, propriedade: StringName, valor: Variant)
 	undo.commit_action()
 	if alvo == fase and propriedade == &"nome":
 		campo_nome.text = fase.nome
+	elif alvo == fase and propriedade == &"raca":
+		# A dica das habilidades nativas depende da raça: remonta o painel.
+		inspetor.mostrar.call_deferred(fase)
 
 
 func _renomear_fase() -> void:

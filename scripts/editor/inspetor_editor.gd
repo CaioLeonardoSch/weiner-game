@@ -19,6 +19,7 @@ const ROTULOS := {
 	&"position": "Posição",
 	&"habilidades": "Habilidades do cachorro",
 	&"raca": "Raça do cachorro",
+	&"objetivo": "Objetivo",
 	&"peso": "Peso (1 = normal)",
 }
 const NOMES_VISIBILIDADE := ["Sempre", "Só isométrico", "Só 3D"]
@@ -61,8 +62,10 @@ func mostrar(alvo: Object) -> void:
 	elif alvo is Fase:
 		_titulo("Fase")
 		_campo(&"nome")
+		_campo(&"objetivo")
 		_campo(&"raca")
 		_campo(&"habilidades")
+		_dica_habilidades_da_raca(alvo as Fase)
 		_campo(&"desvio_camera_3d")
 		_dica("Selecione um objeto (ferramenta Selecionar) para editar as propriedades dele.")
 
@@ -194,6 +197,17 @@ func _campo(propriedade: StringName) -> void:
 				caixas[eixo].set_value_no_signal(vetor[eixo])
 		add_child(linha)
 	_atualizadores[propriedade].call()
+
+
+func _dica_habilidades_da_raca(fase: Fase) -> void:
+	var raca := Racas.por_id(fase.raca)
+	if raca == null or raca.habilidades_nativas == 0:
+		return
+	var nomes: PackedStringArray = []
+	for i in 3:
+		if raca.habilidades_nativas & (1 << i):
+			nomes.append(["Pular", "Cavar", "Latir"][i])
+	_dica("%s já sabe: %s (vale sempre)." % [raca.nome, ", ".join(nomes)])
 
 
 func _nome_de_opcao(propriedade: StringName, texto: String) -> String:
