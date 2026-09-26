@@ -21,12 +21,19 @@ var isometrica := false
 
 
 func _process(delta: float) -> void:
-	if not Input.is_action_pressed("editor_mod_ctrl"):
+	if not Input.is_action_pressed("editor_mod_ctrl") and not _digitando():
 		var entrada := Input.get_vector("mover_esquerda", "mover_direita", "mover_frente", "mover_tras")
 		var direita := Vector3(cos(yaw), 0.0, -sin(yaw))
 		var tras := Vector3(sin(yaw), 0.0, cos(yaw))
 		foco += (direita * entrada.x + tras * entrada.y) * velocidade * delta * (distancia / 22.0)
 	_aplicar()
+
+
+## Um campo de texto (nome da fase, painel de propriedades) está com o foco: WASD e as
+## setas são do texto. (O estado das ações muda mesmo quando a interface usa a tecla.)
+func _digitando() -> bool:
+	var foco := get_viewport().gui_get_focus_owner()
+	return foco is LineEdit or foco is TextEdit
 
 
 func orbitar(relativo: Vector2) -> void:

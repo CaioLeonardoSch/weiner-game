@@ -79,6 +79,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_graveto_pego(quem: Dachshund) -> void:
+	# Pego ainda durante a transição de largar (a física empurrou o cachorro para dentro
+	# da área, ex.: uma tampa voltando): a câmera só vai para o 3D depois que ela terminar.
+	if camera_controller.estado == CameraController.Estado.TRANSICAO:
+		await camera_controller.transicao_concluida
 	quem.entrada_bloqueada = true
 	# Reparent fora do callback de física da Area3D.
 	quem.pegar_graveto.call_deferred(graveto)
@@ -111,19 +115,21 @@ func _tentar_largar_graveto() -> void:
 	if concluida or not cachorro.tem_graveto \
 			or camera_controller.estado != CameraController.Estado.TERCEIRA_PESSOA:
 		return
+	# No ar (caindo de uma beirada) o graveto ficaria flutuando.
+	if not cachorro.is_on_floor():
+		return
 	for zona in fase.todos(ZonaSemLargar):
 		if (zona as ZonaSemLargar).contem(cachorro):
 			_mostrar_aviso("Aqui não dá para largar o graveto")
 			return
 
 	cachorro.entrada_bloqueada = true
-	var boca := cachorro.boca.global_position
+	var ponto := _ponto_para_largar()
 	cachorro.largar_graveto()
 	graveto.reparent(fase.objetos)
-	# No chão, na frente do focinho, ainda atravessado em relação ao cachorro.
+	# No chão, ainda atravessado em relação ao cachorro.
 	graveto.global_transform = Transform3D(
-		Basis(Vector3.UP, cachorro.modelo.rotation.y),
-		Vector3(boca.x, cachorro.global_position.y + 0.08, boca.z))
+		Basis(Vector3.UP, cachorro.modelo.rotation.y), ponto + Vector3.UP * 0.08)
 	graveto.soltar()
 
 	fase.ativar(ObjetoFase.Visibilidade.SO_3D, false)
@@ -135,6 +141,27 @@ func _tentar_largar_graveto() -> void:
 	await camera_controller.transicao_concluida
 	cachorro.entrada_bloqueada = false
 	dica.text = DICA_ISO
+
+
+## Onde o graveto cai: no chão, na frente do focinho. Se ali não der (parede, árvore, beira
+## de barranco, água), cai embaixo do cachorro — na frente ele ficaria fora de alcance, e o
+## cachorro preso sem ele (ex.: largado encostado no mato, com o túnel já fechado).
+func _ponto_para_largar() -> Vector3:
+	var espaco := cachorro.get_world_3d().direct_space_state
+	var excluir: Array[RID] = [cachorro.get_rid()]
+	var pe := cachorro.global_position
+	var boca := cachorro.boca.global_position
+	var frente := Vector3(boca.x, pe.y, boca.z)
+	var altura := Vector3.UP * 0.3
+	# Caminho livre até um pouco além do ponto (a área de pegar tem 0,2 m para cada lado).
+	var alem := frente + (frente - pe).normalized() * 0.2
+	var raio := PhysicsRayQueryParameters3D.create(pe + altura, alem + altura, cachorro.collision_mask, excluir)
+	if espaco.intersect_ray(raio).is_empty():
+		raio = PhysicsRayQueryParameters3D.create(frente + altura, frente + Vector3.DOWN * 0.3, cachorro.collision_mask, excluir)
+		var chao := espaco.intersect_ray(raio)
+		if not chao.is_empty():
+			return chao.position
+	return pe
 
 
 func _on_dono_cachorro_chegou(body: Node3D) -> void:
@@ -153,6 +180,8 @@ func _concluir() -> void:
 	concluida = true
 	cachorro.entrada_bloqueada = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# Senão um clique na tela de "fase concluída" prenderia o mouse de novo.
+	camera_controller.set_process_unhandled_input(false)
 	aviso.hide()
 	var texto := "Fase concluída! 🦴\n"
 	if Fases.testando:

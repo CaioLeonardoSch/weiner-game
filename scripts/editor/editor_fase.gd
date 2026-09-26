@@ -14,6 +14,8 @@ enum Modo { SELECAO, TERRENO, OBJETO }
 enum Visao { TUDO, ISO, TERCEIRA }
 
 const NOMES_VISAO := ["tudo", "isométrica", "3D"]
+## Quanto (pixels) o mouse anda com o botão apertado até virar arrasto: um clique só seleciona.
+const DISTANCIA_INICIO_ARRASTO := 6.0
 ## Altura do topo de cada tile (para apoiar objetos em cima); o padrão é 1 (bloco cheio).
 const TOPO_TILE := {
 	Tiles.MEIO_BLOCO: 0.5, Tiles.MATO_BAIXO: 0.5, Tiles.RAMPA_BAIXA: 0.25,
@@ -52,6 +54,9 @@ var _pincel := ""  # "", "colocar", "apagar", "pintar"
 var _camada_pincel := 0
 var _mudancas_pincel := {}  # Vector3i → [item antigo, orientação antiga, item novo, orientação nova]
 var _arrastando_objeto := false
+## Só vira true depois de o mouse andar DISTANCIA_INICIO_ARRASTO desde o clique.
+var _arrasto_iniciado := false
+var _mouse_inicio_arrasto := Vector2.ZERO
 var _transform_antes_arrasto: Transform3D
 var _altura_arrasto := 0.0
 var _orbitando := false
@@ -116,8 +121,8 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	# UndoRedo não é contado por referência: libera o histórico (e os objetos apagados que
-	# só ele guardava) e depois ele mesmo.
-	undo.clear_history()
+	# só ele guardava) e depois ele mesmo. Sem mudar a versão: a cena já está saindo.
+	undo.clear_history(false)
 	undo.free()
 
 
@@ -542,6 +547,8 @@ func _acao_principal() -> void:
 			_selecionar(objeto_sob_mouse)
 			if selecionado:
 				_arrastando_objeto = true
+				_arrasto_iniciado = false
+				_mouse_inicio_arrasto = get_viewport().get_mouse_position()
 				_transform_antes_arrasto = selecionado.transform
 				_altura_arrasto = _altura_extra(selecionado)
 
@@ -785,7 +792,6 @@ func _registrar_adicao(objeto: ObjetoFase, nome_acao: String) -> void:
 	undo.add_undo_method(_retirar.bind(objeto))
 	undo.add_do_reference(objeto)
 	undo.commit_action(false)
-	_aplicar_visao()
 
 
 func _remover_objeto(objeto: ObjetoFase) -> void:
@@ -828,6 +834,12 @@ func _duplicar_selecionado() -> void:
 func _continuar_arrasto_objeto() -> void:
 	if not alvo_valido:
 		return
+	# Sem isso, só clicar para selecionar já levava o objeto para o ponto do chão sob o
+	# mouse (clicando na copa de uma árvore, o chão atrás dela).
+	if not _arrasto_iniciado:
+		if get_viewport().get_mouse_position().distance_to(_mouse_inicio_arrasto) < DISTANCIA_INICIO_ARRASTO:
+			return
+		_arrasto_iniciado = true
 	var destino := ponto_alvo + Vector3.UP * _altura_arrasto
 	if selecionado.position != destino:
 		selecionado.position = destino
@@ -838,7 +850,9 @@ func _alterar_propriedade(alvo: Object, propriedade: StringName, valor: Variant)
 	var antigo: Variant = alvo.get(propriedade)
 	if antigo == valor:
 		return
-	undo.create_action("Alterar %s" % propriedade, UndoRedo.MERGE_ENDS)
+	# MERGE_ENDS junta ações seguidas com o mesmo nome; o nome leva o objeto porque juntar
+	# mudanças de objetos diferentes faria o desfazer perder uma delas.
+	undo.create_action("Alterar %s (%d)" % [propriedade, alvo.get_instance_id()], UndoRedo.MERGE_ENDS)
 	undo.add_do_property(alvo, propriedade, valor)
 	undo.add_undo_property(alvo, propriedade, antigo)
 	undo.commit_action()
@@ -887,6 +901,9 @@ func _on_versao_mudou() -> void:
 	modificado = true
 	_caixas.clear()
 	inspetor.atualizar_valores()
+	# Objeto recolocado (desfazer "Apagar") ou com a visibilidade trocada tem de seguir a
+	# visão atual (ex.: um "só 3D" não pode aparecer na visão isométrica).
+	_aplicar_visao()
 	_atualizar_status()
 
 
