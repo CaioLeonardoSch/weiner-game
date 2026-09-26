@@ -1,0 +1,54 @@
+# Dono do cachorro — 7 x 14 x 3 voxels (0,875 x 1,75 x 0,375 m), olhando para +Z.
+voxel 0.125
+cor s 3a2a1e   # sapato
+cor j 3b5b9a   # calça jeans
+cor b 2a2a2a   # cinto
+cor c 3a64c8   # camiseta
+cor p f0c8a0   # pele
+cor h 5a3a22   # cabelo
+cor e 222222   # olhos
+
+camada 0
+.ss.ss.
+.ss.ss.
+.ss.ss.
+
+camada 1-4
+.jj.jj.
+.jj.jj.
+.jj.jj.
+
+camada 5
+.bbbbb.
+pbbbbbp
+.bbbbb.
+
+camada 6
+.ccccc.
+pcccccp
+.ccccc.
+
+camada 7-9
+.ccccc.
+ccccccc
+.ccccc.
+
+camada 10
+..ppp..
+..ppp..
+..ppp..
+
+camada 11
+..hhh..
+..ppp..
+..ppp..
+
+camada 12
+..hhh..
+.hppph.
+..epe..
+
+camada 13
+..hhh..
+..hhh..
+..hhh..

@@ -3,10 +3,126 @@
 Jogo de puzzle 3D: um cachorro salsicha busca gravetos lendários e precisa voltar carregando
 o graveto na boca — a colisão do graveto pelo cenário é o núcleo do puzzle.
 
-Ver [CONCEITO.md](CONCEITO.md) para a ideia completa.
+Ver [CONCEITO.md](CONCEITO.md) para a ideia completa e [ROADMAP.md](ROADMAP.md) para as
+próximas etapas (túneis, pulo, cavar, empurrar, riachos, latir, truques, peso do graveto...).
 
-## Demo experimental — Fase 01
+## Rodando
 
-Protótipo da mecânica "pegou o graveto → a perspectiva muda de isométrica para 3D em terceira pessoa"
-(especificação em [DEMO_FASE_01.md](DEMO_FASE_01.md)). Abrir a pasta no Godot 4.7 e rodar (F5);
-a cena principal é `scenes/fase_01.tscn`.
+Abrir a pasta no **Godot 4.7** e rodar (F5). A cena principal é `scenes/jogo.tscn`, que
+carrega a primeira fase de `scenes/fases/`. Para jogar uma fase específica, abra a cena dela
+e use F6 (rodar cena atual).
+
+| Tecla | Jogo | Editor de fases |
+|---|---|---|
+| WASD / setas | andar | mover a câmera |
+| Mouse | câmera 3D | clique esq. coloca, dir. apaga, meio gira |
+| E | largar o graveto | girar (com Q) |
+| R | reiniciar | subir camada (com F: descer) |
+| **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
+| F3 | liga/desliga o pixelado | idem |
+| H | — | lista de atalhos do editor |
+
+## Fase 01 — "O Primeiro Graveto"
+
+Ida em visão isométrica: a trilha é estreita, cercada por mato e floresta. O mato bloqueia o
+caminho, então o salsicha sobe a rampa, anda pelo barranco e pula lá de cima perto do graveto.
+Ao pegar o graveto a câmera vira 3D e revela o túnel no mato (as bocas ficam tampadas por
+folhagem "só isométrica") — o único caminho de volta, porque o barranco é de mão única.
+
+## Visual pixelado
+
+- O 3D é renderizado em baixa resolução e ampliado sem filtro (`Viewport.scaling_3d_mode =
+  NEAREST`); a interface continua nítida. Tudo no autoload `scripts/autoload/visual.gd`:
+  **`LINHAS_ALVO`** (padrão 240) controla o quanto fica pixelado — menor = pixels maiores.
+- Contorno escuro nas silhuetas e realce claro nas quinas: `shaders/contorno_pixel.gdshader`
+  (quad de tela cheia preso à câmera; força e limiares são `uniform`s).
+- A câmera isométrica é alinhada à grade de pixels, para o cenário não "tremer".
+- Materiais do mundo (`shaders/pixel_mundo.gdshader`): cor chapada + textura de pixels gerada
+  pela posição no mundo (8 texels por metro). Cores em `assets/materiais/*.tres`.
+- Use materiais opacos (ou com alpha scissor): o contorno lê a profundidade só do que é opaco.
+
+## Criando fases
+
+Cada fase é uma cena em `scenes/fases/` com:
+
+```
+Fase (scripts/fase.gd: nome, giro da câmera 3D)
+├─ Terreno  GridMap (assets/tiles/tiles.tres), células de 1 m; o chão fica na camada -1
+└─ Objetos  instâncias de scenes/objetos/*.tscn
+```
+
+**Pelo editor do jogo (F1)** — o jeito principal. Escolha um tile ou objeto na paleta à esquerda
+e clique; a ferramenta Selecionar (Esc) seleciona e arrasta objetos e mostra as propriedades à
+direita. A visão (V) alterna entre ver tudo, **isométrica** (o que o jogador vê na ida) e **3D**
+(a volta). **Salvar** (Ctrl+S) grava por cima do arquivo da fase. Para criar uma fase nova:
+**Nova** (parte de um modelo) ou abra uma fase existente, mude o nome e use **Salvar como** — o
+arquivo novo leva o nome da fase (`Fase 02 — A ponte` → `scenes/fases/fase_02_a_ponte.tscn`).
+As fases são jogadas em ordem de nome de arquivo, então comece o nome com "Fase 02", "Fase 03"...
+Num jogo exportado as fases salvas vão para `user://fases/`.
+
+**Pelo editor do Godot** — também funciona: pinte o GridMap `Terreno` com a biblioteca de tiles e
+arraste cenas de `scenes/objetos/` para dentro de `Objetos`.
+
+Toda fase precisa de um **Início do cachorro**, um **Dono** e um **Graveto** (categoria "Regras").
+
+### A mecânica da perspectiva no editor
+
+Todo objeto tem **Visibilidade**: *Sempre*, *Só isométrico* ou *Só 3D*. Objetos "só isométrico"
+somem — e perdem a colisão — quando o cachorro pega o graveto (ex.: a *Tampa de folhagem* que
+esconde a boca de um túnel); "só 3D" só aparecem depois (ex.: árvores na frente da trilha, que
+tapariam a visão isométrica). Use a *Zona sem largar* onde largar o graveto deixaria o cachorro
+preso quando as tampas voltarem.
+
+## Criando assets
+
+Nada de arquivos externos: tudo é gerado pelo próprio Godot.
+
+- **Tiles do terreno** — `scripts/assets/tiles.gd`: cada tile é um perfil 2D extrudado (bloco,
+  meio bloco, rampas, água, tábua...) com um material e colisão. Depois de mudar ou acrescentar
+  um tile, gere a biblioteca de novo: no editor do Godot abra `ferramentas/gerar_tiles_editor.gd`
+  e use Arquivo → Executar (gera também os ícones), ou pela linha de comando
+  `godot --headless --script res://ferramentas/gerar_tiles.gd`. **Nunca renumere um ID** (ele
+  fica gravado nas fases). Mudar só as cores (em `assets/materiais/`) não precisa gerar de novo.
+- **Modelos voxel em texto** — `assets/voxel/*.txt`: camadas desenhadas com letras, uma cor por
+  letra (formato em [assets/voxel/LEIA-ME.md](assets/voxel/LEIA-ME.md)). Exemplos: `dono.txt`,
+  `tronco_caido.txt`. Use com o nó `ModeloVoxel`.
+- **Modelos voxel gerados por código** — `scripts/assets/voxel.gd`: árvores (pinheiro, redonda,
+  arbusto), pedras e flores, cada uma com 8 variantes. As malhas ficam em cache.
+- **Objetos de fase** — uma cena em `scenes/objetos/` cuja raiz estende `ObjetoFase`
+  (`scripts/objetos/objeto_fase.gd`) aparece sozinha na paleta do editor, com ícone. Para
+  expor parâmetros no painel do editor, liste as variáveis `@export` em
+  `propriedades_editaveis()`; para sortear variações ao colocar, implemente
+  `ao_colocar_no_editor(rng)`. Objetos sem lógica própria podem usar `objeto_simples.gd`.
+
+## Estrutura
+
+```
+scenes/jogo.tscn              jogo: cachorro, câmera, HUD (a fase é carregada por código)
+scenes/editor/editor_fase.tscn  editor de fases (F1)
+scenes/fases/                 fases (conteúdo: terreno + objetos)
+scenes/objetos/               objetos que o editor coloca
+scripts/jogo.gd               regras: pegar/largar graveto, perspectiva, vitória
+scripts/fase.gd               raiz de uma fase (consultas: objetos, tiles, água)
+scripts/autoload/fases.gd     qual fase jogar/editar; troca jogo ↔ editor
+scripts/autoload/visual.gd    pixelado (F3)
+scripts/assets/               tiles, voxel
+scripts/editor/               editor de fases
+shaders/, assets/             shaders, materiais, tiles gerados, modelos voxel
+ferramentas/                  geradores (rodar pelo editor do Godot ou linha de comando)
+```
+
+Camadas de física: 1 `mundo` (terreno), 2 `bordas` (paredes invisíveis; a câmera 3D passa
+por elas), 3 `objetos`, 4 `cachorro`.
+
+## Valores fáceis de ajustar
+
+| O quê | Onde |
+|---|---|
+| Quanto pixelado | `LINHAS_ALVO` em `scripts/autoload/visual.gd` |
+| Contorno (cor, força, limiares) | `uniform`s em `shaders/contorno_pixel.gdshader` |
+| Cores dos blocos | `assets/materiais/*.tres` (inspetor do Godot) |
+| Velocidade do cachorro | `velocidade` em `scenes/dachshund.tscn` / `scripts/dachshund.gd` |
+| Câmera isométrica (ângulo, zoom) e 3D | exports de `scripts/camera_controller.gd` |
+| Duração da transição de câmera | `duracao_transicao` em `scripts/camera_controller.gd` |
+| Comprimento/peso do graveto | propriedades do Graveto no editor de fases |
+| Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |

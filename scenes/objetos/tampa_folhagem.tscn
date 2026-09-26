@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objetos/objeto_simples.gd" id="1_script"]
+[ext_resource type="Material" path="res://assets/materiais/mato.tres" id="2_mato"]
+
+[sub_resource type="BoxMesh" id="Malha"]
+material = ExtResource("2_mato")
+
+[sub_resource type="BoxShape3D" id="Forma"]
+
+[node name="TampaFolhagem" type="Node3D"]
+script = ExtResource("1_script")
+visibilidade = 1
+nome = "Tampa de folhagem"
+categoria = "Regras"
+
+[node name="Visual" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("Malha")
+
+[node name="Corpo" type="StaticBody3D" parent="."]
+collision_layer = 4
+collision_mask = 0
+
+[node name="Colisao" type="CollisionShape3D" parent="Corpo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("Forma")

@@ -29,7 +29,8 @@ enum Estado { ISOMETRICO, TRANSICAO, TERCEIRA_PESSOA }
 
 @export_group("Transição")
 @export var duracao_transicao := 1.2
-## Direção inicial da câmera 3D. 90° = câmera em +X olhando para -X (de volta ao dono).
+## Direção inicial da câmera 3D. 90° = câmera em +X olhando para -X.
+## O jogo recalcula a cada fase para a câmera olhar do cachorro para o dono.
 @export var yaw_inicial_3d := 78.0
 @export var pitch_inicial_3d := -15.0
 
@@ -69,7 +70,7 @@ func configurar(novo_alvo: CharacterBody3D) -> void:
 	alvo = novo_alvo
 	braco.add_excluded_object(alvo.get_rid())
 	_foco_iso = alvo.global_position
-	camera.global_transform = _transform_iso()
+	camera.global_transform = _alinhar_ao_pixel(_transform_iso())
 
 
 func transicionar_para_3d() -> void:
@@ -142,7 +143,7 @@ func _physics_process(delta: float) -> void:
 	match estado:
 		Estado.ISOMETRICO:
 			_foco_iso = _foco_iso.lerp(alvo.global_position, 1.0 - exp(-suavizacao_iso * delta))
-			camera.global_transform = _transform_iso()
+			camera.global_transform = _alinhar_ao_pixel(_transform_iso())
 		Estado.TRANSICAO:
 			# Orbita em volta do cachorro interpolando ângulos e distância separadamente
 			# (interpolar as rotações direto faz a câmera "rolar" no meio do caminho).
@@ -163,6 +164,17 @@ func _girar(delta_yaw: float, delta_pitch: float) -> void:
 
 func _transform_iso() -> Transform3D:
 	return _transform_orbita(_foco_iso, deg_to_rad(yaw_iso), deg_to_rad(pitch_iso), distancia_iso)
+
+
+## Alinha a câmera ortográfica à grade de pixels da imagem 3D (que é de baixa resolução,
+## ver autoload Visual): sem isso o cenário "treme" um pixel enquanto a câmera desliza.
+func _alinhar_ao_pixel(t: Transform3D) -> Transform3D:
+	var tamanho_texel := tamanho_iso / Visual.altura_interna()
+	var o := t.origin
+	var x := snappedf(o.dot(t.basis.x), tamanho_texel)
+	var y := snappedf(o.dot(t.basis.y), tamanho_texel)
+	t.origin = t.basis.x * x + t.basis.y * y + t.basis.z * o.dot(t.basis.z)
+	return t
 
 
 ## Câmera olhando para `pivo`, afastada dele na direção do seu próprio +Z.

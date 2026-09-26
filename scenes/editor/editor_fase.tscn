@@ -1,0 +1,212 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/editor/editor_fase.gd" id="1_editor"]
+[ext_resource type="PackedScene" path="res://scenes/ambiente.tscn" id="2_ambiente"]
+[ext_resource type="Script" path="res://scripts/editor/camera_editor.gd" id="3_camera"]
+[ext_resource type="PackedScene" path="res://scenes/contorno_pixel.tscn" id="4_contorno"]
+[ext_resource type="Script" path="res://scripts/editor/gerador_icones.gd" id="5_icones"]
+[ext_resource type="Script" path="res://scripts/editor/sobreposicao_editor.gd" id="6_sobreposicao"]
+[ext_resource type="Script" path="res://scripts/editor/inspetor_editor.gd" id="7_inspetor"]
+
+[sub_resource type="StyleBoxFlat" id="Estilo_painel"]
+content_margin_left = 6.0
+content_margin_top = 4.0
+content_margin_right = 6.0
+content_margin_bottom = 4.0
+bg_color = Color(0.11, 0.12, 0.14, 0.96)
+
+[node name="EditorFase" type="Node3D"]
+script = ExtResource("1_editor")
+
+[node name="Ambiente" parent="." instance=ExtResource("2_ambiente")]
+
+[node name="CameraEditor" type="Node3D" parent="."]
+script = ExtResource("3_camera")
+
+[node name="Camera3D" type="Camera3D" parent="CameraEditor"]
+current = true
+fov = 50.0
+far = 300.0
+
+[node name="ContornoPixel" parent="CameraEditor/Camera3D" instance=ExtResource("4_contorno")]
+
+[node name="Icones" type="Node" parent="."]
+script = ExtResource("5_icones")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="Sobreposicao" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("6_sobreposicao")
+
+[node name="BarraTopo" type="PanelContainer" parent="UI"]
+theme_override_styles/panel = SubResource("Estilo_painel")
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 40.0
+grow_horizontal = 2
+
+[node name="Linha" type="HBoxContainer" parent="UI/BarraTopo"]
+layout_mode = 2
+
+[node name="Rotulo" type="Label" parent="UI/BarraTopo/Linha"]
+layout_mode = 2
+text = " Fase:"
+
+[node name="NomeFase" type="LineEdit" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+placeholder_text = "Nome da fase"
+
+[node name="BotaoNova" type="Button" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Nova"
+
+[node name="BotaoAbrir" type="MenuButton" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Abrir ▾"
+flat = false
+
+[node name="BotaoSalvar" type="Button" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Salvar (Ctrl+S)"
+
+[node name="BotaoSalvarComo" type="Button" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Salvar como"
+
+[node name="Espaco" type="Control" parent="UI/BarraTopo/Linha"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="BotaoVisao" type="Button" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Visão: tudo (V)"
+
+[node name="BotaoTestar" type="Button" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "▶ Testar (F1)"
+
+[node name="BotaoAjuda" type="Button" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Atalhos (H)"
+
+[node name="PainelPaleta" type="PanelContainer" parent="UI"]
+theme_override_styles/panel = SubResource("Estilo_painel")
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_top = 44.0
+offset_right = 210.0
+offset_bottom = -32.0
+grow_vertical = 2
+
+[node name="Rolagem" type="ScrollContainer" parent="UI/PainelPaleta"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Paleta" type="VBoxContainer" parent="UI/PainelPaleta/Rolagem"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PainelInspetor" type="PanelContainer" parent="UI"]
+theme_override_styles/panel = SubResource("Estilo_painel")
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -250.0
+offset_top = 44.0
+offset_bottom = -32.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="Rolagem" type="ScrollContainer" parent="UI/PainelInspetor"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Inspetor" type="VBoxContainer" parent="UI/PainelInspetor/Rolagem"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("7_inspetor")
+
+[node name="BarraStatus" type="PanelContainer" parent="UI"]
+theme_override_styles/panel = SubResource("Estilo_painel")
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Status" type="Label" parent="UI/BarraStatus"]
+unique_name_in_owner = true
+layout_mode = 2
+clip_text = true
+
+[node name="Aviso" type="Label" parent="UI"]
+unique_name_in_owner = true
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 56.0
+offset_bottom = 90.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.92, 0.5, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 22
+text = "Aviso"
+horizontal_alignment = 1
+
+[node name="Ajuda" type="PanelContainer" parent="UI"]
+theme_override_styles/panel = SubResource("Estilo_painel")
+unique_name_in_owner = true
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -330.0
+offset_top = -270.0
+offset_right = 330.0
+offset_bottom = 270.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Texto" type="RichTextLabel" parent="UI/Ajuda"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[b]Editor de fases — atalhos[/b]
+[table=2][cell][color=#ffd980]Câmera[/color][/cell][cell] [/cell][cell]WASD / setas    [/cell][cell][color=#cccccc]mover[/color][/cell][cell]Roda do mouse    [/cell][cell][color=#cccccc]zoom[/color][/cell][cell]Botão do meio    [/cell][cell][color=#cccccc]girar (com Shift: arrastar)[/color][/cell][cell]Home    [/cell][cell][color=#cccccc]centralizar no início do cachorro[/color][/cell][cell]V    [/cell][cell][color=#cccccc]visão: tudo / isométrica (a ida) / 3D (a volta)[/color][/cell][cell][color=#ffd980]Terreno (tile escolhido na paleta)[/color][/cell][cell] [/cell][cell]Clique esquerdo    [/cell][cell][color=#cccccc]colocar em cima/ao lado do bloco apontado; arraste para pintar[/color][/cell][cell]Shift + clique    [/cell][cell][color=#cccccc]trocar o bloco apontado pelo tile escolhido[/color][/cell][cell]Clique direito    [/cell][cell][color=#cccccc]apagar (arraste para apagar vários)[/color][/cell][cell]Q / E    [/cell][cell][color=#cccccc]girar o tile (rampas sobem para a seta)[/color][/cell][cell]PgUp / PgDn  ou  R / F    [/cell][cell][color=#cccccc]camada da grade (onde colocar quando não há bloco)[/color][/cell][cell][color=#ffd980]Objetos (objeto escolhido na paleta)[/color][/cell][cell] [/cell][cell]Clique esquerdo / direito    [/cell][cell][color=#cccccc]colocar / apagar[/color][/cell][cell]Q / E    [/cell][cell][color=#cccccc]girar 45° (com Shift: 15°)[/color][/cell][cell]Alt    [/cell][cell][color=#cccccc]posição livre (sem encaixar no centro da célula)[/color][/cell][cell][color=#ffd980]Selecionar (Esc)[/color][/cell][cell] [/cell][cell]Clique    [/cell][cell][color=#cccccc]selecionar; arraste para mover[/color][/cell][cell]Del / Ctrl+D    [/cell][cell][color=#cccccc]apagar / duplicar[/color][/cell][cell][color=#ffd980]Geral[/color][/cell][cell] [/cell][cell]Ctrl+Z / Ctrl+Y    [/cell][cell][color=#cccccc]desfazer / refazer[/color][/cell][cell]Ctrl+S    [/cell][cell][color=#cccccc]salvar (Salvar como: arquivo novo com o nome da fase)[/color][/cell][cell]F1    [/cell][cell][color=#cccccc]testar a fase (F1 no jogo volta para cá)[/color][/cell][cell]F3    [/cell][cell][color=#cccccc]liga/desliga o pixelado[/color][/cell][/table]
+Esc ou H fecha esta janela."
+fit_content = true
+scroll_active = false
+
+[node name="Confirmar" type="ConfirmationDialog" parent="UI"]
+unique_name_in_owner = true
+title = "Alterações não salvas"
+ok_button_text = "Continuar"
+cancel_button_text = "Cancelar"

@@ -20,6 +20,21 @@ Repositório: `CaioLeonardoSch/weiner-game`.
 >   cachorro (yaw, pitch, distância e FOV interpolados) até a terceira pessoa.
 > - As invariantes da seção 4.2 sobre o 2D (raia z = 0, trilho) deixam de se aplicar; as do 3D
 >   (barranco de mão única, mato só atravessável pelo túnel, borda frontal) continuam valendo.
+>
+> **Revisão (2026-09-26) — visual pixelado, fase em grade e editor.** A fase deixou de ser CSG
+> montado à mão dentro de `fase_01.tscn`:
+>
+> - O jogo é `scenes/jogo.tscn` (regras em `scripts/jogo.gd`) e a fase é só conteúdo, em
+>   `scenes/fases/fase_01.tscn`: terreno em grade (GridMap, blocos de 1 m) + objetos de
+>   `scenes/objetos/`. Edite pelo editor de fases do jogo (F1) — ver README.
+> - Layout mais linear: trilha de 3 m de largura cercada de mato, rampa (x 1–5) → barranco
+>   (topo em y = 2, x 5–11) → queda → clareira do graveto (x 11–19); o mato com o túnel fica em
+>   x 5–8, z −3…0. Floresta densa em volta; as árvores na frente da trilha são "só 3D".
+> - Os grupos `so_iso`/`so_3d` viraram a propriedade **Visibilidade** de cada objeto (Sempre /
+>   Só isométrico / Só 3D); as tampas do túnel são objetos *Tampa de folhagem* (só isométrico).
+>   `ZonaSemLargar` e as bordas invisíveis viraram objetos (*Zona sem largar*, *Parede invisível*).
+> - A câmera 3D, ao pegar o graveto, olha do cachorro para o dono (+ "Giro da câmera 3D" da fase).
+> - A tabela 4.1 (formas CSG) e as coordenadas da seção 4 descrevem a versão antiga.
 
 ---
 

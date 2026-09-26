@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[sub_resource type="ProceduralSkyMaterial" id="Mat_ceu"]
+sky_top_color = Color(0.32, 0.52, 0.85, 1)
+sky_horizon_color = Color(0.72, 0.82, 0.92, 1)
+ground_horizon_color = Color(0.72, 0.82, 0.92, 1)
+
+[sub_resource type="Sky" id="Ceu"]
+sky_material = SubResource("Mat_ceu")
+
+[sub_resource type="Environment" id="Ambiente"]
+background_mode = 2
+sky = SubResource("Ceu")
+ambient_light_source = 3
+tonemap_mode = 0
+
+[node name="Ambiente" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Ambiente")
+
+[node name="Sol" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.939693, -0.321394, 0.116978, 0, 0.34202, 0.939693, -0.34202, -0.883022, 0.321394, 0, 10, 0)
+shadow_enabled = true
+directional_shadow_max_distance = 45.0
