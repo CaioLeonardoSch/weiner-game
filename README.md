@@ -21,6 +21,10 @@ e use F6 (rodar cena atual).
 | Espaço | pular (se a fase liberar) | — |
 | C | cavar terra fofa (se a fase liberar) | — |
 | B | latir (se a fase liberar) | — |
+| F (segurando) + trás | puxar o bloco de pedra (sem graveto) | — |
+| Ctrl + arrastar | — | preencher um retângulo de tiles |
+| Shift + arrastar | — | espalhar o objeto escolhido (pincel de floresta) |
+| G | — | conta-gotas (pega o tile/objeto sob o cursor) |
 | Shift | andar devagar (equilíbrio) | modificador (trocar tile, girar 15°) |
 | R | reiniciar | subir camada (com F: descer) |
 | **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
@@ -52,6 +56,15 @@ para dentro do riacho; ele afunda e vira passagem (se o bloco ficar encurralado 
 volta sozinho para o lugar). Com o graveto na boca não dá para cavar
 nem latir.
 
+## Fase 04 — "A Correnteza"
+
+Primeira fase sem habilidades extras. Um **monte** de rampas e cantos logo no começo; depois
+um rio de **correnteza** (água rasa que arrasta o cachorro rio abaixo — se ele for levado até a
+água funda, "Splash!"). Um bloco de pedra está **encaixado num nicho**: empurrar não resolve,
+é preciso **puxar** (segurar F e andar para trás) para tirá-lo e depois empurrá-lo para dentro
+do canal. Uma **escada** sobe ao platô do graveto, que é pesado — e graveto pesado deixa o
+cachorro mais firme na correnteza na volta.
+
 ## O graveto
 
 - **Colisão própria**: o graveto na boca é uma forma do corpo do cachorro. Se ele não passa,
@@ -60,7 +73,8 @@ nem latir.
   graveto atravessado exigiria mira de milímetros).
 - **Q** alterna entre atravessado e ao comprido (apontando para a frente). Ao comprido passa em
   vãos estreitos, mas o graveto vai longe à frente e bate em paredes ao virar.
-- **Peso**: deixa o cachorro mais lento e o pulo mais baixo.
+- **Peso**: deixa o cachorro mais lento e o pulo mais baixo, mas mais firme na correnteza
+  (o arrasto é dividido pelo peso).
 - **Equilíbrio**: em passagens estreitas (tile *Tábua*), carga = peso × comprimento acima de 1,2
   faz o cachorro balançar; o balanço cresce com o quadrado da velocidade e é menor ao comprido.
   Com o centro do corpo fora da tábua, ele cai. Ajustes no grupo "Equilíbrio" de
@@ -100,6 +114,12 @@ Num jogo exportado as fases salvas vão para `user://fases/`.
 **Pelo editor do Godot** — também funciona: pinte o GridMap `Terreno` com a biblioteca de tiles e
 arraste cenas de `scenes/objetos/` para dentro de `Objetos`.
 
+Atalhos de construção: **Ctrl + arrastar** preenche um retângulo com o tile escolhido (um só
+desfazer); **Shift + arrastar** com um objeto escolhido espalha cópias com espaçamento e
+variações sorteadas — o "pincel de floresta"; **G** é o conta-gotas. Ao **Testar** o editor valida
+a fase (falta início, dono ou graveto; início sem chão...) e pede confirmação se houver problema
+grave; ao salvar, mostra os avisos.
+
 Toda fase precisa de um **Início do cachorro**, um **Dono** e um **Graveto** (categoria "Regras").
 Nas propriedades da fase (nada selecionado) ficam as **habilidades do cachorro** que a fase
 libera (pular, cavar, latir) — a Fase 01 depende de o cachorro *não* pular o barranco. O comprimento e
@@ -123,6 +143,10 @@ Nada de arquivos externos: tudo é gerado pelo próprio Godot.
   e use Arquivo → Executar (gera também os ícones), ou pela linha de comando
   `godot --headless --script res://ferramentas/gerar_tiles.gd`. **Nunca renumere um ID** (ele
   fica gravado nas fases). Mudar só as cores (em `assets/materiais/`) não precisa gerar de novo.
+  Tiles especiais: *Água* (funda, sem colisão), *Água rasa* (leito rente ao chão, deixa mais
+  lento), *Correnteza* (água rasa que arrasta no sentido +X do tile — gire o tile no editor para
+  mudar o sentido; as listras da água mostram o fluxo), *Escada baixa/alta* (colide como
+  rampa), *Canto de rampa* (externo e interno, baixo e alto) para fechar montes e barrancos.
 - **Modelos voxel em texto** — `assets/voxel/*.txt`: camadas desenhadas com letras, uma cor por
   letra (formato em [assets/voxel/LEIA-ME.md](assets/voxel/LEIA-ME.md)). Exemplos: `dono.txt`,
   `tronco_caido.txt`. Use com o nó `ModeloVoxel`.
@@ -168,4 +192,6 @@ por elas), 3 `objetos`, 4 `cachorro`.
 | Altura do pulo, equilíbrio | exports de `scripts/dachshund.gd` (grupo "Equilíbrio") |
 | Habilidades liberadas | propriedades da fase no editor (nada selecionado) |
 | Alcance do latido | `ALCANCE_LATIDO` em `scripts/dachshund.gd` |
+| Força da correnteza, lentidão da água rasa | `correnteza` / `lentidao` em `Tiles.definicoes()` |
+| Tempo segurando para puxar | `DURACAO_PUXAR` em `scripts/dachshund.gd` |
 | Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |
