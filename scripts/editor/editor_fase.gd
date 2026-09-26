@@ -14,6 +14,8 @@ enum Modo { SELECAO, TERRENO, OBJETO }
 enum Visao { TUDO, ISO, TERCEIRA }
 
 const NOMES_VISAO := ["tudo", "isométrica", "3D"]
+## Maior lado (células) de um retângulo de pintura, para um arrasto sem querer não travar tudo.
+const RETANGULO_MAXIMO := 64
 ## Quanto (pixels) o mouse anda com o botão apertado até virar arrasto: um clique só seleciona.
 const DISTANCIA_INICIO_ARRASTO := 6.0
 ## Altura do topo de cada tile (para apoiar objetos em cima); o padrão é 1 (bloco cheio).
@@ -53,6 +55,16 @@ var selecionado: ObjetoFase
 var _pincel := ""  # "", "colocar", "apagar", "pintar"
 var _camada_pincel := 0
 var _mudancas_pincel := {}  # Vector3i → [item antigo, orientação antiga, item novo, orientação nova]
+## Ctrl + arrastar: o pincel só marca um retângulo e aplica tudo ao soltar.
+var _retangulo := false
+var _retangulo_inicio := Vector2i.ZERO
+var _retangulo_fim := Vector2i.ZERO
+## Shift + arrastar com um objeto escolhido: espalha cópias (floresta, flores, pedras).
+var _espalhando := false
+var _espalhados: Array[ObjetoFase] = []
+var _ultimo_espalhado := Vector3.ZERO
+## Ponto sob o mouse sem encaixar na grade (para espalhar objetos).
+var ponto_livre := Vector3.ZERO
 var _arrastando_objeto := false
 ## Só vira true depois de o mouse andar DISTANCIA_INICIO_ARRASTO desde o clique.
 var _arrasto_iniciado := false
@@ -270,8 +282,61 @@ func _gravar(destino: String) -> void:
 	caminho = destino
 	Fases.caminho_atual = destino
 	modificado = false
-	_avisar("Salva: %s" % destino)
+	var problemas := _validar()
+	var lista: PackedStringArray = problemas.graves + problemas.avisos
+	if lista.is_empty():
+		_avisar("Salva: %s" % destino)
+	else:
+		_avisar("Salva: %s\nAtenção: %s" % [destino, "\n".join(lista)], 6.0)
 	_atualizar_status()
+
+
+## Confere a fase. `graves`: impedem jogar (falta início, dono ou graveto); `avisos`: coisas
+## que provavelmente são engano (habilidade desligada, objeto no ar...).
+func _validar() -> Dictionary:
+	var graves: PackedStringArray = []
+	var avisos: PackedStringArray = []
+	for regra in [[InicioCachorro, "o Início do cachorro"], [Dono, "o Dono"], [Graveto, "o Graveto"]]:
+		var quantos := fase.todos(regra[0]).size()
+		if quantos == 0:
+			graves.append("Falta %s." % regra[1])
+		elif quantos > 1:
+			avisos.append("Há %d de %s — só o primeiro vale." % [quantos, regra[1]])
+	var inicio := fase.primeiro(InicioCachorro)
+	if inicio and not _tem_chao(inicio.global_position):
+		graves.append("O Início do cachorro está no ar ou na água.")
+	var graveto := fase.primeiro(Graveto)
+	if graveto and not _tem_chao(graveto.global_position):
+		avisos.append("O Graveto está no ar ou na água.")
+	var abaixo := 0
+	for objeto in fase.lista_objetos():
+		if objeto.global_position.y < -3.0:
+			abaixo += 1
+	if abaixo > 0:
+		avisos.append("%d objeto(s) bem abaixo do chão." % abaixo)
+	var tem_terra_fofa := not terreno.get_used_cells_by_item(Tiles.TERRA_FOFA).is_empty()
+	if tem_terra_fofa and not fase.tem_habilidade(Fase.HABILIDADE_CAVAR):
+		avisos.append("Há terra fofa, mas a habilidade Cavar está desligada.")
+	if not fase.todos(Passaro).is_empty() and not fase.tem_habilidade(Fase.HABILIDADE_LATIR):
+		for passaro in fase.todos(Passaro):
+			if graveto and (passaro as Passaro).guarda(graveto.global_position) or (passaro as Passaro).bloqueia_passagem:
+				avisos.append("Um passarinho guarda o graveto ou bloqueia o caminho, mas Latir está desligado.")
+				break
+	for bloco in fase.todos(Empurravel):
+		var local := terreno.to_local(bloco.global_position)
+		if absf(fposmod(local.x, 1.0) - 0.5) > 0.05 or absf(fposmod(local.z, 1.0) - 0.5) > 0.05:
+			avisos.append("Bloco empurrável fora do centro da célula (ele anda de célula em célula).")
+			break
+	return {graves = graves, avisos = avisos}
+
+
+## Tem chão firme (bloco que não é água) logo abaixo da posição?
+func _tem_chao(posicao: Vector3) -> bool:
+	for descida: float in [0.1, 0.6]:
+		var item := fase.tile_em(posicao + Vector3.DOWN * descida)
+		if item != GridMap.INVALID_CELL_ITEM:
+			return not Tiles.eh_agua(item)
+	return false
 
 
 ## A pasta do projeto é só leitura no jogo exportado.
@@ -296,7 +361,16 @@ static func _nome_de_arquivo(nome: String) -> String:
 	return resultado.trim_suffix("_")
 
 
-func _testar() -> void:
+func _testar(confirmado := false) -> void:
+	var problemas := _validar()
+	if not confirmado and problemas.graves.size() > 0:
+		confirmar.dialog_text = "Esta fase não dá para jogar direito:\n\n• %s\n\nTestar mesmo assim?" \
+			% "\n• ".join(problemas.graves)
+		for conexao in confirmar.confirmed.get_connections():
+			confirmar.confirmed.disconnect(conexao.callable)
+		confirmar.confirmed.connect(_testar.bind(true), CONNECT_ONE_SHOT)
+		confirmar.popup_centered()
+		return
 	var cena := _empacotar()
 	if cena == null:
 		return
@@ -457,6 +531,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		ajuda.visible = not ajuda.visible
 	elif event.is_action_pressed("editor_perspectiva"):
 		_proxima_visao()
+	elif event.is_action_pressed("editor_conta_gotas"):
+		_conta_gotas()
 	elif event.is_action_pressed("editor_centralizar"):
 		var inicio := fase.primeiro(InicioCachorro)
 		camera_editor.foco = inicio.global_position if inicio else Vector3.ZERO
@@ -498,7 +574,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(_delta: float) -> void:
 	# Botão solto em cima de um painel: o evento não chega aqui, então confere o estado.
-	if (_pincel != "" or _arrastando_objeto) \
+	if (_pincel != "" or _arrastando_objeto or _espalhando) \
 			and not Input.is_action_pressed("editor_acao") and not Input.is_action_pressed("editor_remover"):
 		_terminar_arrastos()
 	_orbitando = _orbitando and Input.is_action_pressed("editor_orbitar")
@@ -508,6 +584,8 @@ func _process(_delta: float) -> void:
 		_continuar_pincel()
 	if _arrastando_objeto and selecionado:
 		_continuar_arrasto_objeto()
+	if _espalhando and alvo_valido:
+		_continuar_espalhar()
 	if fantasma:
 		fantasma.visible = modo == Modo.OBJETO and alvo_valido
 		if fantasma.visible:
@@ -542,7 +620,10 @@ func _acao_principal() -> void:
 			else:
 				_comecar_pincel("colocar", celula_alvo.y)
 		Modo.OBJETO:
-			_colocar_objeto()
+			if Input.is_action_pressed("editor_mod_shift"):
+				_comecar_espalhar()
+			else:
+				_colocar_objeto()
 		Modo.SELECAO:
 			_selecionar(objeto_sob_mouse)
 			if selecionado:
@@ -564,6 +645,8 @@ func _acao_remover() -> void:
 func _terminar_arrastos() -> void:
 	if _pincel != "":
 		_terminar_pincel()
+	if _espalhando:
+		_terminar_espalhar()
 	if _arrastando_objeto:
 		_arrastando_objeto = false
 		if selecionado and selecionado.transform != _transform_antes_arrasto:
@@ -620,6 +703,7 @@ func _atualizar_alvo() -> void:
 		celula_alvo = Vector3i(floori(ponto_alvo.x), camada, floori(ponto_alvo.z))
 	else:
 		return
+	ponto_livre = ponto_alvo
 	# Objetos ficam no centro da célula; com Alt, livres.
 	if not Input.is_action_pressed("editor_mod_alt"):
 		ponto_alvo.x = floorf(ponto_alvo.x) + 0.5
@@ -700,7 +784,22 @@ func _comecar_pincel(tipo: String, camada_pincel: int) -> void:
 	_pincel = tipo
 	_camada_pincel = camada_pincel
 	_mudancas_pincel.clear()
-	_aplicar_pincel(celula_atingida if tipo != "colocar" else celula_alvo)
+	var celula := celula_atingida if tipo != "colocar" else celula_alvo
+	_retangulo = Input.is_action_pressed("editor_mod_ctrl")
+	if _retangulo:
+		_retangulo_inicio = Vector2i(celula.x, celula.z)
+		_retangulo_fim = _retangulo_inicio
+	else:
+		_aplicar_pincel(celula)
+
+
+## Retângulo sendo marcado (Ctrl + arrastar), em células: AABB, ou null.
+func retangulo_em_andamento() -> Variant:
+	if _pincel == "" or not _retangulo:
+		return null
+	var minimo := Vector2i(mini(_retangulo_inicio.x, _retangulo_fim.x), mini(_retangulo_inicio.y, _retangulo_fim.y))
+	var maximo := Vector2i(maxi(_retangulo_inicio.x, _retangulo_fim.x), maxi(_retangulo_inicio.y, _retangulo_fim.y))
+	return AABB(Vector3(minimo.x, _camada_pincel, minimo.y), Vector3(maximo.x - minimo.x + 1, 1, maximo.y - minimo.y + 1))
 
 
 ## Durante o arrasto, a pintura fica presa na camada em que começou.
@@ -716,7 +815,13 @@ func _continuar_pincel() -> void:
 	if t <= 0.0:
 		return
 	var ponto := origem + direcao * t
-	_aplicar_pincel(Vector3i(floori(ponto.x), _camada_pincel, floori(ponto.z)))
+	var celula := Vector3i(floori(ponto.x), _camada_pincel, floori(ponto.z))
+	if _retangulo:
+		_retangulo_fim = Vector2i(
+			clampi(celula.x, _retangulo_inicio.x - RETANGULO_MAXIMO + 1, _retangulo_inicio.x + RETANGULO_MAXIMO - 1),
+			clampi(celula.z, _retangulo_inicio.y - RETANGULO_MAXIMO + 1, _retangulo_inicio.y + RETANGULO_MAXIMO - 1))
+	else:
+		_aplicar_pincel(celula)
 
 
 func _aplicar_pincel(celula: Vector3i) -> void:
@@ -748,6 +853,12 @@ func _aplicar_pincel(celula: Vector3i) -> void:
 
 func _terminar_pincel() -> void:
 	var tipo := _pincel
+	if _retangulo:
+		var caixa: AABB = retangulo_em_andamento()
+		for x in range(int(caixa.position.x), int(caixa.end.x)):
+			for z in range(int(caixa.position.z), int(caixa.end.z)):
+				_aplicar_pincel(Vector3i(x, _camada_pincel, z))
+		_retangulo = false
 	_pincel = ""
 	if _mudancas_pincel.is_empty():
 		return
@@ -784,6 +895,78 @@ func _colocar_objeto() -> void:
 	_selecionar(objeto)
 	# Próximo com outra variação (árvores, pedras...); objetos sem variação mantêm o giro.
 	fantasma.ao_colocar_no_editor(rng)
+
+
+func _comecar_espalhar() -> void:
+	if fantasma == null:
+		return
+	_espalhando = true
+	_espalhados.clear()
+	_espalhar_um(ponto_livre)
+
+
+## Distância mínima entre objetos espalhados: pelo tamanho do objeto.
+func _espacamento() -> float:
+	var caixa := fantasma.caixa_editor()
+	return clampf(maxf(caixa.size.x, caixa.size.z) * 0.75 * fantasma.scale.x, 0.6, 3.0)
+
+
+func _continuar_espalhar() -> void:
+	if ponto_livre.distance_to(_ultimo_espalhado) >= _espacamento():
+		_espalhar_um(ponto_livre)
+
+
+func _espalhar_um(ponto: Vector3) -> void:
+	var jitter := Vector3(rng.randf_range(-0.25, 0.25), 0.0, rng.randf_range(-0.25, 0.25))
+	var objeto := fase.adicionar_objeto(entrada_objeto.cena, ponto + jitter, 0.0)
+	objeto.transform = Transform3D(fantasma.transform.basis, ponto + jitter + Vector3.UP * _altura_extra(fantasma))
+	objeto.visibilidade = fantasma.visibilidade
+	for propriedade in fantasma.propriedades_editaveis():
+		objeto.set(propriedade, fantasma.get(propriedade))
+	_espalhados.append(objeto)
+	_ultimo_espalhado = ponto
+	fantasma.ao_colocar_no_editor(rng)
+
+
+func _terminar_espalhar() -> void:
+	_espalhando = false
+	if _espalhados.is_empty():
+		return
+	var lista := _espalhados.duplicate()
+	undo.create_action("Espalhar %d objeto(s)" % lista.size())
+	for objeto in lista:
+		undo.add_do_method(_readicionar.bind(objeto))
+		undo.add_undo_method(_retirar.bind(objeto))
+		undo.add_do_reference(objeto)
+	undo.commit_action(false)
+	_espalhados.clear()
+
+
+## Conta-gotas (G): escolhe o objeto ou o tile que está sob o cursor, com as mesmas
+## propriedades (variante, visibilidade, giro).
+func _conta_gotas() -> void:
+	var mouse := get_viewport().get_mouse_position()
+	var origem := camera.project_ray_origin(mouse)
+	var direcao := camera.project_ray_normal(mouse)
+	var objeto := _objeto_no_raio(origem, direcao)
+	if objeto:
+		for entrada in _catalogo:
+			if entrada.caminho == objeto.scene_file_path:
+				_escolher_objeto(entrada)
+				fantasma.visibilidade = objeto.visibilidade
+				fantasma.rotation = objeto.rotation
+				fantasma.scale = objeto.scale
+				for propriedade in objeto.propriedades_editaveis():
+					fantasma.set(propriedade, objeto.get(propriedade))
+				_avisar("Conta-gotas: %s" % entrada.nome)
+				return
+	var bloco := _raio_na_grade(origem, direcao, 300.0)
+	if not bloco.is_empty():
+		var celula: Vector3i = bloco.celula
+		var base := terreno.get_basis_with_orthogonal_index(terreno.get_cell_item_orientation(celula))
+		orientacao = posmod(roundi(base.get_euler().y / (PI * 0.5)), 4)
+		_escolher_tile(terreno.get_cell_item(celula))
+		_avisar("Conta-gotas: %s" % Tiles.definicao(tile_atual).nome)
 
 
 func _registrar_adicao(objeto: ObjetoFase, nome_acao: String) -> void:
@@ -921,11 +1104,11 @@ func _atualizar_status() -> void:
 		ferramenta, camada, NOMES_VISAO[visao], arquivo, "  •  modificada" if modificado else ""]
 
 
-func _avisar(texto: String) -> void:
+func _avisar(texto: String, segundos := 2.5) -> void:
 	aviso.text = texto
 	aviso.show()
 	if _tween_aviso:
 		_tween_aviso.kill()
 	_tween_aviso = create_tween()
-	_tween_aviso.tween_interval(2.5)
+	_tween_aviso.tween_interval(segundos)
 	_tween_aviso.tween_callback(aviso.hide)
