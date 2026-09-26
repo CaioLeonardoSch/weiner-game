@@ -1,0 +1,32 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="Mat_tronco"]
+albedo_color = Color(0.36, 0.23, 0.13, 1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_copa"]
+albedo_color = Color(0.13, 0.36, 0.16, 1)
+
+[node name="Arvore" type="Node3D"]
+
+[node name="Tronco" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+radius = 0.25
+height = 3.0
+sides = 10
+material = SubResource("Mat_tronco")
+
+[node name="CopaBaixo" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.6, 0)
+radius = 1.4
+height = 2.4
+sides = 10
+cone = true
+material = SubResource("Mat_copa")
+
+[node name="CopaCima" type="CSGCylinder3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.7, 0)
+radius = 1.0
+height = 2.0
+sides = 10
+cone = true
+material = SubResource("Mat_copa")
