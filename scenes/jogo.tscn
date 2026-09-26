@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="4_camera"]
 [ext_resource type="PackedScene" path="res://scenes/contorno_pixel.tscn" id="5_contorno"]
 [ext_resource type="Script" path="res://scripts/indicador_equilibrio.gd" id="6_equilibrio"]
+[ext_resource type="Script" path="res://scripts/ui/area_segura.gd" id="7_area"]
 
 [sub_resource type="SphereShape3D" id="Forma_braco"]
 radius = 0.2
@@ -33,17 +34,28 @@ current = true
 
 [node name="HUD" type="CanvasLayer" parent="."]
 
-[node name="Dica" type="Label" parent="HUD"]
+[node name="Area" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("7_area")
+
+[node name="Dica" type="Label" parent="HUD/Area"]
+anchor_right = 1.0
 offset_left = 16.0
 offset_top = 12.0
-offset_right = 1136.0
+offset_right = -16.0
 offset_bottom = 40.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 18
 text = "Dica"
 
-[node name="Aviso" type="Label" parent="HUD"]
+[node name="Aviso" type="Label" parent="HUD/Area"]
 anchor_right = 1.0
 offset_top = 90.0
 offset_bottom = 150.0
@@ -55,7 +67,7 @@ text = "Nova perspectiva!"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Mensagem" type="Label" parent="HUD"]
+[node name="Mensagem" type="Label" parent="HUD/Area"]
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -65,7 +77,7 @@ text = "Fase concluída!"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Equilibrio" type="Control" parent="HUD"]
+[node name="Equilibrio" type="Control" parent="HUD/Area"]
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0

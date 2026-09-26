@@ -7,10 +7,12 @@ extends Node3D
 ## arrastar pinta na mesma camada. Clique direito apaga; Shift + clique troca o tile.
 ## Objetos: escolha na paleta e clique para colocar; a ferramenta Selecionar (Esc) seleciona,
 ## arrasta e mostra as propriedades no painel da direita.
+## Mecanismos (placas, portões...) se ligam pela cor do canal; a ferramenta Ligar (L) liga duas
+## peças com dois cliques e escolhe a cor. Um mecanismo novo já vem com uma cor livre.
 ## Tudo passa pelo desfazer/refazer (Ctrl+Z / Ctrl+Y). Ctrl+S salva em scenes/fases/.
 ## F1 testa a fase como está (sem salvar) e volta para cá no mesmo ponto.
 
-enum Modo { SELECAO, TERRENO, OBJETO }
+enum Modo { SELECAO, TERRENO, OBJETO, LIGAR }
 enum Visao { TUDO, ISO, TERCEIRA }
 
 const NOMES_VISAO := ["tudo", "isométrica", "3D"]
@@ -76,6 +78,10 @@ var _caixas := {}  # cache de caixa_editor() por objeto
 var _catalogo: Array[Dictionary] = []
 var _botoes_paleta := ButtonGroup.new()
 var _tween_aviso: Tween
+## Ferramenta Ligar: a primeira peça clicada (esperando a segunda).
+var ligar_origem: ObjetoFase
+## O fantasma veio do conta-gotas: mantém a cor copiada em vez de pegar uma livre.
+var _fantasma_copiado := false
 
 @onready var camera_editor: CameraEditor = $CameraEditor
 @onready var camera: Camera3D = $CameraEditor/Camera3D
@@ -297,12 +303,13 @@ func _gravar(destino: String) -> void:
 func _validar() -> Dictionary:
 	var graves: PackedStringArray = []
 	var avisos: PackedStringArray = []
-	for regra in fase.requisitos():
-		var quantos := fase.todos(regra[0]).size()
-		if quantos == 0:
-			graves.append("Falta %s." % regra[1])
-		elif quantos > 1 and regra[0] in [InicioCachorro, Dono, Graveto]:
-			avisos.append("Há %d de %s — só o primeiro vale." % [quantos, regra[1]])
+	var objetivo := Objetivo.criar(fase.objetivo)
+	for falta in objetivo.faltando(fase):
+		graves.append("Falta %s." % falta)
+	avisos.append_array(objetivo.avisos(fase))
+	if fase.todos(InicioCachorro).size() > 1:
+		avisos.append("Há mais de um Início do cachorro — só o primeiro vale.")
+	avisos.append_array(_avisos_de_mecanismos())
 	var inicio := fase.primeiro(InicioCachorro)
 	if inicio and not _tem_chao(inicio.global_position):
 		graves.append("O Início do cachorro está no ar ou na água.")
@@ -416,6 +423,9 @@ func _montar_paleta() -> void:
 	var selecionar := _botao_paleta("Selecionar (Esc)", null)
 	selecionar.set_meta(&"ferramenta", "selecao")
 	selecionar.pressed.connect(_escolher_selecao)
+	var ligar := _botao_paleta("Ligar mecanismos (L)", null)
+	ligar.set_meta(&"ferramenta", "ligar")
+	ligar.pressed.connect(_escolher_ligar)
 
 	_cabecalho("Terreno")
 	var biblioteca: MeshLibrary = load(Tiles.CAMINHO_BIBLIOTECA)
@@ -462,12 +472,23 @@ func _marcar_botao_da_ferramenta() -> void:
 			chave = "tile_%d" % tile_atual
 		Modo.OBJETO:
 			chave = entrada_objeto.get("caminho", "")
+		Modo.LIGAR:
+			chave = "ligar"
 	for botao in _botoes_paleta.get_buttons():
 		botao.set_pressed_no_signal(botao.get_meta(&"ferramenta") == chave)
 
 
 func _escolher_selecao() -> void:
 	modo = Modo.SELECAO
+	ligar_origem = null
+	_trocar_fantasma(null)
+	_marcar_botao_da_ferramenta()
+	_atualizar_status()
+
+
+func _escolher_ligar() -> void:
+	modo = Modo.LIGAR
+	ligar_origem = null
 	_trocar_fantasma(null)
 	_marcar_botao_da_ferramenta()
 	_atualizar_status()
@@ -475,6 +496,7 @@ func _escolher_selecao() -> void:
 
 func _escolher_tile(id: int) -> void:
 	modo = Modo.TERRENO
+	ligar_origem = null
 	tile_atual = id
 	_trocar_fantasma(null)
 	_selecionar(null)
@@ -484,8 +506,11 @@ func _escolher_tile(id: int) -> void:
 
 func _escolher_objeto(entrada: Dictionary) -> void:
 	modo = Modo.OBJETO
+	ligar_origem = null
 	entrada_objeto = entrada
 	_trocar_fantasma(entrada.cena)
+	_fantasma_copiado = false
+	_cor_livre_no_fantasma()
 	_marcar_botao_da_ferramenta()
 	_atualizar_status()
 
@@ -524,6 +549,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Esc: fecha a ajuda; senão vai para a ferramenta Selecionar; já nela, desmarca.
 		if ajuda.visible:
 			ajuda.hide()
+		elif modo == Modo.LIGAR and ligar_origem:
+			ligar_origem = null
+			_atualizar_status()
 		elif modo != Modo.SELECAO:
 			_escolher_selecao()
 		else:
@@ -534,6 +562,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_proxima_visao()
 	elif event.is_action_pressed("editor_conta_gotas"):
 		_conta_gotas()
+	elif event.is_action_pressed("editor_ligar"):
+		_escolher_ligar()
 	elif event.is_action_pressed("editor_centralizar"):
 		var inicio := fase.primeiro(InicioCachorro)
 		camera_editor.foco = inicio.global_position if inicio else Vector3.ZERO
@@ -611,6 +641,9 @@ func camada_da_grade() -> int:
 
 
 func _acao_principal() -> void:
+	if modo == Modo.LIGAR:
+		_clique_ligar(objeto_sob_mouse)
+		return
 	if not alvo_valido:
 		return
 	match modo:
@@ -639,6 +672,9 @@ func _acao_remover() -> void:
 	if modo == Modo.TERRENO:
 		if atingiu_bloco:
 			_comecar_pincel("apagar", celula_atingida.y)
+	elif modo == Modo.LIGAR:
+		if objeto_sob_mouse:
+			_isolar(objeto_sob_mouse)
 	elif objeto_sob_mouse:
 		_remover_objeto(objeto_sob_mouse)
 
@@ -683,6 +719,8 @@ func _atualizar_alvo() -> void:
 
 	if modo != Modo.TERRENO:
 		objeto_sob_mouse = _objeto_no_raio(origem, direcao)
+		if modo == Modo.LIGAR and objeto_sob_mouse and objeto_sob_mouse.papel_no_canal() == "":
+			objeto_sob_mouse = null
 
 	var bloco := _raio_na_grade(origem, direcao, 300.0)
 	var t_plano := -1.0
@@ -896,6 +934,7 @@ func _colocar_objeto() -> void:
 	_selecionar(objeto)
 	# Próximo com outra variação (árvores, pedras...); objetos sem variação mantêm o giro.
 	fantasma.ao_colocar_no_editor(rng)
+	_cor_livre_no_fantasma()
 
 
 func _comecar_espalhar() -> void:
@@ -959,6 +998,7 @@ func _conta_gotas() -> void:
 				fantasma.scale = objeto.scale
 				for propriedade in objeto.propriedades_editaveis():
 					fantasma.set(propriedade, objeto.get(propriedade))
+				_fantasma_copiado = true
 				_avisar("Conta-gotas: %s" % entrada.nome)
 				return
 	var bloco := _raio_na_grade(origem, direcao, 300.0)
@@ -1059,6 +1099,134 @@ func _selecionar(objeto: ObjetoFase) -> void:
 	inspetor.mostrar(objeto if objeto else fase)
 
 
+# --- Mecanismos (ferramenta Ligar) --------------------------------------------------------
+
+## Placas, portões... (objetos com papel no canal) da fase.
+func mecanismos() -> Array[ObjetoFase]:
+	var lista: Array[ObjetoFase] = []
+	for objeto in fase.lista_objetos():
+		if objeto.papel_no_canal() != "":
+			lista.append(objeto)
+	return lista
+
+
+## Os outros mecanismos com a mesma cor de `objeto`.
+func _grupo(objeto: ObjetoFase) -> Array[ObjetoFase]:
+	var canal: int = objeto.get(&"canal")
+	return mecanismos().filter(func(outro: ObjetoFase) -> bool:
+		return outro != objeto and outro.get(&"canal") == canal)
+
+
+## Primeira cor que nenhum mecanismo usa (fora `ignorar`), ou -1 se as 8 estão em uso.
+func _canal_livre(ignorar: ObjetoFase = null) -> int:
+	var usados := {}
+	for objeto in mecanismos():
+		if objeto != ignorar:
+			usados[objeto.get(&"canal")] = true
+	for canal in Canais.LISTA.size():
+		if not usados.has(canal):
+			return canal
+	return -1
+
+
+## Mecanismo novo vem com uma cor livre, para não se ligar sem querer ao que já existe.
+func _cor_livre_no_fantasma() -> void:
+	if fantasma == null or _fantasma_copiado or fantasma.papel_no_canal() == "":
+		return
+	var livre := _canal_livre()
+	if livre >= 0:
+		fantasma.set(&"canal", livre)
+
+
+func _clique_ligar(objeto: ObjetoFase) -> void:
+	if objeto == null or objeto == ligar_origem:
+		ligar_origem = null
+	elif ligar_origem == null or not is_instance_valid(ligar_origem) or not ligar_origem.is_inside_tree():
+		ligar_origem = objeto
+		_selecionar(objeto)
+	else:
+		_ligar(ligar_origem, objeto)
+		if not Input.is_action_pressed("editor_mod_shift"):
+			ligar_origem = null
+	_atualizar_status()
+
+
+## Liga `b` a `a` (a segunda peça fica com a cor da primeira). Se só a segunda já tem ligações,
+## é a primeira que entra no grupo dela. Clicar num par já ligado desliga a segunda.
+func _ligar(a: ObjetoFase, b: ObjetoFase) -> void:
+	var canal_a: int = a.get(&"canal")
+	var canal_b: int = b.get(&"canal")
+	if canal_a == canal_b:
+		if ligar_origem and Input.is_action_pressed("editor_mod_shift"):
+			return  # Shift + clique num já ligado: nada a fazer.
+		var livre := _canal_livre()
+		if livre < 0:
+			_avisar("As %d cores já estão em uso: não há como desligar." % Canais.LISTA.size())
+			return
+		_trocar_canais({b: livre}, "Desligar %s" % b.nome_no_editor())
+		_avisar("%s desligado (agora %s)." % [b.nome_no_editor(), Canais.nome(livre).to_lower()])
+		return
+	if _grupo(a).is_empty() and not _grupo(b).is_empty():
+		_trocar_canais({a: canal_b}, "Ligar %s" % a.nome_no_editor())
+		_avisar("Ligados (%s)." % Canais.nome(canal_b).to_lower())
+	else:
+		var saiu := not _grupo(b).is_empty()
+		_trocar_canais({b: canal_a}, "Ligar %s" % b.nome_no_editor())
+		_avisar("Ligados (%s).%s" % [Canais.nome(canal_a).to_lower(),
+			"\n%s saiu das ligações %s." % [b.nome_no_editor(), Canais.nome(canal_b).to_lower()] if saiu else ""])
+
+
+## Clique direito na ferramenta Ligar: a peça ganha uma cor livre (solta de todas as ligações).
+func _isolar(objeto: ObjetoFase) -> void:
+	if _grupo(objeto).is_empty():
+		_avisar("%s não está ligado a nada." % objeto.nome_no_editor())
+		return
+	var livre := _canal_livre()
+	if livre < 0:
+		_avisar("As %d cores já estão em uso." % Canais.LISTA.size())
+		return
+	if objeto == ligar_origem:
+		ligar_origem = null
+	_trocar_canais({objeto: livre}, "Soltar %s" % objeto.nome_no_editor())
+	_avisar("%s solto (agora %s)." % [objeto.nome_no_editor(), Canais.nome(livre).to_lower()])
+
+
+func _trocar_canais(mudancas: Dictionary, nome_acao: String) -> void:
+	undo.create_action(nome_acao)
+	for objeto: ObjetoFase in mudancas:
+		undo.add_do_property(objeto, &"canal", mudancas[objeto])
+		undo.add_undo_property(objeto, &"canal", objeto.get(&"canal"))
+	undo.commit_action()
+
+
+## Avisos da validação: quem aciona sem ninguém reagindo (e vice-versa), e regra E sem sentido.
+func _avisos_de_mecanismos() -> PackedStringArray:
+	var avisos: PackedStringArray = []
+	var acionam := {}
+	var reagem := {}
+	for objeto in mecanismos():
+		var canal: int = objeto.get(&"canal")
+		var lista: Dictionary = acionam if objeto.papel_no_canal() == "aciona" else reagem
+		if not lista.has(canal):
+			lista[canal] = []
+		lista[canal].append(objeto)
+	for canal: int in acionam:
+		if not reagem.has(canal):
+			avisos.append("%s (%s): nada da mesma cor reage a ela." % [
+				acionam[canal][0].nome_no_editor(), Canais.nome(canal).to_lower()])
+	for canal: int in reagem:
+		if not acionam.has(canal):
+			avisos.append("%s (%s): nada da mesma cor para acioná-lo." % [
+				reagem[canal][0].nome_no_editor(), Canais.nome(canal).to_lower()])
+		elif acionam[canal].size() == 1:
+			for objeto: ObjetoFase in reagem[canal]:
+				if objeto.get(&"regra") == Portao.REGRA_TODAS:
+					avisos.append("%s (%s) pede todas as placas (E), mas só há uma." % [
+						objeto.nome_no_editor(), Canais.nome(canal).to_lower()])
+					break
+	return avisos
+
+
 # --- Visão (pré-visualização da perspectiva) ---------------------------------------------
 
 func _proxima_visao() -> void:
@@ -1103,6 +1271,12 @@ func _atualizar_status() -> void:
 			ferramenta = "Terreno: %s (giro %d°)" % [Tiles.definicao(tile_atual).nome, orientacao * 90]
 		Modo.OBJETO:
 			ferramenta = "Objeto: %s" % entrada_objeto.get("nome", "")
+		Modo.LIGAR:
+			if ligar_origem:
+				ferramenta = "Ligar: %s (%s) → clique no que ligar (Shift: continuar; Esc: cancelar)" % [
+					ligar_origem.nome_no_editor(), Canais.nome(ligar_origem.get(&"canal")).to_lower()]
+			else:
+				ferramenta = "Ligar: clique numa placa ou num portão (direito: soltar das ligações)"
 	var arquivo := caminho.get_file() if not caminho.is_empty() else "(não salva)"
 	status.text = "%s   |   Camada %d (PgUp/PgDn)   |   Visão: %s   |   %s%s   |   H: atalhos" % [
 		ferramenta, camada, NOMES_VISAO[visao], arquivo, "  •  modificada" if modificado else ""]

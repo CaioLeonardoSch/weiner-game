@@ -34,6 +34,57 @@ O progresso (fases concluídas, pelagens escolhidas) fica em `user://progresso.c
 | F3 | liga/desliga o pixelado | idem |
 | H | — | lista de atalhos do editor |
 
+## Opções e tela
+
+**Opções** (menu principal ou pausa), guardadas em `user://opcoes.cfg` (autoload `Opcoes`):
+
+- **Tela**: janela, tela cheia (padrão, na resolução do monitor) ou tela cheia exclusiva;
+  tamanho da janela; VSync; limite de FPS; tamanho da interface.
+- **Gráficos**: intensidade do pixelado, contorno, sombras, brilho.
+- **Áudio**: volumes (geral, música, efeitos, ambiente) — prontos para quando houver som.
+- **Controles**: sensibilidade da câmera, inverter Y e **trocar as teclas** (clique e aperte
+  a nova; se a tecla já era de outra ação, as duas trocam). Os textos do jogo sempre mostram a
+  tecla atual; nas *Zonas de dica*, escreva `{nome_da_ação}` (ex.: `{virar_graveto}`).
+
+**Monitores largos** (21:9, 32:9): o 3D ocupa a tela toda sem esticar — a câmera isométrica
+tem altura fixa, então a tela larga mostra mais mundo dos lados — e a interface fica numa
+**área segura** central de no máximo 16:9 (`scripts/ui/area_segura.gd`). Para nunca aparecer o
+"fim do mundo", o jogo gera em volta de cada fase um **entorno** de grama e floresta
+(`scripts/entorno.gd`, árvores em MultiMesh), que não é salvo na fase.
+
+## Exportar e compartilhar
+
+O jogo exporta para **Windows** (`WeinerGame.exe`, um arquivo só), **Linux** e **macOS**
+(presets em `export_presets.cfg`):
+
+- **Pelo editor do Godot:** Projeto → Exportar → escolha a plataforma → *Exportar Projeto*. Na
+  primeira vez o Godot pede os *templates de exportação* (Editor → Gerenciar Templates de
+  Exportação → Baixar, ~1,3 GB).
+- **Pela linha de comando:** `ferramentas/exportar.sh` (ou `ferramentas/exportar.sh Windows`)
+  gera `build/WeinerGame-<versão>-<plataforma>.zip`. A versão vem de `config/version` no
+  `project.godot`.
+- **Pelo GitHub (CI):** o workflow `.github/workflows/jogo.yml` joga todas as fases a cada push e,
+  na `main`, exporta as três plataformas (os `.zip` ficam nos artefatos da execução, em *Actions*).
+  Criando uma **tag** `v0.1`, `v0.2`... ele também publica uma **Release** com os `.zip` — é só
+  mandar o link para os amigos (se o repositório for privado, mande o `.zip`).
+
+Para os amigos: no Windows, o SmartScreen avisa que o programa não é assinado ("Mais
+informações → Executar assim mesmo"); no macOS, abra com clique direito → Abrir. O progresso e
+as opções ficam em `%APPDATA%\WeinerGame` (Windows) ou `~/.local/share/WeinerGame` (Linux).
+O jogo exportado precisa de placa de vídeo com Vulkan ou Direct3D 12.
+
+**Teste de fumaça:** `WeinerGame -- --fumaca=<pasta>` abre o menu, joga a primeira fase, salva
+duas fotos e diz `FUMACA ok` (a CI usa isso para testar o próprio executável).
+
+## Testes das fases
+
+`ferramentas/testar_fases.sh` joga cada fase com as entradas de `ferramentas/testes/rotas/*.txt`
+(sem janela, em segundos) e confere que ela termina. Ao mudar uma fase, rode de novo; se o
+caminho mudou, ajuste a rota (o formato está no topo de `ferramentas/testes/roteiro.gd`).
+A rota `mecanismos` testa a regra OU / E dos portões e a ferramenta Ligar do editor
+(`ferramentas/testes/teste_mecanismos.gd`).
+Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
+
 ## Fase 01 — "O Primeiro Graveto"
 
 Ida em visão isométrica: a trilha é estreita, cercada por mato e floresta. O mato bloqueia o
@@ -77,6 +128,59 @@ relação ao cercado para empurrar o rebanho. **Latir** (B, nativo da raça) esp
 não entram na água funda: o riacho só se atravessa pelo **vau** de água rasa. A porteira do
 cercado fica no lado oeste; dentro dele a ovelha se acalma e não sai mais.
 
+## Fase 06 — "O Portão"
+
+Uma cerca viva atravessa a trilha com um **portão amarelo**. A **placa de pressão amarela** abre
+o portão — mas só enquanto tiver peso em cima: o cachorro sozinho abre, mas o portão fecha quando
+ele sai. A saída é **empurrar o bloco de pedra** para a placa.
+
+## Fase 07 — "A Chave e o Prêmio"
+
+O **graveto lendário** (dourado) está sobre uma placa azul, segurando o portão azul aberto. Pegou,
+o portão fecha — com o cachorro do lado de dentro. Qualquer placa da mesma cor segura o portão:
+antes, é preciso levar um **graveto comum** (pesado como o lendário) para a outra placa azul,
+lá fora. O cachorro sozinho (peso 1) não basta.
+
+## Fase 08 — "A Ponte de Graveto"
+
+A ponte da ida é "só isométrica": na volta, em 3D, ela some. Antes de atravessar, o **mirante**
+(um graveto fincado num toco, com fita vermelha) mostra isso: **F** morde e a câmera mostra a
+fase como ela fica na volta; F (ou Esc) solta. Do outro lado há um **graveto comum comprido**:
+virado ao comprido (**Q**) e largado sobre o riacho, ele **vira ponte**. Aí é buscar o lendário
+e voltar pela ponte de graveto.
+
+## Fase 09 — "O Passeio Completo"
+
+Junta tudo: mirante, ponte só da ida, uma **placa vermelha que pede peso 3** (os pontinhos no
+tampo dizem quanto — só o bloco de pedra basta) segurando o portão vermelho, e o graveto
+comprido que vira a ponte da volta.
+
+## Gravetos, placas e portões
+
+- **Graveto lendário × comum:** o dono só aceita o **lendário** (dourado, com brilho). Os
+  **comuns** (marrons) também trocam a perspectiva ao serem pegos, mas servem de ferramenta
+  (peso numa placa, algo para trocar). Com um graveto na boca não dá para pegar outro — largue
+  antes.
+- **Canais são cores:** uma **placa de pressão** aciona tudo da mesma cor enquanto o peso em
+  cima chega ao mínimo dela; um **portão** da mesma cor abre (ou fecha, com *inverter*). Várias
+  placas da mesma cor: basta uma acionada. O portão nunca fecha em cima de alguém.
+- **Pesos:** salsicha 1 (border collie 1,5; pug 1,8), cachorro com graveto = raça + graveto,
+  graveto largado = o peso dele, bloco de pedra 3, ovelha 1,5, passarinho 0,3.
+- **Pontinhos na placa:** cada pontinho no tampo é uma unidade de peso que ela pede.
+- **Graveto-ponte:** um graveto de 1,6 m ou mais, largado **ao comprido** sobre um vão de uma
+  célula (riacho, buraco) com chão dos dois lados, encaixa na grade e vira uma pinguela (com o
+  equilíbrio da Tábua). Para pegar de volta, chegue por uma das pontas e aperte F.
+- **Mirante:** F morde e mostra a fase como fica na volta (sem ligar nem desligar nada); o
+  cachorro fica parado até soltar (F ou Esc).
+- **Botão de ação (F):** objetos que respondem ao F mostram a ação embaixo da tela
+  ("F: ..."). Segurar F + andar para trás continua puxando o bloco.
+- **Regra OU / E:** com várias placas da mesma cor, o portão abre com **qualquer uma** acionada
+  (OU, o padrão) ou só com **todas** ao mesmo tempo (E) — propriedade *Regra* do portão.
+- **No editor:** Placa, Portão e Mirante ficam em *Mecanismos*; linhas tracejadas na cor do canal
+  ligam as placas aos portões, e o portão que reage a mais de uma placa mostra a regra ("OU" /
+  "E"). A validação avisa placa sem portão (e vice-versa) e regra E com uma placa só. Ver
+  *Ligando mecanismos* em "Criando fases".
+
 ## Raças e pelagens
 
 O cachorro é um modelo **voxel gerado por código** (`scripts/racas/cachorro_voxel.gd`) a partir
@@ -113,7 +217,8 @@ o rabo, balançar as orelhas).
 
 - O 3D é renderizado em baixa resolução e ampliado sem filtro (`Viewport.scaling_3d_mode =
   NEAREST`); a interface continua nítida. Tudo no autoload `scripts/autoload/visual.gd`:
-  **`LINHAS_ALVO`** (padrão 240) controla o quanto fica pixelado — menor = pixels maiores.
+  a intensidade (linhas de pixel na vertical, padrão 240 — menor = pixels maiores) fica nas
+  **Opções → Gráficos**.
 - Contorno escuro nas silhuetas e realce claro nas quinas: `shaders/contorno_pixel.gdshader`
   (quad de tela cheia preso à câmera; força e limiares são `uniform`s).
 - A câmera isométrica é alinhada à grade de pixels, para o cenário não "tremer".
@@ -155,10 +260,25 @@ depende de o cachorro *não* pular o barranco. Cada objetivo pede alguns objetos
 
 | Objetivo | Precisa de |
 |---|---|
-| Trazer o graveto ao dono | **Início do cachorro**, **Dono** e **Graveto** (categoria "Regras") |
+| Trazer o graveto ao dono | **Início do cachorro**, **Dono** e um **Graveto lendário** (categoria "Regras"); gravetos comuns são opcionais |
 | Levar as ovelhas ao cercado | **Início do cachorro**, **Ovelhas** ("Bichos") e um **Cercado** ("Regras"; tamanho no painel, porteira no lado +X — gire para mudar) |
 
 O comprimento e o peso do graveto ficam nas propriedades do Graveto.
+
+### Ligando mecanismos
+
+Placas e portões se ligam pela **cor** (o canal): peças da mesma cor estão ligadas. Uma peça
+nova já vem com uma cor que ninguém usa (o conta-gotas mantém a cor copiada; duplicar com Ctrl+D
+também — bom para uma segunda placa do mesmo portão). Para ligar, use a ferramenta **Ligar
+mecanismos (L)**:
+
+- **Clique numa peça e depois em outra:** a segunda fica com a cor da primeira (se só a segunda
+  já tinha ligações, a primeira é que entra no grupo dela). Uma linha sai da primeira peça até
+  o mouse enquanto você escolhe.
+- **Clicar num par já ligado** desliga a segunda peça (ela ganha uma cor livre).
+- **Shift + clique** liga e mantém a primeira peça escolhida — uma placa para vários portões.
+- **Clique direito** solta a peça de todas as ligações. **Esc** cancela.
+- Tudo entra no desfazer (Ctrl+Z). A cor também pode ser trocada à mão, no campo *Canal*.
 
 ### A mecânica da perspectiva no editor
 
@@ -226,7 +346,7 @@ por elas), 3 `objetos`, 4 `cachorro`.
 
 | O quê | Onde |
 |---|---|
-| Quanto pixelado | `LINHAS_ALVO` em `scripts/autoload/visual.gd` |
+| Quanto pixelado | Opções → Gráficos (padrão em `Opcoes.PADRAO`) |
 | Contorno (cor, força, limiares) | `uniform`s em `shaders/contorno_pixel.gdshader` |
 | Cores dos blocos | `assets/materiais/*.tres` (inspetor do Godot) |
 | Velocidade do cachorro | `velocidade` em `scenes/dachshund.tscn` / `scripts/dachshund.gd` |

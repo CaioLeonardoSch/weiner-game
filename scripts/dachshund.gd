@@ -92,11 +92,26 @@ func _ready() -> void:
 	_guardar_ponto_seguro()
 
 
-## Troca a raça e a pelagem do cachorro. A boca (onde fica o graveto) acompanha o modelo.
+## Troca a raça e a pelagem do cachorro. A boca (onde fica o graveto) acompanha o modelo, e
+## a cápsula de colisão segue as medidas da raça.
 func aplicar_raca(nova_raca: Raca, indice_pelagem: int) -> void:
 	raca = nova_raca
 	voxel.montar(nova_raca, indice_pelagem)
 	boca.position = voxel.boca
+	var forma := CapsuleShape3D.new()
+	forma.radius = nova_raca.raio_colisao
+	forma.height = maxf(nova_raca.altura_colisao, nova_raca.raio_colisao * 2.0)
+	var colisao := $Colisao as CollisionShape3D
+	colisao.shape = forma
+	colisao.position.y = forma.height * 0.5
+
+
+## Peso sobre uma placa de pressão: o da raça mais o do graveto na boca.
+func peso_total() -> float:
+	var peso := raca.peso if raca else 1.0
+	if tem_graveto and graveto:
+		peso += graveto.peso
+	return peso
 
 
 ## Coloca o cachorro numa posição, olhando para `yaw` (radianos; 0 = +X).
@@ -120,7 +135,7 @@ func _physics_process(delta: float) -> void:
 	if _tempo_puxando > 0.0:
 		_tempo_puxando -= delta
 		horizontal = _sentido_puxar / DURACAO_PUXAR
-	elif not entrada_bloqueada and Input.is_action_pressed("puxar"):
+	elif not entrada_bloqueada and Input.is_action_pressed("acao"):
 		_tentar_puxar(horizontal)
 	horizontal += _desvio_de_encaixe(horizontal, delta)
 	horizontal += _empurrao_do_balanco(delta, horizontal)
@@ -251,6 +266,27 @@ func latir() -> String:
 	return ""
 
 
+## Objeto com ação do botão F (`ObjetoFase.acao_da_boca`) à frente do focinho: o mais perto
+## até 1,2 m, dentro de ~60° da direção em que o cachorro olha. Null se não houver.
+func objeto_da_acao() -> ObjetoFase:
+	if fase == null or entrada_bloqueada:
+		return null
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	var melhor: ObjetoFase = null
+	var melhor_distancia := 1.2
+	for no in get_tree().get_nodes_in_group(&"com_acao"):
+		var objeto := no as ObjetoFase
+		if objeto == null or not objeto.visible or objeto.acao_da_boca(self).is_empty():
+			continue
+		var ate := objeto.ponto_da_acao(self) - global_position
+		ate.y = 0.0
+		var distancia := ate.length()
+		if distancia < melhor_distancia and (distancia < 0.3 or ate.normalized().dot(frente) > 0.5):
+			melhor = objeto
+			melhor_distancia = distancia
+	return melhor
+
+
 ## Bloco empurrável logo à frente do focinho (ou null).
 func _bloco_na_frente() -> Empurravel:
 	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
@@ -343,7 +379,7 @@ func _velocidade_entrada() -> Vector3:
 
 func _girar_modelo(delta: float) -> void:
 	# Segurando para puxar, o cachorro não vira: fica de frente para o bloco e anda de ré.
-	if Input.is_action_pressed("puxar") or _tempo_puxando > 0.0:
+	if Input.is_action_pressed("acao") or _tempo_puxando > 0.0:
 		return
 	# O modelo olha para +X quando rotation.y == 0.
 	var novo := lerp_angle(modelo.rotation.y, _yaw_alvo, 1.0 - exp(-velocidade_giro * delta))

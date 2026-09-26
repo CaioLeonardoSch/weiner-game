@@ -72,6 +72,7 @@ func _desenhar_cursor() -> void:
 
 ## Objetos invisíveis no jogo e marcas de visibilidade (só iso / só 3D).
 func _desenhar_objetos_especiais() -> void:
+	_desenhar_canais()
 	for objeto in editor.fase.lista_objetos():
 		if not objeto.visible:
 			continue
@@ -89,6 +90,47 @@ func _desenhar_objetos_especiais() -> void:
 			if not camera.is_position_behind(topo):
 				var p := camera.unproject_position(topo)
 				draw_colored_polygon(PackedVector2Array([p + Vector2(0, -5), p + Vector2(5, 0), p + Vector2(0, 5), p + Vector2(-5, 0)]), cor)
+
+
+## Linhas tracejadas na cor do canal ligando quem aciona (placas) a quem reage (portões), com a
+## regra (OU / E) em cima de quem reage a mais de uma placa. Na ferramenta Ligar, os mecanismos
+## ganham uma caixa na cor deles e uma linha sai da primeira peça clicada até o mouse.
+func _desenhar_canais() -> void:
+	var acionam: Array[ObjetoFase] = []
+	var reagem: Array[ObjetoFase] = []
+	for objeto in editor.mecanismos():
+		(acionam if objeto.papel_no_canal() == "aciona" else reagem).append(objeto)
+	for alvo in reagem:
+		var canal: int = alvo.get(&"canal")
+		var cor := Canais.cor(canal)
+		var fontes := 0
+		for fonte in acionam:
+			if fonte.get(&"canal") != canal:
+				continue
+			fontes += 1
+			_tracejada(fonte.global_position + Vector3.UP * 0.1, alvo.global_position + Vector3.UP * 0.5, cor)
+		var todas: bool = alvo.get(&"regra") == Portao.REGRA_TODAS
+		if fontes > 1 or todas:
+			var topo := alvo.global_position + Vector3.UP * (editor.caixa_local(alvo).end.y + 0.35)
+			_texto(topo, "E (todas)" if todas else "OU (qualquer)", cor)
+	if editor.modo != EditorFase.Modo.LIGAR:
+		return
+	for objeto in acionam + reagem:
+		_caixa(editor.caixa_local(objeto), objeto.global_transform, Canais.cor(objeto.get(&"canal")), 1.0)
+	var origem: ObjetoFase = editor.ligar_origem
+	if origem and is_instance_valid(origem) and origem.is_inside_tree():
+		var cor := Canais.cor(origem.get(&"canal"))
+		_caixa(editor.caixa_local(origem), origem.global_transform, cor, 3.0)
+		var destino: Vector3 = editor.ponto_livre
+		if editor.objeto_sob_mouse:
+			destino = editor.objeto_sob_mouse.global_position + Vector3.UP * 0.5
+		_linha(origem.global_position + Vector3.UP * 0.3, destino, cor, 3.0)
+
+
+func _tracejada(a: Vector3, b: Vector3, cor: Color) -> void:
+	var partes := maxi(int(a.distance_to(b) / 0.3), 1)
+	for i in range(0, partes, 2):
+		_linha(a.lerp(b, float(i) / partes), a.lerp(b, float(i + 1) / partes), cor, 2.0)
 
 
 func _seta_orientacao(origem: Vector3, yaw: float, cor: Color) -> void:

@@ -1,0 +1,28 @@
+# Fase 02 — A Pinguela: passa pelo vão do muro, pula no degrau; volta virando o graveto (Q) e pela pinguela.
+fase res://scenes/fases/fase_02.tscn
+esperar 20
+apertar mover_direita 214
+esperar 218
+apertar mover_direita 77
+esperar 80
+apertar mover_frente 17
+esperar 20
+apertar mover_direita 70
+esperar 10
+apertar pular 3
+esperar 75
+esperar 80
+apertar mover_esquerda 23
+esperar 26
+apertar mover_frente 150
+esperar 155
+apertar virar_graveto 2
+esperar 20
+apertar mover_frente 70
+esperar 75
+apertar mover_direita 6
+esperar 10
+apertar mover_frente 330
+esperar 120
+esperar 215
+checar jogo.concluida

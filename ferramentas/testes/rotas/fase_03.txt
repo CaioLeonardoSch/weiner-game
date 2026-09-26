@@ -1,0 +1,31 @@
+# Fase 03 — O Monte e o Passarinho: cava o túnel, late para o passarinho; volta empurrando a pedra no riacho.
+fase res://scenes/fases/fase_03.tscn
+esperar 20
+apertar mover_direita 100
+esperar 105
+apertar cavar 2
+esperar 45
+apertar mover_direita 25
+esperar 30
+apertar cavar 2
+esperar 45
+apertar mover_direita 62
+esperar 66
+apertar mover_frente 40
+esperar 44
+apertar mover_direita 80
+esperar 84
+apertar mover_tras 22
+esperar 26
+apertar mover_direita 30
+esperar 40
+apertar latir 2
+esperar 160
+apertar mover_esquerda 17
+esperar 20
+apertar mover_frente 90
+esperar 140
+apertar mover_frente 330
+esperar 120
+esperar 215
+checar jogo.concluida

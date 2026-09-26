@@ -1,0 +1,27 @@
+# Fase 08 — A Ponte de Graveto: atravessa pela ponte (só da ida), pega o graveto comprido,
+# larga ao comprido sobre o riacho (vira ponte), pega o lendário e volta pela ponte de graveto.
+fase res://scenes/fases/fase_08.tscn
+esperar 20
+apertar mover_direita 240
+esperar 245
+apertar mover_frente 46
+esperar 130
+apertar mover_esquerda 5
+esperar 10
+apertar mover_frente 3
+esperar 20
+apertar virar_graveto 2
+esperar 20
+apertar mover_frente 30
+esperar 35
+apertar largar_graveto 2
+esperar 100
+apertar mover_direita 80
+esperar 84
+apertar mover_tras 14
+esperar 130
+apertar mover_direita 11
+esperar 15
+apertar mover_frente 450
+esperar 460
+checar jogo.concluida

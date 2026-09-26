@@ -785,6 +785,6 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 13, 
 
 [node name="ZonaDica" parent="Objetos" unique_id=644715093 instance=ExtResource("13_5g7mv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, -3)
-texto = "A ponte larga sumiu! Sobrou a pinguela: Q deixa o graveto ao comprido, Shift anda devagar"
+texto = "A ponte larga sumiu! Sobrou a pinguela: {virar_graveto} deixa o graveto ao comprido, {andar_devagar} anda devagar"
 tamanho = Vector3(1.6, 1.5, 5.6)
 visibilidade = 2

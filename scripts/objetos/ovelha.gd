@@ -64,6 +64,7 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	add_to_group(&"ovelhas")
+	add_to_group(&"pesos")
 	var no := get_parent()
 	while no and not no is Fase:
 		no = no.get_parent()
@@ -75,6 +76,10 @@ func _ready() -> void:
 func _atualizar_modelo() -> void:
 	if is_node_ready():
 		modelo.mesh = Voxel.ovelha(variante)
+
+
+func peso_na_placa() -> float:
+	return 1.5
 
 
 func ao_ouvir_latido(origem: Vector3) -> void:

@@ -17,8 +17,7 @@ const HABILIDADE_CAVAR := 2
 const HABILIDADE_LATIR := 4
 
 ## O que o cachorro precisa fazer para terminar a fase. Para um objetivo novo: acrescente o
-## nome em @export_enum (no fim), uma constante, o que a fase precisa em `requisitos()` e
-## as regras em jogo.gd (`_preparar_objetivo` / `_verificar_objetivo`).
+## nome em @export_enum (no fim), uma constante e uma classe em scripts/objetivos/.
 const OBJETIVO_GRAVETO := 0
 const OBJETIVO_PASTOREIO := 1
 
@@ -31,6 +30,10 @@ const OBJETIVO_PASTOREIO := 1
 ## Raça do cachorro nesta fase (id de assets/racas/*.tres). A raça soma habilidades próprias
 ## às da fase (ex.: o Border Collie sempre late).
 @export var raca := &"salsicha"
+
+## Um canal mudou (alguma fonte ligou ou desligou). Quem reage confere com `canal_ligado`.
+## Ver Canais.
+signal canal_mudou(canal: int)
 
 @onready var terreno: GridMap = $Terreno
 @onready var objetos: Node3D = $Objetos
@@ -54,19 +57,44 @@ func tem_habilidade(habilidade: int) -> bool:
 	return habilidades_efetivas() & habilidade != 0
 
 
+# --- Canais -------------------------------------------------------------------------------
+
+## canal → {id da fonte: ativa}
+var _fontes := {}
+
+
+## Uma fonte (placa...) avisa se está acionada. As fontes se registram (desligadas) ao entrar
+## na fase, para a regra "todas" saber quantas são.
+func definir_fonte(canal: int, fonte: Object, ativa: bool) -> void:
+	if not _fontes.has(canal):
+		_fontes[canal] = {}
+	var id := fonte.get_instance_id()
+	if (_fontes[canal] as Dictionary).get(id) == ativa:
+		return
+	_fontes[canal][id] = ativa
+	canal_mudou.emit(canal)
+
+
+## Regra OU: alguma fonte do canal está acionada.
+func canal_ativo(canal: int) -> bool:
+	return _fontes.has(canal) and (_fontes[canal] as Dictionary).values().has(true)
+
+
+## Regra E: todas as fontes do canal estão acionadas (e há pelo menos uma).
+func canal_completo(canal: int) -> bool:
+	return _fontes.has(canal) and not (_fontes[canal] as Dictionary).is_empty() \
+		and not (_fontes[canal] as Dictionary).values().has(false)
+
+
+## O canal liga quem reage? `todas`: regra E; senão, regra OU.
+func canal_ligado(canal: int, todas: bool) -> bool:
+	return canal_completo(canal) if todas else canal_ativo(canal)
+
+
 ## Habilidades da fase somadas às nativas da raça.
 func habilidades_efetivas() -> int:
 	var dados_raca := Racas.por_id(raca)
 	return habilidades | (dados_raca.habilidades_nativas if dados_raca else 0)
-
-
-## Objetos que a fase precisa ter para o objetivo dela: [[tipo, "nome para mensagens"], ...].
-func requisitos() -> Array:
-	match objetivo:
-		OBJETIVO_PASTOREIO:
-			return [[InicioCachorro, "o Início do cachorro"], [Ovelha, "uma Ovelha"], [Cercado, "um Cercado"]]
-		_:
-			return [[InicioCachorro, "o Início do cachorro"], [Dono, "o Dono"], [Graveto, "o Graveto"]]
 
 
 func lista_objetos() -> Array[ObjetoFase]:
@@ -100,6 +128,16 @@ func ativar(visibilidade: ObjetoFase.Visibilidade, ativo: bool) -> void:
 			objeto.definir_ativo(ativo)
 
 
+## Só o visual da volta (mirante): esconde o que é "só isométrico" e mostra o "só 3D", sem
+## mexer na física (o cachorro fica parado olhando). `false` volta ao visual da ida.
+func previa_da_volta(ligada: bool) -> void:
+	for objeto in lista_objetos():
+		if objeto.visibilidade == ObjetoFase.Visibilidade.SO_ISO:
+			objeto.visible = not ligada
+		elif objeto.visibilidade == ObjetoFase.Visibilidade.SO_3D:
+			objeto.visible = ligada
+
+
 ## Estado da visão isométrica: tampas e afins presentes, coisas "só 3D" escondidas.
 func preparar_isometrica() -> void:
 	ativar(ObjetoFase.Visibilidade.SO_ISO, true)
@@ -117,12 +155,22 @@ func passagem_estreita_em(posicao: Vector3) -> Dictionary:
 	var celula := terreno.local_to_map(terreno.to_local(posicao))
 	var id := terreno.get_cell_item(celula)
 	if not Tiles.eh_estreita(id):
-		return {}
+		return passagem_estreita_de_objeto(posicao)
 	var lado := terreno.global_basis * terreno.get_cell_item_basis(celula).z
 	lado.y = 0.0
 	lado = lado.normalized()
 	var centro := terreno.to_global(terreno.map_to_local(celula))
 	return {desvio = (posicao - centro).dot(lado), lado = lado, meia_largura = Tiles.meia_largura(id)}
+
+
+## Passagem estreita feita por um objeto (graveto que virou ponte), no mesmo formato de
+## `passagem_estreita_em`.
+func passagem_estreita_de_objeto(posicao: Vector3) -> Dictionary:
+	for no in get_tree().get_nodes_in_group(&"pontes_graveto"):
+		var dados: Dictionary = (no as Graveto).passagem_em(posicao)
+		if not dados.is_empty():
+			return dados
+	return {}
 
 
 ## A posição está dentro de um tile de água, abaixo da superfície?

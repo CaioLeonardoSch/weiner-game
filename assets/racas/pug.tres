@@ -38,4 +38,6 @@ tamanho_orelha = 2
 rabo = 1
 comprimento_rabo = 6
 fator_velocidade = 0.9
+peso = 1.8
+raio_colisao = 0.3
 pelagens = Array[ExtResource("1_kr7ry")]([SubResource("Resource_ehyrv"), SubResource("Resource_dbo7d")])

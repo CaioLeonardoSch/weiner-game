@@ -42,6 +42,43 @@ func ao_ouvir_latido(_origem: Vector3) -> void:
 	pass
 
 
+## Botão de ação (F): o que o cachorro faz com este objeto quando ele está à frente do focinho
+## (ex.: "morder o mirante", "pegar o graveto"), ou "" se nada. `executar_acao` faz a ação.
+## Objetos com ação entram no grupo "com_acao" (é onde o cachorro procura).
+func acao_da_boca(_cachorro: Dachshund) -> String:
+	return ""
+
+
+func executar_acao(_cachorro: Dachshund) -> void:
+	pass
+
+
+## Onde o cachorro precisa estar perto para a ação (padrão: a origem do objeto).
+func ponto_da_acao(_cachorro: Dachshund) -> Vector3:
+	return global_position
+
+
+## Quanto este objeto pesa sobre uma placa de pressão (0 = não conta). Objetos com peso entram
+## no grupo "pesos" (ver Placa).
+func peso_na_placa() -> float:
+	return 0.0
+
+
+## Mecanismos ligados por canal (a cor, ver Canais): "aciona" (placa...), "reage" (portão...)
+## ou "" (não é mecanismo). Mecanismos têm a propriedade `canal`, que a ferramenta Ligar do
+## editor troca.
+func papel_no_canal() -> String:
+	return ""
+
+
+## A fase a que este objeto pertence (ou null no editor de cenas do Godot).
+func fase_do_objeto() -> Fase:
+	var no := get_parent()
+	while no and not no is Fase:
+		no = no.get_parent()
+	return no as Fase
+
+
 ## Objetos que são só volume (zonas, paredes invisíveis) usam 0: o editor só os seleciona
 ## quando o clique não acerta nenhum objeto "de verdade" (senão atrapalhariam os de dentro).
 func prioridade_no_editor() -> int:

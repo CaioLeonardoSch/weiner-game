@@ -7,9 +7,9 @@ extends Node
 
 signal mudou
 
-## Quantas linhas de pixel, aproximadamente, a imagem 3D tem na vertical.
+## Quantas linhas de pixel, aproximadamente, a imagem 3D tem na vertical (Opções → Gráficos).
 ## Menor = mais pixelado. O tamanho do pixel é sempre um número inteiro de pixels da tela.
-const LINHAS_ALVO := 240
+var linhas_alvo := 240
 
 var pixelado := true
 ## Contorno escuro nas silhuetas e realce claro nas quinas (ver shaders/contorno_pixel.gdshader).
@@ -18,6 +18,18 @@ var contorno := true
 
 func _ready() -> void:
 	get_tree().root.size_changed.connect(_aplicar)
+	var opcoes := get_node_or_null(^"/root/Opcoes")
+	if opcoes:
+		configurar(int(opcoes.valor("graficos", "pixel")), bool(opcoes.valor("graficos", "contorno")))
+	_aplicar()
+
+
+## Chamado pelas Opções: linhas de pixel (0 = sem pixelado) e contorno.
+func configurar(linhas: int, com_contorno: bool) -> void:
+	pixelado = linhas > 0
+	if linhas > 0:
+		linhas_alvo = linhas
+	contorno = com_contorno
 	_aplicar()
 
 
@@ -32,7 +44,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func tamanho_pixel() -> int:
 	if not pixelado:
 		return 1
-	return maxi(1, roundi(float(get_tree().root.size.y) / LINHAS_ALVO))
+	return maxi(1, roundi(float(get_tree().root.size.y) / linhas_alvo))
 
 
 ## Altura, em pixels, da imagem 3D renderizada.
