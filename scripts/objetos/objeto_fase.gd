@@ -30,6 +30,12 @@ func propriedades_editaveis() -> Array[StringName]:
 	return []
 
 
+## Objetos que são só volume (zonas, paredes invisíveis) usam 0: o editor só os seleciona
+## quando o clique não acerta nenhum objeto "de verdade" (senão atrapalhariam os de dentro).
+func prioridade_no_editor() -> int:
+	return 1
+
+
 ## Caixa (no espaço local) usada pelo editor para selecionar e desenhar o objeto.
 ## Por padrão, junta as caixas das malhas visíveis; objetos invisíveis sobrescrevem.
 func caixa_editor() -> AABB:

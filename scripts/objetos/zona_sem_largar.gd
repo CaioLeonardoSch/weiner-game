@@ -22,6 +22,10 @@ func propriedades_editaveis() -> Array[StringName]:
 	return [&"tamanho"]
 
 
+func prioridade_no_editor() -> int:
+	return 0
+
+
 func caixa_editor() -> AABB:
 	return AABB(Vector3(-tamanho.x * 0.5, 0.0, -tamanho.z * 0.5), tamanho)
 
