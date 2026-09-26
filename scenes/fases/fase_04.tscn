@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://scenes/objetos/flores.tscn" id="9_fvhtv"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/pedra.tscn" id="10_ntq34"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/arvore.tscn" id="11_iqunt"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/zona_dica.tscn" id="12_duwkl"]
 
 [node name="Fase04" type="Node3D" unique_id=1456685534]
 script = ExtResource("1_1npe0")
@@ -749,3 +750,9 @@ variante = 7
 [node name="Flores22" parent="Objetos" unique_id=1679524424 instance=ExtResource("9_fvhtv")]
 transform = Transform3D(-0.92651004, 0, -0.37627, 0, 1, 0, 0.37627, 0, -0.92651004, 7.8682613, 0, 1.9242716)
 variante = 1
+
+[node name="ZonaDica" parent="Objetos" unique_id=402726140 instance=ExtResource("12_duwkl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -2)
+texto = "A ponte sumiu! O bloco de pedra afunda no canal e vira passagem (F + trás puxa o bloco)"
+tamanho = Vector3(1.6, 1.5, 4)
+visibilidade = 2

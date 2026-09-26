@@ -44,7 +44,8 @@ folhagem "só isométrica") — o único caminho de volta, porque o barranco é 
 ## Fase 02 — "A Pinguela"
 
 O graveto agora é grande e pesado (1,4 m, peso 2). Na ida o salsicha cruza o riacho por uma
-ponte larga, passa por um vão estreito num muro de pedra e **pula** para o degrau onde está o
+ponte larga, segue o caminho de terra por um vão estreito no muro de pedra (a parte da frente é
+uma cerca de madeira, para o vão aparecer na câmera de cima) e **pula** para o degrau onde está o
 graveto. Na volta, em 3D, a ponte larga não existe (era "só isométrica"): sobra a **pinguela**.
 Atravessado na boca, o graveto não passa no vão — **Q** vira o graveto ao comprido. Na
 pinguela, graveto grande desequilibra: atravessado e correndo, o cachorro cai na água; ao
@@ -165,7 +166,13 @@ Todo objeto tem **Visibilidade**: *Sempre*, *Só isométrico* ou *Só 3D*. Objet
 somem — e perdem a colisão — quando o cachorro pega o graveto (ex.: a *Tampa de folhagem* que
 esconde a boca de um túnel); "só 3D" só aparecem depois (ex.: árvores na frente da trilha, que
 tapariam a visão isométrica). Use a *Zona sem largar* onde largar o graveto deixaria o cachorro
-preso quando as tampas voltarem.
+preso quando as tampas voltarem, e a *Zona de dica* (texto mostrado quando o cachorro entra
+nela) para explicar a virada: com visibilidade "Só 3D" ela só vale na volta — ex.: "A ponte
+sumiu! Empurre a pedra para dentro do riacho". As Fases 02, 03 e 04 usam uma assim.
+
+Cuidado com a câmera isométrica (inclinação de 55°): um bloco de altura *h* esconde uns
+0,7 × *h* metros de chão logo atrás dele. Um muro de 2 m esconde por inteiro uma passagem de 1 m
+que esteja atrás dele — use a *Cerca* (dá para ver através) ou deixe a passagem na frente.
 
 ## Criando assets
 
