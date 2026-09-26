@@ -1,0 +1,21 @@
+# Fase 01 — O Primeiro Graveto: sobe o barranco, pula perto do graveto, volta pelo túnel.
+fase res://scenes/fases/fase_01.tscn
+esperar 20
+apertar mover_frente 36
+esperar 40
+apertar mover_direita 240
+esperar 245
+apertar mover_tras 34
+esperar 40
+apertar mover_direita 30
+esperar 40
+esperar 90
+esperar 60
+apertar mover_frente 60
+esperar 65
+apertar mover_esquerda 18
+esperar 22
+apertar mover_frente 400
+esperar 200
+esperar 205
+checar jogo.concluida

@@ -1,0 +1,32 @@
+# Fase 04 — A Correnteza: monte, correnteza, puxa o bloco do nicho e afunda no canal, escada; volta pela correnteza.
+fase res://scenes/fases/fase_04.tscn
+esperar 20
+apertar mover_frente 69
+esperar 72
+apertar mover_direita 205
+esperar 60
+esperar 150
+apertar mover_direita 27
+esperar 30
+apertar mover_frente 60
+esperar 64
+apertar acao 45
+apertar mover_tras 25
+esperar 50
+apertar mover_esquerda 17
+esperar 20
+apertar mover_frente 12
+esperar 15
+apertar mover_direita 220
+esperar 100
+esperar 125
+esperar 80
+apertar mover_direita 8
+esperar 12
+apertar mover_frente 150
+esperar 155
+apertar mover_frente 300
+esperar 305
+apertar mover_direita 25
+esperar 45
+checar jogo.concluida
