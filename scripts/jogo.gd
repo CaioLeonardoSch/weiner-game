@@ -32,6 +32,7 @@ var contador := Label.new()
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	aviso.hide()
+	aviso.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	mensagem.hide()
 	cachorro.camera_referencia = camera_controller.camera
 	indicador_equilibrio.cachorro = cachorro
@@ -81,6 +82,8 @@ func _ready() -> void:
 	for bloco in fase.todos(Empurravel):
 		(bloco as Empurravel).voltou_ao_inicio.connect(
 			_mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
+	for zona in fase.todos(ZonaDica):
+		(zona as ZonaDica).ativada.connect(_mostrar_aviso.bind(4.5))
 	_preparar_objetivo()
 	_mostrar_aviso(fase.nome)
 
@@ -357,11 +360,11 @@ func _agendar(segundos: float, acao: Callable) -> void:
 	tween.tween_callback(acao)
 
 
-func _mostrar_aviso(texto: String) -> void:
+func _mostrar_aviso(texto: String, segundos := 2.0) -> void:
 	aviso.text = texto
 	aviso.show()
 	if _tween_aviso:
 		_tween_aviso.kill()
 	_tween_aviso = create_tween()
-	_tween_aviso.tween_interval(2.0)
+	_tween_aviso.tween_interval(segundos)
 	_tween_aviso.tween_callback(aviso.hide)
