@@ -52,7 +52,9 @@ Usada na Fase 03 (túnel cavado num monte). Ideias para depois:
 
 Objeto **Bloco empurrável**: andar contra ele por um instante empurra uma célula (estilo
 Sokoban), se o destino estiver livre e tiver chão. Empurrado para dentro da água, afunda até
-ficar rente ao chão e vira passagem. Ideias para depois:
+ficar rente ao chão e vira passagem. Não entra em cima do graveto nem de passarinhos; se
+ficar encurralado num canto (nenhum empurrão possível), volta sozinho para onde começou.
+Ideias para depois:
 
 - Tronco empurrável que rola e vira ponte sobre dois blocos de água.
 - Empurrar com o graveto ao comprido (alcance maior) ou só sem graveto.

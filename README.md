@@ -48,7 +48,8 @@ comprido ou andando devagar (Shift), passa.
 Um monte de **terra fofa** fecha a trilha: o salsicha **cava** (C) um túnel através dele. Do
 outro lado do riacho, um **passarinho** está pousado no graveto e não deixa pegar — um **latido**
 (B) e ele voa. Na volta, em 3D, a ponte (só isométrica) sumiu: **empurre o bloco de pedra**
-para dentro do riacho; ele afunda e vira passagem. Com o graveto na boca não dá para cavar
+para dentro do riacho; ele afunda e vira passagem (se o bloco ficar encurralado num canto,
+volta sozinho para o lugar). Com o graveto na boca não dá para cavar
 nem latir.
 
 ## O graveto

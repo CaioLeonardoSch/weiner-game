@@ -217,7 +217,8 @@ func latir() -> String:
 	tween.tween_property(modelo, "rotation:z", 0.0, 0.15)
 	if fase:
 		for objeto in fase.lista_objetos():
-			if objeto.global_position.distance_to(global_position) <= ALCANCE_LATIDO:
+			# Objetos desativados pela perspectiva (ex.: "só 3D" na isométrica) não ouvem.
+			if objeto.visible and objeto.global_position.distance_to(global_position) <= ALCANCE_LATIDO:
 				objeto.ao_ouvir_latido(global_position)
 	return ""
 

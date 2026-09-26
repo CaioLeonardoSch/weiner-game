@@ -68,6 +68,9 @@ func _ready() -> void:
 	camera_controller.configurar(cachorro)
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
 	graveto.pego.connect(_on_graveto_pego)
+	for bloco in fase.todos(Empurravel):
+		(bloco as Empurravel).voltou_ao_inicio.connect(
+			_mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
 	graveto.protegido.connect(_mostrar_aviso.bind("Tem um passarinho no graveto!" +
 		("  B: latir" if cachorro.pode_latir else "")))
 	dono.cachorro_chegou.connect(_on_dono_cachorro_chegou)
@@ -149,10 +152,12 @@ func _tentar_largar_graveto() -> void:
 			return
 
 	cachorro.entrada_bloqueada = true
-	# Na mesma direção em que estava na boca (atravessado ou ao comprido), num ponto de chão
-	# alcançável (ver _ponto_para_largar).
+	# Cai onde estava na boca, na mesma direção (atravessado ou ao comprido). Sem chão
+	# embaixo (beira de barranco, água), cai num ponto alcançável (ver _ponto_para_largar).
 	var yaw := graveto.global_basis.get_euler().y
-	var ponto := _ponto_para_largar()
+	var ponto: Variant = _chao_embaixo(graveto.global_position)
+	if ponto == null:
+		ponto = _ponto_para_largar()
 	cachorro.largar_graveto()
 	graveto.reparent(fase.objetos)
 	graveto.global_transform = Transform3D(Basis(Vector3.UP, yaw), ponto + Vector3.UP * 0.08)
@@ -203,6 +208,15 @@ func _atualizar_dica() -> void:
 	if not em_3d:
 		partes.append("F3: pixel")
 	dica.text = "    ".join(partes)
+
+
+## Ponto do chão logo abaixo de `posicao` (até 0,6 m), ou null.
+func _chao_embaixo(posicao: Vector3) -> Variant:
+	var espaco := cachorro.get_world_3d().direct_space_state
+	var raio := PhysicsRayQueryParameters3D.create(posicao + Vector3.UP * 0.2,
+		Vector3(posicao.x, cachorro.global_position.y - 0.6, posicao.z), 1 | 4, [cachorro.get_rid()])
+	var chao := espaco.intersect_ray(raio)
+	return chao.position if not chao.is_empty() else null
 
 
 ## Onde o graveto cai: no chão, na frente do focinho. Se ali não der (parede, árvore, beira

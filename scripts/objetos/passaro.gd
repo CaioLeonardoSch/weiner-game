@@ -48,7 +48,7 @@ func _atualizar() -> void:
 
 ## Está guardando `ponto` (ainda não voou e está perto)?
 func guarda(ponto: Vector3) -> bool:
-	return not voou and global_position.distance_to(ponto) <= DISTANCIA_GUARDA
+	return not voou and visible and global_position.distance_to(ponto) <= DISTANCIA_GUARDA
 
 
 func _process(delta: float) -> void:
