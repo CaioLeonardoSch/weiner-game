@@ -34,6 +34,24 @@ O progresso (fases concluídas, pelagens escolhidas) fica em `user://progresso.c
 | F3 | liga/desliga o pixelado | idem |
 | H | — | lista de atalhos do editor |
 
+## Opções e tela
+
+**Opções** (menu principal ou pausa), guardadas em `user://opcoes.cfg` (autoload `Opcoes`):
+
+- **Tela**: janela, tela cheia (padrão, na resolução do monitor) ou tela cheia exclusiva;
+  tamanho da janela; VSync; limite de FPS; tamanho da interface.
+- **Gráficos**: intensidade do pixelado, contorno, sombras, brilho.
+- **Áudio**: volumes (geral, música, efeitos, ambiente) — prontos para quando houver som.
+- **Controles**: sensibilidade da câmera, inverter Y e **trocar as teclas** (clique e aperte
+  a nova; se a tecla já era de outra ação, as duas trocam). Os textos do jogo sempre mostram a
+  tecla atual; nas *Zonas de dica*, escreva `{nome_da_ação}` (ex.: `{virar_graveto}`).
+
+**Monitores largos** (21:9, 32:9): o 3D ocupa a tela toda sem esticar — a câmera isométrica
+tem altura fixa, então a tela larga mostra mais mundo dos lados — e a interface fica numa
+**área segura** central de no máximo 16:9 (`scripts/ui/area_segura.gd`). Para nunca aparecer o
+"fim do mundo", o jogo gera em volta de cada fase um **entorno** de grama e floresta
+(`scripts/entorno.gd`, árvores em MultiMesh), que não é salvo na fase.
+
 ## Fase 01 — "O Primeiro Graveto"
 
 Ida em visão isométrica: a trilha é estreita, cercada por mato e floresta. O mato bloqueia o
@@ -113,7 +131,8 @@ o rabo, balançar as orelhas).
 
 - O 3D é renderizado em baixa resolução e ampliado sem filtro (`Viewport.scaling_3d_mode =
   NEAREST`); a interface continua nítida. Tudo no autoload `scripts/autoload/visual.gd`:
-  **`LINHAS_ALVO`** (padrão 240) controla o quanto fica pixelado — menor = pixels maiores.
+  a intensidade (linhas de pixel na vertical, padrão 240 — menor = pixels maiores) fica nas
+  **Opções → Gráficos**.
 - Contorno escuro nas silhuetas e realce claro nas quinas: `shaders/contorno_pixel.gdshader`
   (quad de tela cheia preso à câmera; força e limiares são `uniform`s).
 - A câmera isométrica é alinhada à grade de pixels, para o cenário não "tremer".
@@ -226,7 +245,7 @@ por elas), 3 `objetos`, 4 `cachorro`.
 
 | O quê | Onde |
 |---|---|
-| Quanto pixelado | `LINHAS_ALVO` em `scripts/autoload/visual.gd` |
+| Quanto pixelado | Opções → Gráficos (padrão em `Opcoes.PADRAO`) |
 | Contorno (cor, força, limiares) | `uniform`s em `shaders/contorno_pixel.gdshader` |
 | Cores dos blocos | `assets/materiais/*.tres` (inspetor do Godot) |
 | Velocidade do cachorro | `velocidade` em `scenes/dachshund.tscn` / `scripts/dachshund.gd` |

@@ -160,6 +160,12 @@ func _physics_process(delta: float) -> void:
 
 
 func _girar(delta_yaw: float, delta_pitch: float) -> void:
+	# Sensibilidade e "inverter Y" das Opções (mouse e analógico).
+	var opcoes := get_node_or_null(^"/root/Opcoes")
+	if opcoes:
+		var fator := float(opcoes.valor("controles", "sensibilidade"))
+		delta_yaw *= fator
+		delta_pitch *= fator * (-1.0 if opcoes.valor("controles", "inverter_y") else 1.0)
 	_yaw = wrapf(_yaw + delta_yaw, -PI, PI)
 	_pitch = clampf(_pitch + delta_pitch, deg_to_rad(pitch_min), deg_to_rad(pitch_max))
 

@@ -3,6 +3,8 @@ class_name ZonaDica
 extends ObjetoFase
 ## Região que mostra uma dica quando o cachorro entra nela. Com a visibilidade "Só 3D" ela
 ## só funciona na volta (ex.: "A ponte sumiu! Empurre a pedra..."); "Só isométrico", só na ida.
+## No texto, "{nome_da_ação}" vira a tecla atual dela (ex.: "{virar_graveto}" → "Q"), porque
+## o jogador pode trocar as teclas nas Opções.
 
 signal ativada(texto: String)
 

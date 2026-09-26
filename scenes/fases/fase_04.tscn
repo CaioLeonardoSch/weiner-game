@@ -753,6 +753,6 @@ variante = 1
 
 [node name="ZonaDica" parent="Objetos" unique_id=402726140 instance=ExtResource("12_duwkl")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0, -2)
-texto = "A ponte sumiu! O bloco de pedra afunda no canal e vira passagem (F + trás puxa o bloco)"
+texto = "A ponte sumiu! O bloco de pedra afunda no canal e vira passagem ({acao} + trás puxa o bloco)"
 tamanho = Vector3(1.6, 1.5, 4)
 visibilidade = 2

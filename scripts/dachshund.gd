@@ -120,7 +120,7 @@ func _physics_process(delta: float) -> void:
 	if _tempo_puxando > 0.0:
 		_tempo_puxando -= delta
 		horizontal = _sentido_puxar / DURACAO_PUXAR
-	elif not entrada_bloqueada and Input.is_action_pressed("puxar"):
+	elif not entrada_bloqueada and Input.is_action_pressed("acao"):
 		_tentar_puxar(horizontal)
 	horizontal += _desvio_de_encaixe(horizontal, delta)
 	horizontal += _empurrao_do_balanco(delta, horizontal)
@@ -343,7 +343,7 @@ func _velocidade_entrada() -> Vector3:
 
 func _girar_modelo(delta: float) -> void:
 	# Segurando para puxar, o cachorro não vira: fica de frente para o bloco e anda de ré.
-	if Input.is_action_pressed("puxar") or _tempo_puxando > 0.0:
+	if Input.is_action_pressed("acao") or _tempo_puxando > 0.0:
 		return
 	# O modelo olha para +X quando rotation.y == 0.
 	var novo := lerp_angle(modelo.rotation.y, _yaw_alvo, 1.0 - exp(-velocidade_giro * delta))

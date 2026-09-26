@@ -46,6 +46,7 @@ func _ready() -> void:
 	_botoes.add_child(titulo)
 
 	_botao("Continuar", fechar)
+	_botao("Opções", _abrir_opcoes)
 	_botao("Reiniciar a fase", func() -> void:
 		get_tree().paused = false
 		get_tree().reload_current_scene())
@@ -55,6 +56,16 @@ func _ready() -> void:
 		_botao("Editar esta fase", Fases.editar.bind(Fases.caminho_atual))
 	_botao("Menu principal", Fases.abrir_menu)
 	hide()
+
+
+func _abrir_opcoes() -> void:
+	var tela := TelaOpcoes.new()
+	var raiz := get_child(0) as Control
+	raiz.hide()
+	tela.fechada.connect(func() -> void:
+		raiz.show()
+		(_botoes.get_child(2) as Button).grab_focus())
+	add_child(tela)
 
 
 func abrir() -> void:
@@ -70,7 +81,7 @@ func fechar() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
+	if visible and (get_child(0) as Control).visible and event.is_action_pressed("ui_cancel"):
 		fechar()
 		get_viewport().set_input_as_handled()
 

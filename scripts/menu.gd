@@ -63,6 +63,9 @@ func _montar_fundo() -> void:
 	add_child(fase)
 	fase.process_mode = Node.PROCESS_MODE_DISABLED
 	fase.preparar_isometrica()
+	var entorno := Entorno.new()
+	add_child(entorno)
+	entorno.montar(fase)
 	var inicio := fase.primeiro(InicioCachorro)
 	var graveto := fase.primeiro(Graveto)
 	if inicio and graveto:
@@ -80,8 +83,8 @@ func _montar_fundo() -> void:
 # --- Interface ---------------------------------------------------------------------------
 
 func _montar_interface() -> void:
-	var raiz := Control.new()
-	raiz.set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Área segura: em monitores largos o menu fica no centro, e o 3D preenche a tela toda.
+	var raiz := AreaSegura.new()
 	raiz.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	raiz.theme = TemaUI.criar()
 	ui.add_child(raiz)
@@ -133,7 +136,7 @@ func _montar_interface() -> void:
 	rolagem.add_child(_tela)
 
 	var rodape := Label.new()
-	rodape.text = "Setas/Enter ou mouse  ·  Esc: voltar  ·  F3: pixelado"
+	rodape.text = "Setas/Enter ou mouse  ·  Esc: voltar  ·  %s: pixelado" % Teclas.nome(&"alternar_pixel")
 	rodape.add_theme_font_size_override("font_size", 15)
 	rodape.add_theme_color_override("font_color", Color(0.7, 0.72, 0.7))
 	coluna.add_child(rodape)
@@ -195,10 +198,21 @@ func _tela_principal() -> void:
 		_botao(texto + _nome_curto(continuar), Fases.jogar.bind(continuar))
 	_botao("Fases", _tela_fases).disabled = lista.is_empty()
 	_botao("Cachorro", _tela_cachorro)
+	_botao("Opções", _abrir_opcoes)
 	_botao("Editor de fases", _tela_editor)
 	if not OS.has_feature("web"):
 		_botao("Sair", get_tree().quit)
 	_focar_primeiro()
+
+
+func _abrir_opcoes() -> void:
+	var tela := TelaOpcoes.new()
+	var painel := ui.get_child(0) as Control
+	painel.hide()
+	tela.fechada.connect(func() -> void:
+		painel.show()
+		_tela_principal())
+	ui.add_child(tela)
 
 
 func _tela_cachorro() -> void:

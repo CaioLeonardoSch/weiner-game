@@ -10,10 +10,10 @@ extends Node3D
 
 @onready var cachorro: Dachshund = $Dachshund
 @onready var camera_controller: CameraController = $CameraController
-@onready var aviso: Label = $HUD/Aviso
-@onready var mensagem: Label = $HUD/Mensagem
-@onready var dica: Label = $HUD/Dica
-@onready var indicador_equilibrio: Control = $HUD/Equilibrio
+@onready var aviso: Label = $HUD/Area/Aviso
+@onready var mensagem: Label = $HUD/Area/Mensagem
+@onready var dica: Label = $HUD/Area/Dica
+@onready var indicador_equilibrio: Control = $HUD/Area/Equilibrio
 
 var fase: Fase
 var graveto: Graveto
@@ -43,7 +43,7 @@ func _ready() -> void:
 	contador.add_theme_font_size_override("font_size", 24)
 	contador.add_theme_color_override("font_outline_color", Color.BLACK)
 	contador.add_theme_constant_override("outline_size", 8)
-	$HUD.add_child(contador)
+	$HUD/Area.add_child(contador)
 	_atualizar_dica()
 
 	var cena := Fases.cena_atual()
@@ -56,6 +56,11 @@ func _ready() -> void:
 		return
 	add_child(fase)
 	move_child(fase, 0)
+	# Chão e floresta em volta, para monitores largos nunca mostrarem o fim do mundo.
+	var entorno := Entorno.new()
+	entorno.name = "Entorno"
+	add_child(entorno)
+	entorno.montar(fase)
 	cachorro.fase = fase
 	var raca := Racas.por_id(fase.raca)
 	if raca:
@@ -83,7 +88,7 @@ func _ready() -> void:
 		(bloco as Empurravel).voltou_ao_inicio.connect(
 			_mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
 	for zona in fase.todos(ZonaDica):
-		(zona as ZonaDica).ativada.connect(_mostrar_aviso.bind(4.5))
+		(zona as ZonaDica).ativada.connect(func(texto: String) -> void: _mostrar_aviso(_com_teclas(texto), 4.5))
 	_preparar_objetivo()
 	_mostrar_aviso(fase.nome)
 
@@ -98,7 +103,7 @@ func _preparar_objetivo() -> void:
 			dono = fase.primeiro(Dono) as Dono
 			graveto.pego.connect(_on_graveto_pego)
 			graveto.protegido.connect(_mostrar_aviso.bind("Tem um passarinho no graveto!" +
-				("  B: latir" if cachorro.pode_latir else "")))
+				("  %s: latir" % Teclas.nome(&"latir") if cachorro.pode_latir else "")))
 			dono.cachorro_chegou.connect(_on_dono_cachorro_chegou)
 
 
@@ -159,7 +164,7 @@ func _process(delta: float) -> void:
 	_tempo_travado = _tempo_travado + delta if cachorro.graveto_travado else 0.0
 	if _tempo_travado > 0.8 and not _dica_virar_mostrada and not cachorro.graveto_ao_comprido:
 		_dica_virar_mostrada = true
-		_mostrar_aviso("O graveto não passa atravessado — Q vira ao comprido")
+		_mostrar_aviso("O graveto não passa atravessado — %s vira ao comprido" % Teclas.nome(&"virar_graveto"))
 
 
 func _on_graveto_pego(quem: Dachshund) -> void:
@@ -185,9 +190,9 @@ func _on_graveto_pego(quem: Dachshund) -> void:
 	var grande := graveto.comprimento >= 1.1
 	var pesado := graveto.peso >= 1.6
 	if grande and pesado:
-		texto += "\nGraveto grande e pesado (%.1f m) — Q vira ao comprido" % graveto.comprimento
+		texto += "\nGraveto grande e pesado (%.1f m) — %s vira ao comprido" % [graveto.comprimento, Teclas.nome(&"virar_graveto")]
 	elif grande:
-		texto += "\nGraveto grande (%.1f m) — Q vira ao comprido" % graveto.comprimento
+		texto += "\nGraveto grande (%.1f m) — %s vira ao comprido" % [graveto.comprimento, Teclas.nome(&"virar_graveto")]
 	elif pesado:
 		texto += "\nGraveto pesado — mais devagar, mas firme na correnteza"
 	_mostrar_aviso(texto)
@@ -257,23 +262,25 @@ func _avisar_motivo(motivo: String, acao: String, sem_alvo: String) -> void:
 
 
 func _atualizar_dica() -> void:
-	var partes: PackedStringArray = ["WASD / ←↑↓→: andar"]
+	var t := Teclas.nome
+	var andar := "%s%s%s%s" % [t.call(&"mover_frente"), t.call(&"mover_esquerda"), t.call(&"mover_tras"), t.call(&"mover_direita")]
+	var partes: PackedStringArray = ["%s / ←↑↓→: andar" % andar]
 	var em_3d := cachorro.tem_graveto
 	if em_3d:
 		partes.append("Mouse: câmera")
 	if cachorro.pode_pular:
-		partes.append("Espaço: pular")
+		partes.append("%s: pular" % t.call(&"pular"))
 	if cachorro.pode_cavar and not cachorro.tem_graveto:
-		partes.append("C: cavar")
+		partes.append("%s: cavar" % t.call(&"cavar"))
 	if cachorro.pode_latir and not cachorro.tem_graveto:
-		partes.append("B: latir")
+		partes.append("%s: latir" % t.call(&"latir"))
 	if not cachorro.tem_graveto and fase and not fase.todos(Empurravel).is_empty():
-		partes.append("F + trás: puxar bloco")
+		partes.append("%s + trás: puxar bloco" % t.call(&"acao"))
 	if em_3d:
-		partes.append_array(["Q: virar graveto", "Shift: devagar", "E: largar"])
-	partes.append_array(["R: reiniciar", "Esc: pausa", "F1: editor"])
-	if not em_3d:
-		partes.append("F3: pixel")
+		partes.append_array(["%s: virar graveto" % t.call(&"virar_graveto"),
+			"%s: devagar" % t.call(&"andar_devagar"), "%s: largar" % t.call(&"largar_graveto")])
+	partes.append_array(["%s: reiniciar" % t.call(&"reiniciar"), "Esc: pausa",
+		"%s: editor" % t.call(&"alternar_editor")])
 	dica.text = "    ".join(partes)
 
 
@@ -330,14 +337,14 @@ func _concluir() -> void:
 	aviso.hide()
 	var texto := "Fase concluída! 🦴\n"
 	if Fases.testando:
-		texto += "F1: voltar ao editor    R: jogar de novo"
+		texto += "%s: voltar ao editor    %s: jogar de novo" % [Teclas.nome(&"alternar_editor"), Teclas.nome(&"reiniciar")]
 	else:
 		Fases.marcar_concluida(Fases.caminho_atual)
 		_proxima_fase = Fases.proxima()
 		if _proxima_fase.is_empty():
-			texto += "Última fase! Enter: menu    R: jogar de novo"
+			texto += "Última fase! Enter: menu    %s: jogar de novo" % Teclas.nome(&"reiniciar")
 		else:
-			texto += "Enter: próxima fase    R: jogar de novo    Esc: pausa"
+			texto += "Enter: próxima fase    %s: jogar de novo    Esc: pausa" % Teclas.nome(&"reiniciar")
 	mensagem.text = texto
 	mensagem.show()
 
@@ -368,3 +375,11 @@ func _mostrar_aviso(texto: String, segundos := 2.0) -> void:
 	_tween_aviso = create_tween()
 	_tween_aviso.tween_interval(segundos)
 	_tween_aviso.tween_callback(aviso.hide)
+
+
+## Troca "{acao}" pelo nome da tecla atual da ação (textos das Zonas de dica).
+func _com_teclas(texto: String) -> String:
+	var resultado := texto
+	for item in Teclas.REMAPEAVEIS:
+		resultado = resultado.replace("{%s}" % item[0], Teclas.nome(item[0]))
+	return resultado
