@@ -5,7 +5,8 @@ de assets (tiles gerados por código, modelos voxel em texto e procedurais, obje
 sozinhos no editor), o editor de fases dentro do jogo (F1), o graveto com colisão, peso e
 equilíbrio (etapa 3), habilidades por fase com o pulo, escadas e cantos de rampa (etapa 4),
 cavar (5), empurrar e puxar (6), água rasa e correnteza (7), latir e passarinhos (8), as
-melhorias principais do editor e as Fases 02, 03 e 04.
+melhorias principais do editor, o menu principal com pausa, o cachorro em voxel com raças e
+pelagens, o objetivo da fase como dado (graveto ou pastoreio) e as Fases 02 a 05.
 
 Abaixo, o que ficou para depois, na ordem sugerida. Cada item diz **onde encaixa** no código
 atual, para a arquitetura não precisar mudar.
@@ -109,35 +110,48 @@ embora. Não dá para latir com o graveto na boca. Ideias para depois:
 - Validação mais esperta: o graveto é alcançável? (rodar uma busca de caminho pela grade).
 - Preservar os IDs internos ao salvar para o diff no git ficar menor.
 
-## Visão: raças, skins e missões
+## Visão: raças, skins e missões (começou ✅)
 
-Ideias anotadas para o futuro (não começadas). O editor de fases é a base de tudo isso.
+O editor de fases é a base de tudo isso.
 
-- **Skins** do salsicha: malhado, preto, branco, pelo longo/curto. Mais barato de fazer: o
-  modelo do cachorro em voxel (ver "Visual e câmera") com a paleta trocável — uma skin é só um
-  arquivo de cores.
-- **Raças por fase/tema**, cada uma com habilidades próprias:
-  - *Pug* (skins preto/bege).
-  - *Border Collie*: pastorear ovelhas (circular e latir para levá-las a um cercado).
-  - *Malinois*: cão policial que segue o faro — procurar coisas em casas, cidade, fazenda,
-    fases noturnas.
-  - *Corgi*: tema britânico.
+- ✅ **Skins**: o cachorro virou voxel gerado por código, e uma pelagem é só um conjunto de
+  cores (recurso `Pelagem`). O salsicha tem 8: vermelho, preto e fogo, chocolate, malhado,
+  creme, branco e pelo longo (vermelho, preto e fogo). Escolha no menu (tela Cachorro).
+- ✅ **Raças como dados** (`assets/racas/*.tres`, recurso `Raca`): proporções, orelha, rabo,
+  velocidade e habilidades nativas; a fase escolhe a raça. Já existem salsicha, pug e border
+  collie.
+- ✅ **Objetivo da fase como dado** (`Fase.objetivo`): trazer o graveto ao dono (o de sempre) ou
+  levar as ovelhas ao cercado. Cada objetivo diz o que a fase precisa (`Fase.requisitos()`) e
+  o `jogo.gd` prepara e confere o objetivo (`_preparar_objetivo` / `_verificar_objetivo`).
+- ✅ **Border Collie**: objetos *Ovelha* (foge do cachorro, anda em rebanho, se espanta com o
+  latido, não entra na água funda) e *Cercado*; Fase 05 ("O Pastor").
+- Próximas raças (o formato já comporta, falta a mecânica de cada uma):
+  - *Pug*: já tem modelo e pelagens (bege, preto); falta uma fase com a cara dele (mais lento,
+    mas passa por baixo de coisas? empurra com o peso?).
+  - *Malinois*: cão policial que segue o **faro** — objetivo novo "achar o objeto": rastro
+    de cheiro visível ao farejar (tecla nova), em casas, cidade, fazenda, fases noturnas.
+  - *Corgi*: tema britânico (patas curtíssimas: passa em túneis bem baixos).
   - *Akita*: homenagem ao Hachiko (esperar o dono na estação?).
   - *Jack Russell*: buscar uma máscara mágica do dono, com homenagens a filmes na visão 3D.
   - Fases especiais com **gato** (ex.: um gato laranja preguiçoso atrás de lasanha), como skin
-    da primeira fase.
-- **Onde encaixa**: uma raça vira um recurso (`Raca`: modelo/paleta, velocidade, habilidades
-  nativas, som); a fase escolhe a raça como hoje escolhe as habilidades. O **objetivo** da fase
-  também vira dado (trazer o graveto — o atual —, levar ovelhas ao cercado, achar um objeto
-  pelo faro), com o `jogo.gd` perguntando ao objetivo se a fase acabou. **Temas** (fazenda,
-  cidade, noite, Reino Unido) = paleta de tiles/materiais + céu e luz por fase.
+    da primeira fase — um gato é outro gerador voxel (ou uma "raça" com orelhas em pé e rabo
+    longo) mais um objetivo "buscar a comida".
+- Ideias para o pastoreio: ovelha teimosa (só anda com latido), carneiro que dá cabeçada,
+  porteira que fecha com um botão, vários cercados (separar as ovelhas negras).
+- **Temas** (fazenda, cidade, noite, Reino Unido) = paleta de tiles/materiais + céu e luz por
+  fase.
+- Colisão por raça: hoje todas usam a cápsula do salsicha; um border collie alto passaria por
+  onde não deveria (a altura importa em túneis). Dá para derivar a cápsula das medidas da raça.
+- Som por raça (latido grave/agudo), quando houver áudio.
 - Cuidado com propriedade intelectual: nada de nomes, personagens ou visual copiados de
-  filmes e quadrinhos — homenagens genéricas (um gato laranja guloso, uma máscara mágica) são o caminho seguro.
+  filmes e quadrinhos — homenagens genéricas (um gato laranja guloso, uma máscara mágica) são
+  o caminho seguro.
 
 ## Visual e câmera
 
 - Árvores entre a câmera 3D e o cachorro ficarem transparentes (dither) em vez de taparem.
-- Modelo do cachorro em voxel e animações de andar.
+- ✅ Modelo do cachorro em voxel e animações de andar (patas, rabo, orelhas). Faltam animações
+  de cavar, latir e pular mais caprichadas (hoje o corpo todo inclina).
 - Céu e luz por fase (hoje ficam em `scenes/ambiente.tscn`, iguais para todas).
 - Se um dia houver objetos transparentes que precisem de contorno, trocar o quad de contorno por
   um `CompositorEffect`.
@@ -147,4 +161,5 @@ Ideias anotadas para o futuro (não começadas). O editor de fases é a base de 
 - Preset de exportação incluindo `*.txt` (modelos voxel) nos arquivos não-recurso.
 - Testes automatizados de fase: um roteiro que joga a fase com entradas simuladas e confere que
   dá para chegar ao graveto e voltar (foi assim que a Fase 01 foi testada nesta etapa).
-- Menu inicial / seleção de fases.
+- ✅ Menu inicial, seleção de fases, pausa, progresso salvo. Falta: opções (volume, tela
+  cheia, sensibilidade do mouse, tamanho do pixel) e remapear teclas.

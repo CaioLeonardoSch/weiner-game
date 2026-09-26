@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objetos/ovelha.gd" id="1_script"]
+
+[sub_resource type="CapsuleShape3D" id="Forma"]
+radius = 0.24
+height = 0.6
+
+[node name="Ovelha" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Corpo" type="CharacterBody3D" parent="."]
+collision_layer = 4
+collision_mask = 15
+floor_constant_speed = true
+
+[node name="Colisao" type="CollisionShape3D" parent="Corpo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.32, 0)
+shape = SubResource("Forma")
+
+[node name="Modelo" type="MeshInstance3D" parent="Corpo"]

@@ -8,6 +8,8 @@ const PASTA_PROJETO := "res://scenes/fases/"
 const PASTA_USUARIO := "user://fases/"
 const CENA_JOGO := "res://scenes/jogo.tscn"
 const CENA_EDITOR := "res://scenes/editor/editor_fase.tscn"
+const CENA_MENU := "res://scenes/menu.tscn"
+const ARQUIVO_PROGRESSO := "user://progresso.cfg"
 
 ## Arquivo da fase em uso ("" = fase nova, ainda não salva).
 var caminho_atual := ""
@@ -18,9 +20,12 @@ var rascunho_modificado := false
 var testando := false
 ## Câmera, ferramenta etc. do editor, para voltar do teste onde estava.
 var estado_editor := {}
+## Progresso e preferências do jogador (fases concluídas, skin...), em user://progresso.cfg.
+var progresso := ConfigFile.new()
 
 
 func _ready() -> void:
+	progresso.load(ARQUIVO_PROGRESSO)
 	var lista := listar()
 	if not lista.is_empty():
 		caminho_atual = lista[0]
@@ -71,6 +76,7 @@ func jogar(caminho: String) -> void:
 	rascunho = null
 	rascunho_modificado = false
 	testando = false
+	get_tree().paused = false
 	get_tree().change_scene_to_file(CENA_JOGO)
 
 
@@ -79,9 +85,67 @@ func testar(cena: PackedScene, modificado: bool) -> void:
 	rascunho = cena
 	rascunho_modificado = modificado
 	testando = true
+	get_tree().paused = false
 	get_tree().change_scene_to_file(CENA_JOGO)
 
 
+## Nome da fase (propriedade `nome` da raiz), lido sem instanciar a cena.
+func nome_da_fase(caminho: String) -> String:
+	var cena := ResourceLoader.load(caminho, "PackedScene") as PackedScene
+	if cena:
+		var estado := cena.get_state()
+		for i in estado.get_node_property_count(0):
+			if estado.get_node_property_name(0, i) == &"nome":
+				return str(estado.get_node_property_value(0, i))
+	return caminho.get_file().get_basename()
+
+
+func concluida(caminho: String) -> bool:
+	return caminho.get_file() in progresso.get_value("fases", "concluidas", PackedStringArray())
+
+
+func marcar_concluida(caminho: String) -> void:
+	if caminho.is_empty() or concluida(caminho):
+		return
+	var lista: PackedStringArray = progresso.get_value("fases", "concluidas", PackedStringArray())
+	lista.append(caminho.get_file())
+	progresso.set_value("fases", "concluidas", lista)
+	salvar_progresso()
+
+
+func salvar_progresso() -> void:
+	progresso.save(ARQUIVO_PROGRESSO)
+
+
+## A primeira fase ainda não concluída (ou a primeira de todas, se já zerou).
+func fase_para_continuar() -> String:
+	var lista := listar()
+	for caminho in lista:
+		if not concluida(caminho):
+			return caminho
+	return lista[0] if not lista.is_empty() else ""
+
+
+func abrir_menu() -> void:
+	rascunho = null
+	rascunho_modificado = false
+	testando = false
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	get_tree().paused = false
+	get_tree().change_scene_to_file(CENA_MENU)
+
+
+## Abre o editor numa fase existente ("" = fase nova, do zero).
+func editar(caminho: String) -> void:
+	caminho_atual = caminho
+	rascunho = null
+	rascunho_modificado = false
+	testando = false
+	estado_editor = {}
+	abrir_editor()
+
+
 func abrir_editor() -> void:
+	get_tree().paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().change_scene_to_file(CENA_EDITOR)

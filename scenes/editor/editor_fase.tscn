@@ -55,6 +55,13 @@ grow_horizontal = 2
 [node name="Linha" type="HBoxContainer" parent="UI/BarraTopo"]
 layout_mode = 2
 
+[node name="BotaoMenu" type="Button" parent="UI/BarraTopo/Linha"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Voltar ao menu principal"
+text = "◀ Menu"
+
 [node name="Rotulo" type="Label" parent="UI/BarraTopo/Linha"]
 layout_mode = 2
 text = " Fase:"
