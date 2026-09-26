@@ -3,7 +3,8 @@
 O que já existe: visual pixelado, trilha mais linear na Fase 01 com floresta em volta, pipeline
 de assets (tiles gerados por código, modelos voxel em texto e procedurais, objetos que aparecem
 sozinhos no editor), o editor de fases dentro do jogo (F1), o graveto com colisão, peso e
-equilíbrio (etapa 3), habilidades por fase com o pulo (parte da etapa 4) e a Fase 02.
+equilíbrio (etapa 3), habilidades por fase com o pulo (parte da etapa 4), cavar (5),
+empurrar (6), latir e passarinhos (8), e as Fases 02 e 03.
 
 Abaixo, o que ficou para depois, na ordem sugerida. Cada item diz **onde encaixa** no código
 atual, para a arquitetura não precisar mudar.
@@ -37,25 +38,28 @@ com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso. Ficou par
 - **Mais túneis**: já dá para montar no editor; variações úteis: tampas "só 3D" (caminhos que
   existem na ida e fecham na volta) e túneis baixos que só passam com o graveto ao comprido.
 
-## Etapa 5 — Cavar
+## Etapa 5 — Cavar ✅ (feito)
 
-- Tile novo **Terra fofa** (`Tiles`: `cavavel = true`). Ação `cavar`: olha a célula na frente e
-  embaixo do focinho (`Fase.terreno.local_to_map`) e, se for cavável, remove com
-  `GridMap.set_cell_item(celula, -1)` (com uma animação/partículas de terra).
-- Possibilidades: cavar por baixo de cercas (passagem baixa), desenterrar o graveto (objeto
-  "Graveto enterrado" que só aparece depois de cavar), cavar degraus.
-- O jogo reinicia a fase recarregando a cena, então buracos cavados voltam sozinhos.
+Tile **Terra fofa** (`cavavel`), habilidade *Cavar* e ação C: desfaz o bloco na frente do
+focinho, na altura do corpo, com animação e torrões de terra. Não cava com o graveto na boca.
+Usada na Fase 03 (túnel cavado num monte). Ideias para depois:
 
-## Etapa 6 — Empurrar pedras e troncos
+- Cavar para baixo (buraco) — precisa de jeito de sair (rampa de terra, pulo).
+- Graveto enterrado: objeto que só aparece depois de cavar a célula onde ele está.
+- Cavar por baixo de cercas (passagem baixa), combinando com graveto ao comprido.
 
-- Objeto `Empurravel` (base para `Pedra` e `Tronco caído` empurráveis, marcados por uma variável
-  `empurravel` no editor). Duas opções:
-  1. **Por células** (recomendado para puzzle): empurrar move o objeto 1 célula inteira com
-     tween, se a célula de destino estiver livre e com chão; previsível, estilo Sokoban.
-  2. Física (`RigidBody3D`): mais solto, menos previsível.
-- Usos: fazer ponte/escada (tronco empurrado para dentro do riacho vira caminho), abrir passagem,
-  segurar uma tampa aberta.
-- O editor já trata qualquer objeto novo; basta a cena em `scenes/objetos/`.
+## Etapa 6 — Empurrar ✅ (feito)
+
+Objeto **Bloco empurrável**: andar contra ele por um instante empurra uma célula (estilo
+Sokoban), se o destino estiver livre e tiver chão. Empurrado para dentro da água, afunda até
+ficar rente ao chão e vira passagem. Não entra em cima do graveto nem de passarinhos; se
+ficar encurralado num canto (nenhum empurrão possível), volta sozinho para onde começou.
+Ideias para depois:
+
+- Tronco empurrável que rola e vira ponte sobre dois blocos de água.
+- Empurrar com o graveto ao comprido (alcance maior) ou só sem graveto.
+- Blocos que tampam túneis (abrir caminho empurrando) e placas de pressão.
+- Puxar (para desfazer um empurrão errado sem reiniciar a fase).
 
 ## Etapa 7 — Riachos e água
 
@@ -67,16 +71,16 @@ com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso. Ficou par
   - **Travessia**: tábua com equilíbrio (já existe), ponte larga (objeto *Ponte de madeira*,
     já existe), tronco empurrado, pedras de apoio (meio bloco + pulo).
 
-## Etapa 8 — Latir
+## Etapa 8 — Latir ✅ (feito)
 
-- Ação `latir`: uma `Area3D` esférica momentânea em volta do cachorro; objetos dentro recebem
-  `ao_ouvir_latido(cachorro)` — acrescentar esse método (vazio) em `ObjetoFase`.
-- **Pássaros**: objeto `Passaro` pousado num galho/no graveto/no caminho; ao ouvir o latido, voa
-  para longe (modelo voxel em texto, animação simples de bater asas). Pássaro em cima do graveto
-  impede pegar; pássaro no caminho estreito bloqueia a passagem.
-- Outros usos: acordar o dono, espantar esquilo que leva o graveto embora.
-- Som: gerar os efeitos (sem assets externos) com `AudioStreamGenerator` ou deixar para quando a
-  regra de "nada de assets externos" for revista.
+Habilidade *Latir* e ação B: onda e "Au!" em volta do cachorro; objetos até 5 m recebem
+`ao_ouvir_latido(origem)` (método base em `ObjetoFase`). **Passarinho**: pousado a até 1 m do
+graveto, não deixa pegar; com `bloqueia_passagem`, fica no caminho; ao ouvir o latido, voa
+embora. Não dá para latir com o graveto na boca. Ideias para depois:
+
+- Esquilo que pega o graveto e foge (latir faz largar).
+- Acordar o dono / outros cachorros que respondem ao latido.
+- Som do latido gerado por código (`AudioStreamGenerator`), mantendo "nada de assets externos".
 
 ## Etapa 9 — Truques (rolar, abanar o rabo, ficar em duas patas)
 

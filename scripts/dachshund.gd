@@ -14,6 +14,9 @@ extends CharacterBody3D
 ## Caiu num lugar sem volta (água, abismo) e foi levado de volta para terra firme.
 signal voltou_ao_ponto_seguro(motivo: String)
 
+## Até onde o latido chega (m).
+const ALCANCE_LATIDO := 5.0
+
 @export var velocidade := 3.5
 ## Velocidade com que o modelo gira para a direção do movimento.
 @export var velocidade_giro := 10.0
@@ -41,8 +44,10 @@ var graveto: Graveto
 var graveto_ao_comprido := false
 ## Quando true, ignora a entrada do jogador (transição de câmera, fim de fase).
 var entrada_bloqueada := false
-## Habilidade liberada pela fase.
+## Habilidades liberadas pela fase.
 var pode_pular := false
+var pode_cavar := false
+var pode_latir := false
 ## Balanço atual, de -1 a 1 (para o HUD). Só muda em passagens estreitas.
 var balanco := 0.0
 var em_passagem_estreita := false
@@ -60,6 +65,10 @@ var _tempo_fora_da_passagem := 0.0
 ## Forma um pouco menor que a do graveto, para testar giros sem contar o simples encostar.
 var _forma_teste := CapsuleShape3D.new()
 var _tween_graveto: Tween
+var _cavando := false
+var _espera_latido := 0.0
+var _empurrando: Empurravel
+var _tempo_empurrando := 0.0
 
 @onready var modelo: Node3D = $Modelo
 @onready var boca: Marker3D = $Modelo/Boca
@@ -87,13 +96,15 @@ func _physics_process(delta: float) -> void:
 	elif pode_pular and not entrada_bloqueada and Input.is_action_just_pressed("pular"):
 		velocity.y = sqrt(2.0 * _gravidade * altura_pulo_atual())
 
-	var horizontal := Vector3.ZERO if entrada_bloqueada else _velocidade_entrada()
+	_espera_latido = maxf(_espera_latido - delta, 0.0)
+	var horizontal := Vector3.ZERO if entrada_bloqueada or _cavando else _velocidade_entrada()
 	horizontal += _desvio_de_encaixe(horizontal, delta)
 	horizontal += _empurrao_do_balanco(delta, horizontal)
 	velocity.x = horizontal.x
 	velocity.z = horizontal.z
 
 	move_and_slide()
+	_empurrar(delta, horizontal)
 	_girar_modelo(delta)
 	_checar_queda(delta)
 
@@ -146,6 +157,95 @@ func virar_graveto() -> bool:
 	_tween_graveto.tween_property(graveto, "transform", _transform_visual_graveto(graveto_ao_comprido), 0.2) \
 		.set_trans(Tween.TRANS_SINE)
 	return true
+
+
+# --- Cavar, latir, empurrar ---------------------------------------------------------------
+
+## Cava o bloco de terra fofa na frente do focinho. Devolve "" se começou a cavar, ou o
+## motivo: "sem_habilidade", "boca_cheia", "ocupado" ou "nada" (nada cavável na frente).
+func cavar() -> String:
+	if not pode_cavar:
+		return "sem_habilidade"
+	if tem_graveto:
+		return "boca_cheia"
+	if _cavando or not is_on_floor():
+		return "ocupado"
+	var celula: Variant = _celula_cavavel_na_frente()
+	if celula == null:
+		return "nada"
+	_animar_cavar(celula)
+	return ""
+
+
+func _celula_cavavel_na_frente() -> Variant:
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	for distancia: float in [0.55, 0.8, 1.0]:
+		var ponto := global_position + Vector3.UP * 0.3 + frente * distancia
+		var celula := fase.terreno.local_to_map(fase.terreno.to_local(ponto))
+		if Tiles.eh_cavavel(fase.terreno.get_cell_item(celula)):
+			return celula
+	return null
+
+
+func _animar_cavar(celula: Vector3i) -> void:
+	_cavando = true
+	var centro := fase.terreno.to_global(fase.terreno.map_to_local(celula))
+	var tween := create_tween()
+	for i in 3:
+		tween.tween_property(modelo, "rotation:z", -0.35, 0.09)
+		tween.tween_property(modelo, "rotation:z", 0.0, 0.09)
+		tween.tween_callback(Efeitos.terra.bind(get_parent(), centro + Vector3.DOWN * 0.3))
+	await tween.finished
+	fase.terreno.set_cell_item(celula, GridMap.INVALID_CELL_ITEM)
+	Efeitos.terra(get_parent(), centro)
+	_cavando = false
+
+
+## Late: objetos até ALCANCE_LATIDO ouvem (pássaros voam). Devolve "" ou o motivo de não ter
+## latido ("sem_habilidade", "boca_cheia", "ocupado").
+func latir() -> String:
+	if not pode_latir:
+		return "sem_habilidade"
+	if tem_graveto:
+		return "boca_cheia"
+	if _espera_latido > 0.0:
+		return "ocupado"
+	_espera_latido = 0.6
+	Efeitos.latido(get_parent(), boca.global_position)
+	var tween := create_tween()
+	tween.tween_property(modelo, "rotation:z", 0.25, 0.08)
+	tween.tween_property(modelo, "rotation:z", 0.0, 0.15)
+	if fase:
+		for objeto in fase.lista_objetos():
+			# Objetos desativados pela perspectiva (ex.: "só 3D" na isométrica) não ouvem.
+			if objeto.visible and objeto.global_position.distance_to(global_position) <= ALCANCE_LATIDO:
+				objeto.ao_ouvir_latido(global_position)
+	return ""
+
+
+## Andar contra um objeto empurrável por um instante empurra ele uma célula.
+func _empurrar(delta: float, horizontal: Vector3) -> void:
+	var alvo: Empurravel = null
+	if horizontal.length_squared() > 0.1:
+		var direcao := horizontal.normalized()
+		for i in get_slide_collision_count():
+			var colisao := get_slide_collision(i)
+			var corpo := colisao.get_collider() as Node
+			var empurravel := corpo.get_parent() as Empurravel if corpo else null
+			if empurravel and colisao.get_normal().dot(direcao) < -0.6:
+				alvo = empurravel
+	if alvo != _empurrando:
+		_empurrando = alvo
+		_tempo_empurrando = 0.0
+	if alvo == null:
+		return
+	_tempo_empurrando += delta
+	if _tempo_empurrando > 0.25:
+		_tempo_empurrando = 0.0
+		# Direção da grade mais próxima da direção em que o cachorro anda.
+		var passo := Vector3i(int(signf(horizontal.x)), 0, 0) if absf(horizontal.x) >= absf(horizontal.z) \
+			else Vector3i(0, 0, int(signf(horizontal.z)))
+		alvo.empurrar(passo)
 
 
 func _velocidade_entrada() -> Vector3:

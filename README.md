@@ -19,6 +19,8 @@ e use F6 (rodar cena atual).
 | E | largar o graveto | girar (com Q) |
 | Q | virar o graveto (atravessado ↔ ao comprido) | girar (com E) |
 | Espaço | pular (se a fase liberar) | — |
+| C | cavar terra fofa (se a fase liberar) | — |
+| B | latir (se a fase liberar) | — |
 | Shift | andar devagar (equilíbrio) | modificador (trocar tile, girar 15°) |
 | R | reiniciar | subir camada (com F: descer) |
 | **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
@@ -40,6 +42,15 @@ graveto. Na volta, em 3D, a ponte larga não existe (era "só isométrica"): sob
 Atravessado na boca, o graveto não passa no vão — **Q** vira o graveto ao comprido. Na
 pinguela, graveto grande desequilibra: atravessado e correndo, o cachorro cai na água; ao
 comprido ou andando devagar (Shift), passa.
+
+## Fase 03 — "O Monte e o Passarinho"
+
+Um monte de **terra fofa** fecha a trilha: o salsicha **cava** (C) um túnel através dele. Do
+outro lado do riacho, um **passarinho** está pousado no graveto e não deixa pegar — um **latido**
+(B) e ele voa. Na volta, em 3D, a ponte (só isométrica) sumiu: **empurre o bloco de pedra**
+para dentro do riacho; ele afunda e vira passagem (se o bloco ficar encurralado num canto,
+volta sozinho para o lugar). Com o graveto na boca não dá para cavar
+nem latir.
 
 ## O graveto
 
@@ -91,7 +102,7 @@ arraste cenas de `scenes/objetos/` para dentro de `Objetos`.
 
 Toda fase precisa de um **Início do cachorro**, um **Dono** e um **Graveto** (categoria "Regras").
 Nas propriedades da fase (nada selecionado) ficam as **habilidades do cachorro** que a fase
-libera (hoje: pular) — a Fase 01 depende de o cachorro *não* pular o barranco. O comprimento e
+libera (pular, cavar, latir) — a Fase 01 depende de o cachorro *não* pular o barranco. O comprimento e
 o peso do graveto ficam nas propriedades do Graveto.
 
 ### A mecânica da perspectiva no editor
@@ -156,4 +167,5 @@ por elas), 3 `objetos`, 4 `cachorro`.
 | Comprimento/peso do graveto | propriedades do Graveto no editor de fases |
 | Altura do pulo, equilíbrio | exports de `scripts/dachshund.gd` (grupo "Equilíbrio") |
 | Habilidades liberadas | propriedades da fase no editor (nada selecionado) |
+| Alcance do latido | `ALCANCE_LATIDO` em `scripts/dachshund.gd` |
 | Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |

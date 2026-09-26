@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/objetos/empurravel.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/assets/malha_gerada.gd" id="2_malha"]
+
+[sub_resource type="BoxShape3D" id="Forma"]
+size = Vector3(0.9, 0.9, 0.9)
+
+[node name="BlocoEmpurravel" type="Node3D"]
+script = ExtResource("1_script")
+
+[node name="Visual" type="MeshInstance3D" parent="."]
+script = ExtResource("2_malha")
+
+[node name="Corpo" type="StaticBody3D" parent="."]
+collision_layer = 4
+collision_mask = 0
+
+[node name="Colisao" type="CollisionShape3D" parent="Corpo"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+shape = SubResource("Forma")

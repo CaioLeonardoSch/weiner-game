@@ -37,6 +37,11 @@ func ao_colocar_no_editor(_rng: RandomNumberGenerator) -> void:
 	pass
 
 
+## O cachorro latiu perto (até Dachshund.ALCANCE_LATIDO metros). Pássaros voam, etc.
+func ao_ouvir_latido(_origem: Vector3) -> void:
+	pass
+
+
 ## Objetos que são só volume (zonas, paredes invisíveis) usam 0: o editor só os seleciona
 ## quando o clique não acerta nenhum objeto "de verdade" (senão atrapalhariam os de dentro).
 func prioridade_no_editor() -> int:

@@ -19,6 +19,7 @@ const MEIO_BLOCO := 6
 const MATO_BAIXO := 7
 const AGUA := 8
 const TABUA := 9
+const TERRA_FOFA := 10
 
 ## Altura (no espaço do tile, de -0.5 a 0.5) da superfície da água.
 const SUPERFICIE_AGUA := 0.35
@@ -39,6 +40,7 @@ const _TABUA := [Vector2(-0.5, -0.58), Vector2(0.5, -0.58), Vector2(0.5, -0.5), 
 ## ("perfil" = o próprio formato, "nenhuma"), z (profundidade da extrusão) e cor no editor.
 ## `agua`: o cachorro que cai dentro volta para o último ponto seguro.
 ## `estreita`: passagem estreita — com graveto grande e pesado, o cachorro se desequilibra.
+## `cavavel`: o cachorro (com a habilidade Cavar) desfaz o bloco cavando.
 static func definicoes() -> Array[Dictionary]:
 	return [
 		{id = GRAMA, nome = "Grama", perfil = _BLOCO, material = "grama", cor = Color("5da03a")},
@@ -51,6 +53,7 @@ static func definicoes() -> Array[Dictionary]:
 		{id = MATO_BAIXO, nome = "Mato baixo", perfil = _MEIO, material = "mato", cor = Color("4d9a45")},
 		{id = AGUA, nome = "Água", perfil = _AGUA, material = "agua", colisao = "nenhuma", agua = true, cor = Color("3d8ccf")},
 		{id = TABUA, nome = "Tábua", perfil = _TABUA, material = "madeira", z = 0.18, estreita = true, cor = Color("a8773f")},
+		{id = TERRA_FOFA, nome = "Terra fofa", perfil = _BLOCO, material = "terra_fofa", cavavel = true, cor = Color("a87b4f")},
 	]
 
 
@@ -67,6 +70,10 @@ static func eh_agua(id: int) -> bool:
 
 static func eh_estreita(id: int) -> bool:
 	return definicao(id).get("estreita", false)
+
+
+static func eh_cavavel(id: int) -> bool:
+	return definicao(id).get("cavavel", false)
 
 
 ## Meia largura (m) da passagem estreita, no eixo Z do tile.

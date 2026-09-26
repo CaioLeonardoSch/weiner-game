@@ -9,6 +9,8 @@ extends ObjetoFase
 ## precisarão ser largos o bastante para ele; e, com o peso, equilíbrio em passagens estreitas.
 
 signal pego(cachorro: Dachshund)
+## O cachorro encostou, mas um passarinho está guardando o graveto (no máximo 1 vez a cada 2 s).
+signal protegido
 
 ## Amplitude (m) e velocidade da flutuação enquanto está no chão, só para chamar atenção.
 @export var amplitude_flutuacao := 0.05
@@ -27,6 +29,11 @@ signal pego(cachorro: Dachshund)
 var ja_pego := false
 var _tempo := 0.0
 var _bloqueio := 0.0
+var _espera_aviso := 0.0
+## Um passarinho barrou o cachorro encostado: quando ele for embora, o graveto é pego sem o
+## cachorro precisar sair e encostar de novo. Fora disso, só um encostar novo pega (senão o
+## graveto recém-largado embaixo do focinho voltaria sozinho para a boca).
+var _barrado_por_passaro := false
 
 @onready var visual: Node3D = $Visual
 @onready var area: Area3D = $AreaPegar
@@ -54,6 +61,11 @@ func _process(delta: float) -> void:
 	if ja_pego or Engine.is_editor_hint():
 		return
 	_bloqueio = maxf(_bloqueio - delta, 0.0)
+	_espera_aviso = maxf(_espera_aviso - delta, 0.0)
+	# O cachorro pode já estar encostado quando o passarinho vai embora.
+	if _barrado_por_passaro and _bloqueio <= 0.0 and area.monitoring:
+		for corpo in area.get_overlapping_bodies():
+			_on_body_entered(corpo)
 	_tempo += delta
 	visual.position.y = sin(_tempo * velocidade_flutuacao) * amplitude_flutuacao
 	visual.rotation.y += delta
@@ -67,6 +79,7 @@ func fator_velocidade() -> float:
 ## Volta a ficar disponível no chão (quem posiciona é o jogo).
 func soltar() -> void:
 	ja_pego = false
+	_barrado_por_passaro = false
 	_bloqueio = tempo_para_repegar
 	area.set_deferred("monitoring", true)
 
@@ -74,7 +87,15 @@ func soltar() -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if ja_pego or _bloqueio > 0.0 or not body is Dachshund:
 		return
+	for passaro in get_tree().get_nodes_in_group(&"passaros"):
+		if (passaro as Passaro).guarda(global_position):
+			_barrado_por_passaro = true
+			if _espera_aviso <= 0.0:
+				_espera_aviso = 2.0
+				protegido.emit()
+			return
 	ja_pego = true
+	_barrado_por_passaro = false
 	# Não dá para mudar o monitoring dentro do próprio callback de física.
 	area.set_deferred("monitoring", false)
 	visual.position = Vector3.ZERO
