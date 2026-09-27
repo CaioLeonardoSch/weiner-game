@@ -27,6 +27,52 @@ nova entra — a Fase 01, por exemplo, depende de o cachorro *não* pular o barr
 Já é assim: `Fase.habilidades` (flags no painel da fase no editor), somadas às habilidades
 nativas da raça; o `jogo.gd` liga só essas.
 
+## Próxima etapa — Editor de fases 2
+
+Pedido depois de testar o editor: construir mais rápido e ver melhor o que está sendo feito. Antes,
+uma olhada em como outros jogos com construção em grade resolvem isso:
+
+- **Super Mario Maker 1 e 2**: pinta-se arrastando; uma barra no topo guarda os itens usados por
+  último; *Multi-Grab* seleciona um retângulo para mover ou copiar; a mão (cursor) agarra e
+  arrasta sem colocar nada; testar começa de onde o Mario está ("jogar daqui"); desfazer é um
+  botão só.
+- **Minecraft (criativo)**: barra de atalhos com os blocos à mão e "escolher bloco" apontando
+  (o nosso conta-gotas, G). As placas de pressão: a de madeira é acionada por tudo (até itens
+  largados), a de pedra só por quem anda (jogador e bichos) — ideia que adaptamos abaixo.
+- **Axiom** (editor de mundo do Minecraft): cada ferramenta tem forma e raio, com atalho para
+  mudar o raio na hora (Ctrl + botão do meio); a prévia aparece antes de confirmar.
+- **Dragon Quest Builders**: segurar o botão coloca em sequência, com uma pausa depois do
+  primeiro bloco para não pôr um a mais sem querer — prévia + confirmação resolve melhor.
+- **Captain Toad**: fases como dioramas pequenos, e a câmera gira em volta o tempo todo — no
+  editor, girar a vista precisa ser fácil e estar sempre à mão.
+
+O plano:
+
+1. **Tamanho do pincel**: Ctrl + roda do mouse (ou [ e ]) aumenta e diminui a área — 1×1, 2×2, 3×3...
+   — para colocar, apagar e trocar vários blocos de uma vez (um chão de grama inteiro).
+2. **Linha com prévia**: Shift + clique marca o começo; a prévia mostra os blocos (ou objetos) em
+   linha reta até o mouse; outro clique confirma. Substitui o "Shift + arrastar espalha" dos
+   objetos (o pincel de floresta passa para Ctrl + arrastar).
+3. **Barra de ferramentas do terreno**: Pincel, Trocar, Linha, Retângulo e Balde (teclas 1 a 5),
+   com os atalhos de sempre (Shift linha, Ctrl retângulo, Alt balde).
+4. **Cursor**: uma ferramenta com ícone de seta que não coloca nada — clique seleciona, arrastar um
+   objeto move, arrastar no vazio gira a vista (com Shift, arrasta). Em qualquer ferramenta,
+   **Espaço + botão esquerdo** gira a vista.
+5. **Prévia translúcida** do que vai ser colocado (pincel, linha, retângulo), na cor do tile.
+6. **Menos texto na tela**: nada de rótulos em cima dos objetos; o nome do que está sob o mouse vai
+   para a barra de status.
+7. **Paredes invisíveis e zonas** com um efeito leve (translúcido) só no editor.
+8. **Ícones para tudo** na paleta: ferramentas, início do cachorro, zonas, paredes, módulos.
+9. **Recentes** no topo da paleta (os últimos itens usados) e categorias que se recolhem.
+10. **Testar daqui (F2)**: joga a fase com o cachorro começando onde está o cursor.
+
+Junto, duas mudanças de mecânica pedidas:
+
+- **Placas de madeira e de pedra** (no lugar do peso mínimo com pontinhos): a de madeira é acionada
+  por qualquer coisa em cima (o cachorro, um graveto, uma ovelha, um bloco...); a de pedra só por
+  algo pesado — o bloco de pedra e o tronco. A cor da moldura continua dizendo o que ela aciona.
+- **Sem graveto molhado**: a água não muda mais o peso do graveto.
+
 ## Versão de teste: Floresta e Neve
 
 O plano para a primeira versão jogável por outras pessoas: **dois biomas**, cada um uma região.
