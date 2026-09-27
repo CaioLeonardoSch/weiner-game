@@ -9,7 +9,10 @@ melhorias principais do editor, o menu principal com pausa, o cachorro em voxel 
 pelagens, o objetivo da fase como dado (graveto ou pastoreio) e as Fases 02 a 12. As etapas 3 a
 8 estão fechadas (as ideias que sobraram delas também: rampa lisa, degrau alto, buraco, graveto
 enterrado, cavar sob a cerca, tronco que rola e boia, graveto molhado, esquilo, dono dormindo,
-cão vizinho e o som do latido — Fases 10, 11 e 12). Do Pacote 1
+cão vizinho e o som do latido — Fases 10, 11 e 12). Depois vieram o bioma de neve (tiles e
+texturas, céu, entorno, neve caindo), as regiões no menu, o frio e a fogueira montada com
+gravetos, o celeiro para o rebanho e o editor modular (trechos, copiar/colar entre fases, módulos,
+balde) — ver *Versão de teste*. Do Pacote 1
 (Etapa 10) já existem o botão de ação (F), gravetos lendário e comuns, placas de pressão e
 portões por canal de cor, o graveto-ponte e o mirante. Também o menu de opções (tela, gráficos,
 áudio, teclas), a tela para monitores largos e a exportação para Windows, Linux e macOS (ver
@@ -23,6 +26,22 @@ cachorro tem (pular, cavar, latir...). Isso deixa as fases antigas corretas quan
 nova entra — a Fase 01, por exemplo, depende de o cachorro *não* pular o barranco de 2 m.
 Já é assim: `Fase.habilidades` (flags no painel da fase no editor), somadas às habilidades
 nativas da raça; o `jogo.gd` liga só essas.
+
+## Versão de teste: Floresta e Neve
+
+O plano para a primeira versão jogável por outras pessoas: **dois biomas**, cada um uma região.
+
+- **Floresta**: as fases de buscar o graveto com as mecânicas de sempre (Fases 01 a 12, e a 05
+  de pastoreio).
+- **Neve**: buscar o graveto no frio (fogueiras montadas com gravetos, neve para derreter ou
+  cavar, gelo) e **abrigar o rebanho**: fases do Border Collie em que ele explora um mapa grande,
+  acha as ovelhas (elas balem) e as guia com segurança até o **celeiro** — protegidas do frio ou
+  do tempo ruim.
+- Os mapas das fases ficam com o autor (montados no editor, com módulos); o código cuida das
+  peças e do editor. ✅ Feito para isso: bioma Neve, tiles de neve, Fogueira, frio, Celeiro,
+  balido, regiões no menu, editor modular (trecho, módulos, balde, busca) e mapas de qualquer
+  tamanho e formato (entorno que segue o formato do mapa, queda relativa).
+- Falta: as fases da região Neve (mapas) e, se preciso, ajustes finos de frio/fogo com elas.
 
 ## Visão
 
@@ -57,12 +76,14 @@ Como isso vira jogo:
   quais raças é compatível. Antes de entrar numa região, o jogador escolhe a raça entre as
   compatíveis e, depois, a pelagem. Jogar a região de novo com outra raça mostra outros
   caminhos.
-- *Onde encaixa:* recurso `Regiao` (`assets/regioes/*.tres`: nome, tema, fases em ordem, raças
-  compatíveis, textos ou cenas de abertura e de final). O menu passa a ser Regiões → raça →
-  pelagem → fases, e o progresso guarda (fase, raça). Hoje as fases são uma lista só
-  (`Fases.listar()`, em ordem de nome), a pelagem se escolhe na tela Cachorro do menu e a raça
-  vem de `Fase.raca` — que continua útil como raça padrão para testar no editor. Toda fase
-  precisa ter solução com cada raça compatível da região.
+- ✅ **Regiões como dado**: recurso `Regiao` (`assets/regioes/*.tres`: id, nome, descrição,
+  ordem, bioma sugerido); cada fase diz a sua (`Fase.regiao`) e o menu (Fases) agrupa por região,
+  com a descrição. A ordem do jogo é a das regiões, depois o nome do arquivo. Hoje: Floresta e
+  Neve.
+- Falta: raças compatíveis por região e o menu Regiões → raça → pelagem → fases (o progresso
+  guardaria (fase, raça)); textos ou cenas de abertura e de final. Hoje a pelagem se escolhe na
+  tela Cachorro e a raça vem de `Fase.raca` — que continua útil como raça padrão para testar no
+  editor. Toda fase precisa ter solução com cada raça compatível da região.
 
 ## Etapa 3 — Graveto de verdade ✅ (feito, com ideias para depois)
 
@@ -154,7 +175,7 @@ raça — agudo no salsicha e no pug, grave no border collie); objetos até 5 m 
   dele. É o jeito de latir com o graveto na boca. Fase 12 ("O Vizinho").
 - Pássaros no contrapeso (voam e voltam, corrida contra o tempo): Etapa 10.
 
-## Etapa 9 — Truques (rolar, abanar o rabo, ficar em duas patas)
+## Etapa 9 — Truques (rolar, abanar o rabo, ficar em duas patas) — para depois
 
 - O modelo já é separado em pivôs (corpo, cabeça, orelhas, rabo, patas) e animado por código
   em `ModeloCachorro`; os truques entram como animações novas ali.
@@ -243,32 +264,33 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   da ação ou vazio); o cachorro procura o objeto à frente do focinho (como o `_bloco_na_frente`
   do puxar) e o HUD mostra a ação disponível ("F: morder", "F: puxar corda").
 
-## Etapa 11 — Neve: frio, fogo e vento
+## Etapa 11 — Neve: frio, fogo e vento (em boa parte ✅)
 
 Fases de inverno em que andar já é um esforço e o caminho precisa ser aberto com fogo.
 
-- **Neve fofa**: movimento pesado — mais lento, e o cachorro demora a arrancar e a parar.
-  *Onde encaixa:* tile `Neve` com `lentidao` (como a água rasa) e um pouco de inércia no
-  `dachshund.gd`.
-- **Montes de neve**: bloqueiam o caminho; derretem com fogo ou são cavados.
-  *Onde encaixa:* tile `Neve funda` com `cavavel`.
-- **Gelo**: o cachorro desliza até bater em algo (o quebra-cabeça clássico de deslizar). Com o
-  graveto atravessado ele bate antes — virar (Q) muda onde ele para. Blocos também deslizam.
-  *Onde encaixa:* tile com uma flag `escorrega`: no gelo o cachorro mantém a direção até
-  colidir, e o `Empurravel` desliza até ser bloqueado.
-- **Fogo que derrete**: lanternas, lareiras e fogueiras acesas derretem a neve em volta e
-  facilitam o acesso. Jeitos de acender: puxar a corda de um lampião, empurrar uma brasa ou
-  **levar um graveto aceso** de uma fogueira a outra — com o vento tentando apagar a chama pelo
-  caminho. **Fogueira maior**: gravetos comuns enterrados na neve são cavados e levados, um a um,
-  até a fogueira; quanto mais gravetos, maior o fogo e maior a área de neve que ele derrete.
-  *Onde encaixa:* objeto `Fogo` (apagado/aceso, com um raio que cresce a cada graveto recebido);
-  ao acender ou crescer, troca os tiles de neve em volta (com um efeito de derreter). Pode ser
-  alvo de um canal (placa, alavanca).
-- **Cavar na neve**: descobre um pedacinho do chão, onde pode haver algo útil (um osso, um pano,
-  uma chave, gravetos para a fogueira) ou o próprio graveto lendário, se for o lugar certo. O
-  faro ajuda a saber onde cavar.
-  *Onde encaixa:* objeto "montinho de neve" que esconde outro objeto e some ao ser cavado (o
-  mesmo mecanismo do "graveto enterrado", Etapa 5).
+- ✅ **Bioma Neve**: as mesmas peças com texturas de inverno (biblioteca de tiles por bioma),
+  céu frio, neve caindo, entorno branco, árvores e pedras com neve (`Fase.bioma`, `Biomas`).
+- ✅ **Neve fofa**: mais lenta, e o cachorro demora a arrancar e a parar (tile com `lentidao` e
+  `aderencia`). As ovelhas também ficam mais lentas.
+- ✅ **Montes de neve**: bloco que se cava (C) ou derrete no fogo.
+- ✅ **Gelo** (versão simples): aderência baixa — o cachorro desliza e demora a parar.
+  Ideia para depois: o quebra-cabeça clássico de deslizar até bater em algo (com o graveto
+  atravessado ele bate antes; virar com Q muda onde ele para) e blocos que deslizam no gelo.
+- ✅ **Frio**: `Fase.frio` — longe do fogo o calor cai (barra no HUD, mais rápido na água); com
+  pouco calor o cachorro treme e fica lento; gelado, volta para o último lugar quente.
+- ✅ **Fogueira montada com gravetos**: pede N gravetos comuns (F perto dela, ou largar junto);
+  acesa, esquenta, derrete a neve em volta (neve fofa vira terra, montes somem, com vapor) e
+  revela o que estava enterrado na neve; cada graveto a mais aumenta o raio. Aciona um canal
+  (opcional) — dá para abrir um portão quando ela acende.
+- ✅ **Cavar na neve**: o graveto enterrado vira um montinho de neve no bioma de neve (cava-se
+  com C, ou o fogo revela).
+- Ideias para depois: outros jeitos de acender (a corda de um lampião, empurrar uma brasa,
+  **levar um graveto aceso** de uma fogueira a outra com o vento tentando apagar); o fogo derreter
+  gelo em água (o caminho que piora); "montinho de neve" que esconde outro objeto qualquer (um
+  osso, um pano, uma chave), achado pelo faro.
+- ✅ **Celeiro** (para o pastoreio na neve): abrigo das ovelhas, quente por dentro; telhado e
+  paredes altas somem com o cachorro perto. As ovelhas **balem** (com som) quando estão longe —
+  para achá-las em mapas grandes.
 - **Vento forte**: rajadas que empurram o cachorro para trás; é preciso avançar de abrigo em
   abrigo, atrás de paredes, árvores e pedras. O graveto atravessado vira vela (empurra mais), ao
   comprido corta o vento, e um graveto pesado deixa o cachorro mais firme.
@@ -290,8 +312,16 @@ Fases de inverno em que andar já é um esforço e o caminho precisa ser aberto 
 
 - ✅ Retângulo de preenchimento (Ctrl + arrastar), conta-gotas (G), "pincel de floresta"
   (Shift + arrastar com um objeto) e validação ao testar/salvar.
-- Balde de tinta.
-- Seleção múltipla, copiar/colar regiões entre fases.
+- ✅ Balde de tinta (Alt + clique).
+- ✅ **Trecho (T)**: marcar um retângulo (todas as camadas + objetos), copiar, recortar, apagar e
+  colar (Ctrl+V) girando e subindo/descendo, também em outra fase.
+- ✅ **Módulos**: salvar um trecho como módulo (`scenes/modulos/`), que aparece na paleta; as
+  classes `Trecho` e `Modulos` servem também para um gerador de mapas montar fases com peças.
+- ✅ Busca na paleta; ícones dos tiles no bioma da fase; painel da fase com região, bioma e frio.
+- ✅ Mapas de qualquer tamanho e formato (entorno que segue o formato, queda relativa).
+- Ideias: editar um módulo direto (abrir como fase), prévia/miniatura dos módulos na paleta,
+  minimapa para mapas grandes, pontos de encaixe nos módulos (para um gerador saber onde ligar
+  uma peça na outra).
 - Mostrar no editor as habilidades liberadas e o comprimento do graveto (prévia de passagens).
 - Validação mais esperta: o graveto é alcançável? (rodar uma busca de caminho pela grade).
 - Preservar os IDs internos ao salvar para o diff no git ficar menor.
@@ -308,8 +338,8 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
   velocidade e habilidades nativas; a fase escolhe a raça. Já existem salsicha, pug e border
   collie.
 - ✅ **Objetivo da fase como dado** (`Fase.objetivo`): trazer o graveto ao dono (o de sempre) ou
-  levar as ovelhas ao cercado. Cada objetivo é uma classe em `scripts/objetivos/` que diz o que
-  a fase precisa (`faltando`, `avisos`) e prepara e confere a fase (`preparar`, `processar`).
+  levar as ovelhas ao abrigo (cercado ou celeiro). Cada objetivo é uma classe em
+  `scripts/objetivos/` que diz o que a fase precisa (`faltando`, `avisos`) e prepara e confere a fase (`preparar`, `processar`).
 - ✅ **Border Collie**: objetos *Ovelha* (foge do cachorro, anda em rebanho, se espanta com o
   latido, não entra na água funda) e *Cercado*; Fase 05 ("O Pastor").
 - **Raças com mecânica própria.** Cada raça resolve os quebra-cabeças do seu jeito; a raça é
@@ -378,15 +408,14 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
 - Árvores entre a câmera 3D e o cachorro ficarem transparentes (dither) em vez de taparem.
 - ✅ Modelo do cachorro em voxel e animações de andar (patas, rabo, orelhas). Faltam animações
   de cavar, latir e pular mais caprichadas (hoje o corpo todo inclina).
-- Céu e luz por fase (hoje ficam em `scenes/ambiente.tscn`, iguais para todas) — necessário
-  para os temas de noite, neve e mar.
+- ✅ Céu e luz por bioma (`Biomas.aplicar_ambiente`). Faltam biomas de noite e mar.
 - Se um dia houver objetos transparentes que precisem de contorno, trocar o quad de contorno por
   um `CompositorEffect`.
 
 ## Áudio
 
-- ✅ Barramentos e volumes nas opções (geral, música, efeitos, ambiente) e o primeiro som: o
-  latido, gerado por código (`scripts/som.gd`), no barramento Efeitos.
+- ✅ Barramentos e volumes nas opções (geral, música, efeitos, ambiente) e os primeiros sons: o
+  latido e o balido, gerados por código (`scripts/som.gd`), no barramento Efeitos.
 - Faltam: passos (grama, terra, água), água corrente, pássaros, portão, cavar, música e ambiente
   por tema. Mantendo "nada de assets externos", tudo pode sair do mesmo gerador (`Som`), ou
   entrar como arquivos quando houver quem componha.
@@ -397,6 +426,6 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
   fumaça na CI.
 - ✅ Testes automatizados: `ferramentas/testar_fases.sh` joga cada fase com entradas simuladas
   (rotas em `ferramentas/testes/rotas/`), mais rotas das mecânicas (mecanismos, save, hud,
-  bichos, cavar, movimento, tronco). Rodam na CI em todo push.
+  bichos, cavar, movimento, tronco, editor, neve, celeiro). Rodam na CI em todo push.
 - ✅ Menu inicial, seleção de fases, pausa, progresso salvo (com versão e migração), opções (tela,
   gráficos, áudio, controles) e remapear teclas.

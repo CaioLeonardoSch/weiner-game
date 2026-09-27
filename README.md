@@ -104,7 +104,9 @@ O progresso (fases concluídas e pelagens) fica em `progresso.cfg`, na pasta do 
 caminho mudou, ajuste a rota (o formato está no topo de `ferramentas/testes/roteiro.gd`).
 A rota `save` testa a pasta do save, os ids das fases e a migração de saves antigos; a rota
 `mecanismos` testa a regra OU / E dos portões e a ferramenta Ligar do editor
-(`ferramentas/testes/teste_mecanismos.gd`).
+(`ferramentas/testes/teste_mecanismos.gd`); `editor` testa trechos, colar girado, módulos,
+balde e bioma (`teste_editor.gd`); `neve` e `celeiro` montam fases de neve por código
+(`teste_neve.gd`) e testam frio, fogueira, gelo e o celeiro.
 Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
 Os testes não mexem nos arquivos do jogador: usam as opções de fábrica e guardam o progresso
 só na memória (se o `progresso.cfg` real mudar durante um teste, o teste falha).
@@ -244,6 +246,41 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
   latido (a validação avisa se ninguém pode latir).
 - **Som**: o latido é gerado por código (`scripts/som.gd`), com o tom pela altura da raça.
 
+## Neve, fogo e o celeiro
+
+- **Bioma Neve** (propriedade *Bioma* da fase): os mesmos tiles com texturas de inverno (grama
+  coberta de neve, pedra nevada, mato nevado, terra gelada), céu frio, neve caindo, entorno
+  branco e árvores e pedras com neve. Tiles próprios: **Neve fofa** (mais lento, e o cachorro
+  demora a arrancar e a parar), **Monte de neve** (bloco que se cava com C ou derrete no fogo) e
+  **Gelo** (desliza: solta a tecla e ele continua).
+- **Frio** (propriedade *Frio* da fase): longe do fogo o **calor** cai (barra no canto de baixo)
+  em *Segundos até gelar*, e mais rápido na água; com pouco calor o cachorro treme e anda mais
+  devagar; gelado, volta para o último lugar quente. Esquentam: fogueira acesa (perto) e celeiro
+  (dentro).
+- **Fogueira**: um círculo de pedras que acende com `gravetos_para_acender` gravetos comuns —
+  traga na boca e aperte **F** perto dela (ou largue o graveto junto dela). Acesa, esquenta,
+  derrete a neve em volta (neve fofa vira terra, montes somem) e revela o que estava enterrado
+  na neve; cada graveto a mais aumenta o raio (`raio_por_graveto`, até `raio_maximo`). O
+  lendário não vai para o fogo. Acesa, também aciona a cor dela (dá para abrir um portão com a
+  ferramenta Ligar) — ou fica sem ligação.
+- **Celeiro**: abrigo das ovelhas (como o Cercado): porta larga no lado +X, feno num canto,
+  telhado com neve no bioma de neve. Com o cachorro perto, o telhado e a parte alta das paredes
+  somem para dar para ver dentro. Uma ovelha que entra fica guardada; dentro é quente.
+- **Ovelhas balem** ("Béé!", com som) de vez em quando quando estão longe do cachorro — é assim
+  que se acha uma ovelha perdida num mapa grande. Neve fofa e água rasa atrasam as ovelhas também.
+
+## Regiões e biomas
+
+- **Regiões** (`assets/regioes/*.tres`, recurso `Regiao`: nome, descrição, ordem, bioma
+  sugerido) agrupam as fases no menu (**Fases**, com a história curta de cada região). Cada fase
+  diz a sua na propriedade *Região*. Hoje: **Floresta** (as Fases 01 a 12) e **Neve** (vazia,
+  esperando as fases). A ordem do jogo (continuar, próxima fase) é a das regiões e, dentro de
+  cada uma, a do nome do arquivo. Para uma região nova, duplique um `.tres` e mude `id`, `nome`
+  e `ordem`.
+- **Biomas** (`scripts/biomas.gd`): Floresta e Neve. O bioma troca a biblioteca de tiles
+  (`assets/tiles/tiles.tres`, `tiles_neve.tres` — mesmos IDs, materiais trocados em
+  `Tiles.MATERIAIS_POR_BIOMA`), o céu e a luz, o chão e as árvores do entorno e se neva.
+
 ## Raças e pelagens
 
 O cachorro é um modelo **voxel gerado por código** (`scripts/racas/cachorro_voxel.gd`) a partir
@@ -308,7 +345,8 @@ direita. A visão (V) alterna entre ver tudo, **isométrica** (o que o jogador v
 (a volta). **Salvar** (Ctrl+S) grava por cima do arquivo da fase. Para criar uma fase nova:
 **Nova** (parte de um modelo) ou abra uma fase existente, mude o nome e use **Salvar como** — o
 arquivo novo leva o nome da fase (`Fase 02 — A ponte` → `scenes/fases/fase_02_a_ponte.tscn`).
-As fases são jogadas em ordem de nome de arquivo, então comece o nome com "Fase 02", "Fase 03"...
+As fases são jogadas na ordem das regiões e, dentro de cada região, pelo nome do arquivo — então
+comece o nome com "Fase 02", "Fase 03"... (ou "Neve 01", "Neve 02"...).
 Num jogo exportado as fases salvas vão para `user://fases/`.
 
 **Pelo editor do Godot** — também funciona: pinte o GridMap `Terreno` com a biblioteca de tiles e
@@ -320,16 +358,52 @@ variações sorteadas — o "pincel de floresta"; **G** é o conta-gotas. Ao **T
 a fase (falta início, dono ou graveto; início sem chão...) e pede confirmação se houver problema
 grave; ao salvar, mostra os avisos.
 
-Nas propriedades da fase (nada selecionado) ficam o **objetivo**, a **raça** do cachorro e as
-**habilidades** que a fase libera (pular, cavar, latir; a raça pode somar as dela) — a Fase 01
-depende de o cachorro *não* pular o barranco. Cada objetivo pede alguns objetos:
+Nas propriedades da fase (nada selecionado) ficam a **região**, o **bioma**, o **objetivo**, a
+**raça** do cachorro, as **habilidades** que a fase libera (pular, cavar, latir; a raça pode
+somar as dela) — a Fase 01 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
+objetivo pede alguns objetos:
 
 | Objetivo | Precisa de |
 |---|---|
 | Trazer o graveto ao dono | **Início do cachorro**, **Dono** e um **Graveto lendário** (categoria "Regras"); gravetos comuns são opcionais |
-| Levar as ovelhas ao cercado | **Início do cachorro**, **Ovelhas** ("Bichos") e um **Cercado** ("Regras"; tamanho no painel, porteira no lado +X — gire para mudar) |
+| Levar as ovelhas ao abrigo | **Início do cachorro**, **Ovelhas** ("Bichos") e um **Cercado** ou um **Celeiro** ("Regras"; tamanho no painel, porta no lado +X — gire para mudar); vale qualquer abrigo, e pode haver vários |
 
 O comprimento e o peso do graveto ficam nas propriedades do Graveto.
+
+### Trechos e módulos: montar mapas com peças
+
+A ferramenta **Trecho (T)** marca um retângulo do mapa arrastando o mouse — entram os blocos de
+todas as camadas e os objetos de dentro (menos o Início do cachorro). Com ele marcado:
+
+- **Ctrl+C** copia, **Ctrl+X** recorta, **Del** apaga (tudo com desfazer). Com um objeto
+  selecionado (Selecionar), Ctrl+C copia só ele.
+- **Ctrl+V** cola: a prévia segue o mouse, **Q/E** gira 90° (rampas, escadas, cercas e objetos
+  giram junto), **PgUp/PgDn** sobe ou desce, clique cola (e continua colando; Esc sai). O que foi
+  copiado continua copiado ao abrir outra fase. Blocos colados substituem os do lugar; onde o
+  trecho não tem bloco, nada muda. Mecanismos colados mantêm a cor.
+- **Salvar como módulo** (painel da direita): o trecho vira `scenes/modulos/<nome>.tscn` (no jogo
+  exportado, `user://modulos/`) e aparece no fim da paleta, em **Módulos** — clique para colar,
+  em qualquer fase. Um módulo é uma fase pequena (terreno + objetos, com o canto na origem).
+  Nome repetido pede confirmação para substituir.
+
+Para um gerador de mapas, o mesmo pelo código (`scripts/modulos/`):
+
+```gdscript
+var peca := Modulos.carregar("res://scenes/modulos/ponte_de_troncos.tscn")  # Trecho
+peca.girado(1).aplicar_em(fase, Vector3i(10, 0, -4))  # canto na coluna (10, -4), mesma altura
+var trecho := Trecho.da_fase(fase, Vector2i(0, 0), Vector2i(7, 5))  # recortar um pedaço
+Modulos.salvar(trecho, "Clareira", "clareira", Biomas.NEVE)
+```
+
+Outros atalhos para mapas grandes: **Alt + clique** no terreno é o **balde** (troca pelo tile
+escolhido a mancha inteira de blocos iguais ligados ao apontado, na mesma camada; no vazio,
+preenche o vazio da camada dentro do retângulo do terreno) e a **busca** no topo da paleta
+filtra tiles, objetos e módulos pelo nome.
+
+**Mapas grandes e para vários lados**: a grade não tem limite — pinte para qualquer lado. O
+entorno (chão e árvores em volta) acompanha o formato do mapa: num mapa em L, o que sobra do
+retângulo em volta também ganha chão e árvores; um vazio cercado pelo mapa continua abismo. O
+limite de queda acompanha a camada mais funda do terreno.
 
 ### Ligando mecanismos
 
@@ -375,12 +449,18 @@ Nada de arquivos externos: tudo é gerado pelo próprio Godot.
   mudar o sentido; as listras da água mostram o fluxo), *Escada baixa/alta* (colide como
   rampa), *Canto de rampa* (externo e interno, baixo e alto) para fechar montes e barrancos,
   *Rampa lisa* baixa/alta (graveto pesado escorrega), *Degrau alto* (0,72 m, só pulando sem
-  graveto) e *Buraco* (o que a terra fofa do chão vira ao ser cavada).
+  graveto), *Buraco* (o que a terra fofa do chão vira ao ser cavada), *Neve fofa* (`lentidao` e
+  `aderencia`), *Monte de neve* e *Gelo* (`aderencia` baixa: desliza). `derrete_em` diz no que o
+  fogo transforma o tile. Cada **bioma** tem a sua biblioteca (`Tiles.BIBLIOTECAS`): os
+  geradores fazem todas; a troca de materiais por bioma fica em `Tiles.MATERIAIS_POR_BIOMA`.
 - **Modelos voxel em texto** — `assets/voxel/*.txt`: camadas desenhadas com letras, uma cor por
   letra (formato em [assets/voxel/LEIA-ME.md](assets/voxel/LEIA-ME.md)). Exemplos: `dono.txt`,
   `tronco_caido.txt`. Use com o nó `ModeloVoxel`.
 - **Modelos voxel gerados por código** — `scripts/assets/voxel.gd`: árvores (pinheiro, redonda,
-  arbusto), pedras e flores, cada uma com 8 variantes. As malhas ficam em cache.
+  arbusto), pedras e flores, cada uma com 8 variantes (árvores e pedras também com neve). As
+  malhas ficam em cache. Objetos que mudam com o bioma usam `bioma_da_fase()` e
+  `ao_mudar_bioma()` de `ObjetoFase`.
+- **Sons gerados por código** — `scripts/som.gd`: latido e balido.
 - **Objetos de fase** — uma cena em `scenes/objetos/` cuja raiz estende `ObjetoFase`
   (`scripts/objetos/objeto_fase.gd`) aparece sozinha na paleta do editor, com ícone. Para
   expor parâmetros no painel do editor, liste as variáveis `@export` em
@@ -394,9 +474,13 @@ scenes/menu.tscn              menu principal (cena inicial)
 scenes/jogo.tscn              jogo: cachorro, câmera, HUD (a fase é carregada por código)
 scenes/editor/editor_fase.tscn  editor de fases (F1)
 scenes/fases/                 fases (conteúdo: terreno + objetos)
+scenes/modulos/               módulos: trechos de fase para reusar (criados pelo editor)
 scenes/objetos/               objetos que o editor coloca
 scripts/jogo.gd               regras: pegar/largar graveto, perspectiva, vitória
 scripts/fase.gd               raiz de uma fase (consultas: objetos, tiles, água)
+scripts/biomas.gd             biomas: tiles, céu, luz, entorno, neve caindo
+scripts/regioes/, assets/regioes/  regiões (agrupam as fases no menu)
+scripts/modulos/              Trecho (copiar/colar/girar pedaços de fase) e Modulos (catálogo)
 scripts/autoload/fases.gd     qual fase jogar/editar; troca menu ↔ jogo ↔ editor; progresso
 scripts/racas/                raça, pelagem, gerador voxel e modelo animado do cachorro
 scripts/ui/                   tema dos menus e menu de pausa
@@ -429,3 +513,7 @@ por elas), 3 `objetos`, 4 `cachorro`.
 | Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |
 | Medidas, velocidade e cores de uma raça | `assets/racas/*.tres` (inspetor do Godot) |
 | Medo e velocidade das ovelhas | constantes no topo de `scripts/objetos/ovelha.gd` |
+| Frio (tempo até gelar) | "Segundos até gelar" nas propriedades da fase |
+| Raio e gravetos da fogueira | propriedades da Fogueira no editor |
+| Neve fofa e gelo (lentidão, aderência) | `lentidao` / `aderencia` em `Tiles.definicoes()` |
+| Céu, luz e chão de cada bioma | `Biomas.dados()` em `scripts/biomas.gd` |

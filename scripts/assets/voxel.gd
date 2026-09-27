@@ -189,8 +189,9 @@ const _VERDES_COPA := [Color("3f8f3a"), Color("4b9e42"), Color("367f34"), Color(
 const _CASCA := [Color("6b4428"), Color("5b3920"), Color("744b2c")]
 
 
-static func arvore(tipo: TipoArvore, variante: int) -> ArrayMesh:
-	var chave := "arvore_%d_%d" % [tipo, variante]
+## `nevada`: com neve nos topos da copa (bioma de neve).
+static func arvore(tipo: TipoArvore, variante: int, nevada := false) -> ArrayMesh:
+	var chave := "arvore_%d_%d%s" % [tipo, variante, "_neve" if nevada else ""]
 	if not _cache.has(chave):
 		var rng := RandomNumberGenerator.new()
 		rng.seed = hash(chave)
@@ -203,6 +204,8 @@ static func arvore(tipo: TipoArvore, variante: int) -> ArrayMesh:
 			TipoArvore.ARBUSTO:
 				_gerar_arbusto(voxels, rng)
 		_clarear_topos(voxels, 1.18)
+		if nevada:
+			nevar(voxels, rng, 0.85)
 		# Voxel de 0,25 m; o tronco 2x2 fica centrado na origem.
 		_cache[chave] = malha(voxels, 0.25, Vector3(0.0, 0.0, 0.0))
 	return _cache[chave]
@@ -272,6 +275,13 @@ static func _bolhas(voxels: Dictionary, rng: RandomNumberGenerator, bolhas: Arra
 						voxels[Vector3i(x, y, z)] = cores[rng.randi() % cores.size()]
 
 
+## Neve nos voxels sem nada em cima (`fracao` deles: o resto fica com a cor de antes).
+static func nevar(voxels: Dictionary, rng: RandomNumberGenerator, fracao: float) -> void:
+	for p: Vector3i in voxels.keys():
+		if not voxels.has(p + Vector3i.UP) and rng.randf() < fracao:
+			voxels[p] = Biomas.CORES_NEVE[rng.randi() % Biomas.CORES_NEVE.size()]
+
+
 ## Voxels sem nada em cima pegam mais sol: cor um pouco mais clara.
 static func _clarear_topos(voxels: Dictionary, fator: float) -> void:
 	for p: Vector3i in voxels.keys():
@@ -285,8 +295,8 @@ const _MUSGO := [Color("5f8f3e"), Color("6d9d45")]
 
 
 ## Pedra arredondada (voxel de 0,125 m) com um pouco de musgo em cima.
-static func pedra(variante: int) -> ArrayMesh:
-	var chave := "pedra_%d" % variante
+static func pedra(variante: int, nevada := false) -> ArrayMesh:
+	var chave := "pedra_%d%s" % [variante, "_neve" if nevada else ""]
 	if not _cache.has(chave):
 		var rng := RandomNumberGenerator.new()
 		rng.seed = hash(chave)
@@ -301,6 +311,8 @@ static func pedra(variante: int) -> ArrayMesh:
 		for p: Vector3i in voxels.keys():
 			if not voxels.has(p + Vector3i.UP) and rng.randf() < 0.35:
 				voxels[p] = _MUSGO[rng.randi() % _MUSGO.size()]
+		if nevada:
+			nevar(voxels, rng, 0.95)
 		_cache[chave] = malha(voxels, 0.125)
 	return _cache[chave]
 

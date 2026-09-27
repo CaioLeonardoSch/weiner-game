@@ -1,0 +1,66 @@
+# Neve: frio, neve fofa, fogueira montada com gravetos (acende, cresce, derrete a neve, revela
+# o graveto enterrado, esquenta), gelar e voltar para perto do fogo, e deslizar no gelo.
+chamar res://ferramentas/testes/teste_neve.gd montar_fogueira
+esperar 30
+chamar res://ferramentas/testes/teste_neve.gd marcar
+checar jogo.cachorro.sente_frio
+checar jogo.indicador_calor.visible
+esperar 60
+checar jogo.cachorro.calor < 0.99
+checar jogo.cachorro._lentidao_piso < 0.8 and jogo.cachorro._aderencia < 0.5
+checar jogo.get_node("NeveCaindo") != null
+
+# Primeiro graveto: vai para a fogueira (ainda apagada).
+teleportar -1.5 0.1 -2.5
+esperar 120
+checar jogo.cachorro.tem_graveto
+chamar res://ferramentas/testes/teste_neve.gd entregar
+esperar 90
+checar not jogo.cachorro.tem_graveto
+checar jogo.get_meta("fogueira").gravetos == 1 and not jogo.get_meta("fogueira").acesa
+
+# Segundo: acende.
+teleportar 1.5 0.1 -2.5
+esperar 120
+checar jogo.cachorro.tem_graveto
+chamar res://ferramentas/testes/teste_neve.gd entregar
+esperar 120
+checar jogo.get_meta("fogueira").acesa
+checar is_equal_approx(jogo.get_meta("fogueira").raio, 2.5)
+# Derreteu o monte perto (6,0,0), não o de longe (7,0,0); a neve fofa do chão vira terra.
+checar jogo.fase.terreno.get_cell_item(Vector3i(6, 0, 0)) == -1
+checar jogo.fase.terreno.get_cell_item(Vector3i(7, 0, 0)) == 24
+checar jogo.fase.terreno.get_cell_item(Vector3i(4, -1, 0)) == 1
+checar jogo.fase.terreno.get_cell_item(Vector3i(9, -1, 0)) == 23
+# O lendário enterrado na neve perto do fogo aparece.
+checar not jogo.get_meta("lendario").enterrado
+
+# Perto do fogo esquenta.
+teleportar 3.2 0.1 0.5
+eval jogo.cachorro.set("calor", 0.5)
+esperar 30
+checar jogo.cachorro.aquecendo and jogo.cachorro.calor > 0.6
+
+# Terceiro graveto: o fogo cresce e derrete o monte de longe.
+teleportar 1.5 0.1 2.5
+esperar 120
+checar jogo.cachorro.tem_graveto
+chamar res://ferramentas/testes/teste_neve.gd entregar
+esperar 120
+checar is_equal_approx(jogo.get_meta("fogueira").raio, 3.5)
+checar jogo.fase.terreno.get_cell_item(Vector3i(7, 0, 0)) == -1
+
+# Gelado demais: volta para o último lugar quente.
+teleportar 10.5 0.1 2.5
+esperar 5
+eval jogo.cachorro.set("calor", 0.001)
+esperar 5
+checar jogo.cachorro.calor > 0.9
+checar jogo.cachorro.global_position.distance_to(jogo.get_meta("fogueira").global_position) < 4.0
+
+# Gelo: anda um pouco, solta e continua deslizando.
+teleportar 0.5 0.1 -3.5
+esperar 20
+apertar mover_direita 40
+esperar 46
+checar jogo.cachorro.velocity.x > 0.5

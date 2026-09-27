@@ -31,12 +31,16 @@ var rascunho_modificado := false
 var testando := false
 ## Câmera, ferramenta etc. do editor, para voltar do teste onde estava.
 var estado_editor := {}
+## O que o editor copiou (Ctrl+C: um Trecho). Fica aqui para dar para colar em outra fase.
+var area_transferencia: RefCounted
 ## Progresso e preferências do jogador (fases concluídas, skin...), em user://progresso.cfg.
 var progresso := ConfigFile.new()
 ## Progresso só na memória, sem ler nem gravar o save do jogador (testes automáticos).
 var _so_memoria := false
 ## caminho da fase → id (ver id_da_fase).
 var _ids := {}
+## [caminho, propriedade] → valor (ver propriedade_da_fase).
+var _propriedades := {}
 
 
 func _ready() -> void:
@@ -62,7 +66,8 @@ func usar_progresso_em_memoria() -> void:
 	progresso = ConfigFile.new()
 
 
-## Todas as fases (projeto + usuário), em ordem de nome de arquivo.
+## Todas as fases (projeto + usuário), na ordem das regiões (Regiao.ordem) e, dentro de cada
+## região, pelo nome do arquivo. É a ordem do menu e da "próxima fase".
 func listar() -> PackedStringArray:
 	var caminhos := PackedStringArray()
 	if DirAccess.dir_exists_absolute(PASTA_PROJETO):
@@ -74,8 +79,28 @@ func listar() -> PackedStringArray:
 			if arquivo.ends_with(".tscn"):
 				caminhos.append(PASTA_USUARIO + arquivo)
 	var ordenado := Array(caminhos)
-	ordenado.sort_custom(func(a: String, b: String) -> bool: return a.get_file() < b.get_file())
+	var ordem := {}
+	for caminho: String in ordenado:
+		ordem[caminho] = Regioes.ordem(regiao_da_fase(caminho))
+	ordenado.sort_custom(func(a: String, b: String) -> bool:
+		if ordem[a] != ordem[b]:
+			return ordem[a] < ordem[b]
+		return a.get_file() < b.get_file())
 	return PackedStringArray(ordenado)
+
+
+## Id da região da fase (Fase.regiao).
+func regiao_da_fase(caminho: String) -> StringName:
+	return StringName(str(propriedade_da_fase(caminho, &"regiao", Regioes.PADRAO)))
+
+
+## As fases de uma região, em ordem.
+func fases_da_regiao(regiao: StringName) -> PackedStringArray:
+	var lista := PackedStringArray()
+	for caminho in listar():
+		if regiao_da_fase(caminho) == regiao:
+			lista.append(caminho)
+	return lista
 
 
 ## Onde o editor grava fases novas.
@@ -136,20 +161,30 @@ func id_da_fase(caminho: String) -> String:
 	return _ids[caminho]
 
 
-## O editor gravou este arquivo: o id pode ter mudado.
+## O editor gravou este arquivo: o id (e o nome, a região...) pode ter mudado.
 func esquecer_id(caminho: String) -> void:
 	_ids.erase(caminho)
+	for chave: Array in _propriedades.keys():
+		if chave[0] == caminho:
+			_propriedades.erase(chave)
 
 
-## Uma propriedade da raiz da cena da fase, lida sem instanciar (ou `padrao`).
+## Uma propriedade da raiz da cena da fase, lida sem instanciar (ou `padrao`). Guardada até o
+## editor gravar o arquivo de novo (esquecer_id).
 func propriedade_da_fase(caminho: String, propriedade: StringName, padrao: Variant) -> Variant:
-	var cena := ResourceLoader.load(caminho, "PackedScene") as PackedScene
+	var chave := [caminho, propriedade]
+	if _propriedades.has(chave):
+		return _propriedades[chave]
+	var valor: Variant = padrao
+	# Sem o cache do ResourceLoader: o editor pode ter acabado de gravar por cima.
+	var cena := ResourceLoader.load(caminho, "PackedScene", ResourceLoader.CACHE_MODE_IGNORE) as PackedScene
 	if cena:
 		var estado := cena.get_state()
 		for i in estado.get_node_property_count(0):
 			if estado.get_node_property_name(0, i) == propriedade:
-				return estado.get_node_property_value(0, i)
-	return padrao
+				valor = estado.get_node_property_value(0, i)
+	_propriedades[chave] = valor
+	return valor
 
 
 func concluida(caminho: String) -> bool:

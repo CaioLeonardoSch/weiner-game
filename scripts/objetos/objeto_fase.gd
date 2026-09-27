@@ -71,6 +71,29 @@ func papel_no_canal() -> String:
 	return ""
 
 
+## Só pode haver um na fase (o Início do cachorro): fica de fora dos trechos copiados.
+func unico_na_fase() -> bool:
+	return false
+
+
+## Mecanismo que funciona bem sem ligação nenhuma (a fogueira: esquenta mesmo sem portão): a
+## validação do editor não reclama se nada da mesma cor reage a ele.
+func canal_opcional() -> bool:
+	return false
+
+
+## Bioma da fase (ver Biomas): árvores e pedras ganham neve, por exemplo.
+func bioma_da_fase() -> int:
+	var fase := fase_do_objeto()
+	var valor: Variant = fase.get(&"bioma") if fase else null
+	return valor if valor is int else Biomas.FLORESTA
+
+
+## O bioma da fase mudou (no editor): refaça o visual que depende dele.
+func ao_mudar_bioma() -> void:
+	pass
+
+
 ## A fase a que este objeto pertence (ou null no editor de cenas do Godot).
 func fase_do_objeto() -> Fase:
 	var no := get_parent()

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Regiao" format=3]
+
+[ext_resource type="Script" path="res://scripts/regioes/regiao.gd" id="1_regiao"]
+
+[resource]
+script = ExtResource("1_regiao")
+id = &"neve"
+nome = "Neve"
+descricao = "Inverno: gravetos para a fogueira, neve para derreter e um rebanho para levar em segurança até o celeiro."
+ordem = 1
+bioma = 1

@@ -1,0 +1,21 @@
+# Pastoreio na neve: celeiro (telhado some com o cachorro perto, dentro é quente, ovelhas
+# guardadas) e o balido das ovelhas.
+chamar res://ferramentas/testes/teste_neve.gd montar_celeiro
+esperar 30
+chamar res://ferramentas/testes/teste_neve.gd marcar
+checar jogo.contador.text.contains("no celeiro")
+checar jogo.get_meta("celeiro")._telhado.visible
+teleportar 7.5 0.1 0.5
+esperar 20
+checar not jogo.get_meta("celeiro")._telhado.visible
+checar jogo.cachorro.aquecendo
+chamar res://ferramentas/testes/teste_neve.gd balir
+checar jogo.get_meta("baloes", 0) >= 1
+teleportar -4.5 0.1 0.5
+chamar res://ferramentas/testes/teste_neve.gd guardar_uma_ovelha
+esperar 20
+checar jogo.contador.text.contains("1 / 2")
+checar not jogo.concluida
+chamar res://ferramentas/testes/teste_neve.gd guardar_todas
+esperar 20
+checar jogo.concluida

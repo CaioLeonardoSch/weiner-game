@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="Regiao" format=3]
+
+[ext_resource type="Script" path="res://scripts/regioes/regiao.gd" id="1_regiao"]
+
+[resource]
+script = ExtResource("1_regiao")
+id = &"floresta"
+nome = "Floresta"
+descricao = "Um cão e seu dono passeiam pela floresta, e o cãozinho vai juntando os gravetos favoritos. Cada fase é um dia de passeio."
+ordem = 0
+bioma = 0

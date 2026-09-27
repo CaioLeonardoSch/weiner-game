@@ -38,7 +38,7 @@ func caixa_editor() -> AABB:
 func _ready() -> void:
 	_montar()
 	if not Engine.is_editor_hint():
-		add_to_group(&"cercados")
+		add_to_group(&"abrigos")
 
 
 ## O ponto (global) está bem dentro do cercado (longe da cerca e da porteira)?

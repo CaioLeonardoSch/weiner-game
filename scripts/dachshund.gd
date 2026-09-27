@@ -15,6 +15,8 @@ extends CharacterBody3D
 signal voltou_ao_ponto_seguro(motivo: String)
 ## Tentou puxar um bloco e não deu ("boca_cheia", "sem_espaco"); uma vez por aperto de F.
 signal puxar_falhou(motivo: String)
+## Gelou (fase com frio, calor chegou a zero) e voltou para perto do último fogo.
+signal gelou
 
 ## Até onde o latido chega (m).
 const ALCANCE_LATIDO := 5.0
@@ -70,9 +72,28 @@ var _tween_graveto: Tween
 var _cavando := false
 var _espera_latido := 0.0
 var _empurrando: Node
-## Na água rasa: multiplicador da velocidade e se há correnteza embaixo.
-var _lentidao_agua := 1.0
+## Pelo chão embaixo (água rasa, neve fofa): multiplicador da velocidade e se há correnteza.
+var _lentidao_piso := 1.0
 var em_correnteza := false
+var _na_agua_rasa := false
+## Aderência do chão (Tiles: `aderencia`): abaixo de 1 o cachorro demora a arrancar e a parar
+## (neve fofa) ou desliza (gelo). `_embalo` é a velocidade que ele carrega.
+var _aderencia := 1.0
+var _embalo := Vector3.ZERO
+## Aceleração (m/s²) com aderência 1; a do chão é esta vezes a aderência dele.
+const ACELERACAO_MAXIMA := 30.0
+
+## Fase com frio (Fase.frio): o calor cai longe do fogo. O jogo liga isto.
+var sente_frio := false
+## Segundos, bem aquecido, até gelar (Fase.tempo_de_frio).
+var tempo_de_frio := 60.0
+## Calor do cachorro, de 0 (gelado) a 1 (quentinho). Com pouco calor ele fica lento e treme.
+var calor := 1.0
+## Está sendo aquecido agora (perto de uma fogueira acesa, dentro do celeiro).
+var aquecendo := false
+## Onde volta ao gelar: o último lugar em que esteve aquecido (ou o começo da fase).
+var _ponto_quente := Vector3.ZERO
+var _tremor := 0.0
 ## Puxando um bloco: o cachorro recua uma célula junto com ele.
 const DURACAO_PUXAR := 0.35
 var _tempo_puxando := 0.0
@@ -122,6 +143,8 @@ func peso_total() -> float:
 func posicionar(posicao: Vector3, yaw: float) -> void:
 	global_position = posicao
 	velocity = Vector3.ZERO
+	_embalo = Vector3.ZERO
+	_ponto_quente = posicao
 	_yaw_alvo = yaw
 	modelo.rotation.y = yaw
 	_pontos_seguros.clear()
@@ -149,16 +172,24 @@ func _physics_process(delta: float) -> void:
 	horizontal += _desvio_de_encaixe(horizontal, delta)
 	horizontal += _empurrao_do_balanco(delta, horizontal)
 	horizontal = _rampa_lisa(horizontal)
-	var arrasto := _efeito_da_agua()
+	var arrasto := _efeito_do_piso()
 	# Parado à força (câmera em transição, mirante, fase concluída): a água não leva o cachorro
 	# embora sem ele poder reagir.
 	if entrada_bloqueada:
 		arrasto = Vector3.ZERO
-	horizontal *= _lentidao_agua
+	horizontal *= _lentidao_piso * _fator_do_frio()
+	horizontal = _com_aderencia(horizontal, delta)
 	velocity.x = horizontal.x + arrasto.x
 	velocity.z = horizontal.z + arrasto.z
 
 	move_and_slide()
+	if is_on_wall():
+		# Deslizando contra uma parede, o embalo não continua empurrando para dentro dela.
+		var parede := get_wall_normal()
+		parede.y = 0.0
+		if parede.length() > 0.1 and _embalo.dot(parede) < 0.0:
+			_embalo = _embalo.slide(parede.normalized())
+	_atualizar_calor(delta)
 	_soltar_se_pendurado()
 	_escalar_do_buraco(horizontal)
 	voxel.velocidade = Vector2(get_real_velocity().x, get_real_velocity().z).length()
@@ -658,21 +689,25 @@ func _rampa_lisa(horizontal: Vector3) -> Vector3:
 	return horizontal - descida * subindo + descida * 2.2
 
 
-# --- Água rasa e correnteza ---
+# --- Chão: água rasa, correnteza, neve e gelo ---
 
-## Água rasa deixa o cachorro mais lento; correnteza arrasta no sentido do tile. Graveto
-## pesado na boca deixa o cachorro mais firme contra a correnteza. Devolve o arrasto (m/s).
-func _efeito_da_agua() -> Vector3:
-	_lentidao_agua = 1.0
+## O chão embaixo muda o passo: água rasa e neve fofa deixam o cachorro mais lento (`lentidao`),
+## neve fofa e gelo tiram a aderência; a correnteza arrasta no sentido do tile. Graveto pesado
+## na boca deixa o cachorro mais firme contra a correnteza. Devolve o arrasto (m/s).
+func _efeito_do_piso() -> Vector3:
+	_lentidao_piso = 1.0
 	em_correnteza = false
+	_na_agua_rasa = false
 	if fase == null or not is_on_floor():
 		return Vector3.ZERO
 	var terreno := fase.terreno
 	var celula := terreno.local_to_map(terreno.to_local(global_position + Vector3.DOWN * 0.05))
 	var definicao := Tiles.definicao(terreno.get_cell_item(celula))
-	if not definicao.get("rasa", false):
+	_lentidao_piso = definicao.get("lentidao", 1.0)
+	_aderencia = definicao.get("aderencia", 1.0)
+	_na_agua_rasa = definicao.get("rasa", false)
+	if not _na_agua_rasa:
 		return Vector3.ZERO
-	_lentidao_agua = definicao.get("lentidao", 1.0)
 	# O graveto na boca encharca na água rasa (pesa mais por um tempo).
 	if tem_graveto and graveto:
 		graveto.molhar()
@@ -686,12 +721,68 @@ func _efeito_da_agua() -> Vector3:
 	return sentido.normalized() * forca / firmeza
 
 
+## Aderência: com o chão firme o cachorro faz o que o jogador manda na hora; na neve fofa demora
+## a arrancar e a parar; no gelo desliza. No ar, mantém a aderência do último chão.
+func _com_aderencia(desejo: Vector3, delta: float) -> Vector3:
+	if _aderencia >= 1.0 or _tempo_puxando > 0.0:
+		_embalo = desejo
+		return desejo
+	_embalo = _embalo.move_toward(desejo, ACELERACAO_MAXIMA * _aderencia * delta)
+	return _embalo
+
+
+# --- Frio ----------------------------------------------------------------------------------
+
+## Perto de uma fonte de calor (grupo "fontes_de_calor", com `aquece(ponto)`) o calor sobe
+## rápido; longe, cai em `tempo_de_frio` segundos (mais rápido na água). Gelado, volta para o
+## último lugar quente.
+func _atualizar_calor(delta: float) -> void:
+	aquecendo = false
+	if not sente_frio:
+		calor = 1.0
+		return
+	for fonte in get_tree().get_nodes_in_group(&"fontes_de_calor"):
+		if fonte.aquece(global_position):
+			aquecendo = true
+			break
+	if aquecendo:
+		calor = minf(calor + delta * 0.6, 1.0)
+		if is_on_floor():
+			_ponto_quente = global_position
+	elif not entrada_bloqueada:
+		var ritmo := 1.0 / maxf(tempo_de_frio, 1.0)
+		if _na_agua_rasa:
+			ritmo *= 2.0
+		calor = maxf(calor - ritmo * delta, 0.0)
+	# Tremendo de frio.
+	if calor < 0.35:
+		_tremor += delta * 40.0
+		voxel.position.z = sin(_tremor) * 0.012 * (1.0 - calor / 0.35)
+	elif voxel.position.z != 0.0:
+		voxel.position.z = 0.0
+	if calor <= 0.0:
+		calor = 1.0
+		_embalo = Vector3.ZERO
+		global_position = _ponto_quente + Vector3.UP * 0.2
+		velocity = Vector3.ZERO
+		_pontos_seguros.clear()
+		_guardar_ponto_seguro()
+		gelou.emit()
+
+
+## Com frio o cachorro anda mais devagar (até 30% abaixo do normal, quase gelado).
+func _fator_do_frio() -> float:
+	if not sente_frio or calor >= 0.35:
+		return 1.0
+	return lerpf(0.7, 1.0, calor / 0.35)
+
+
 # --- Quedas ------------------------------------------------------------------------------
 
 func _checar_queda(delta: float) -> void:
 	if fase and (fase.dentro_da_agua(global_position) or _na_beira_da_agua()):
 		_voltar_ao_ponto_seguro("agua")
-	elif global_position.y < -10.0:
+	elif global_position.y < (fase.limite_de_queda if fase else -10.0):
 		_voltar_ao_ponto_seguro("queda")
 	elif is_on_floor() and not em_passagem_estreita and not em_correnteza:
 		_tempo_ponto_seguro += delta

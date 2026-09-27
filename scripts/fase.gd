@@ -30,10 +30,23 @@ const OBJETIVO_PASTOREIO := 1
 @export_flags("Pular", "Cavar", "Latir") var habilidades := 0
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
-@export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao cercado") var objetivo := OBJETIVO_GRAVETO
+@export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)") var objetivo := OBJETIVO_GRAVETO
 ## Raça do cachorro nesta fase (id de assets/racas/*.tres). A raça soma habilidades próprias
 ## às da fase (ex.: o Border Collie sempre late).
 @export var raca := &"salsicha"
+## Região a que a fase pertence (id de assets/regioes/*.tres): o menu agrupa as fases por
+## região, na ordem das regiões e, dentro de cada uma, pelo nome do arquivo.
+@export var regiao := &"floresta"
+## Bioma (ver Biomas): texturas dos tiles, céu, luz, entorno e neve caindo.
+@export_enum("Floresta", "Neve") var bioma := Biomas.FLORESTA:
+	set(valor):
+		bioma = valor
+		_aplicar_bioma()
+## Frio: longe do fogo (fogueira acesa, celeiro) o cachorro perde calor; gelado demais, volta
+## para perto do último fogo (ou do começo). Ver Dachshund.calor.
+@export var frio := false
+## Segundos, bem aquecido, até ficar gelado demais.
+@export_range(10.0, 300.0, 5.0) var tempo_de_frio := 60.0
 
 ## Um canal mudou (alguma fonte ligou ou desligou). Quem reage confere com `canal_ligado`.
 ## Ver Canais.
@@ -42,8 +55,19 @@ signal canal_mudou(canal: int)
 @onready var terreno: GridMap = $Terreno
 @onready var objetos: Node3D = $Objetos
 
+## Abaixo desta altura (m) o cachorro caiu no abismo e volta ao último ponto seguro: bem abaixo
+## da camada mais funda do terreno (fases podem descer e subir à vontade).
+var limite_de_queda := -10.0
+
 
 func _ready() -> void:
+	_aplicar_bioma()
+	var celulas := terreno.get_used_cells()
+	if not celulas.is_empty():
+		var mais_baixa := celulas[0].y
+		for celula in celulas:
+			mais_baixa = mini(mais_baixa, celula.y)
+		limite_de_queda = minf(-10.0, terreno.to_global(terreno.map_to_local(Vector3i(0, mais_baixa, 0))).y - 8.0)
 	# Busca o autoload pelo caminho: assim o script também compila em ferramentas de linha
 	# de comando (--script), que rodam sem os autoloads.
 	var fases := get_node_or_null(^"/root/Fases")
@@ -55,6 +79,18 @@ func _validate_property(propriedade: Dictionary) -> void:
 	if propriedade.name == &"raca":
 		propriedade.hint = PROPERTY_HINT_ENUM
 		propriedade.hint_string = ",".join(Racas.ids())
+	elif propriedade.name == &"regiao":
+		propriedade.hint = PROPERTY_HINT_ENUM
+		propriedade.hint_string = ",".join(Regioes.ids())
+
+
+## Troca a biblioteca de tiles pela do bioma e avisa os objetos (árvores com neve...).
+func _aplicar_bioma() -> void:
+	if not is_node_ready():
+		return
+	terreno.mesh_library = load(Tiles.biblioteca_do_bioma(bioma))
+	for objeto in lista_objetos():
+		objeto.ao_mudar_bioma()
 
 
 func tem_habilidade(habilidade: int) -> bool:

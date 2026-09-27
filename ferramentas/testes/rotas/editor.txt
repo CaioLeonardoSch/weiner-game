@@ -1,0 +1,6 @@
+# Editor modular: trecho (copiar, colar, girar, apagar), balde, módulos, bioma e regiões
+# (ver teste_editor.gd).
+fase res://scenes/fases/fase_01.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_editor.gd rodar
+checar jogo.get_meta("editor_ok", false)
