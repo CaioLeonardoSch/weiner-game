@@ -266,7 +266,11 @@ func _tela_fases() -> void:
 		_cabecalho_regiao(regiao)
 		var fases := Fases.fases_da_regiao(regiao.id)
 		if fases.is_empty():
-			_rotulo("Nenhuma fase ainda — crie no editor (painel da fase → Região: %s)." % regiao.nome)
+			# Para quem joga, "em breve"; a dica do editor só rodando pelo Godot.
+			if OS.has_feature("editor"):
+				_rotulo("Nenhuma fase ainda — crie no editor (painel da fase → Região: %s)." % regiao.nome)
+			else:
+				_rotulo("Em breve.")
 		for caminho in fases:
 			_linha_fase(caminho)
 	# Fases de uma região que não existe (arquivo apagado, id trocado) não somem do menu.

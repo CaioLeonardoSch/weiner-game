@@ -44,6 +44,13 @@ const NEVE_FOFA := 23
 const MONTE_DE_NEVE := 24
 const GELO := 25
 
+## Quanto (m) a malha VISUAL de cada tile passa da célula em X e Z, para os vizinhos se
+## sobreporem um fio. Sem isso, na emenda entre dois blocos de 8×8 células do GridMap (os
+## "octantes", cada um desenhado com a sua transformação) o arredondamento abria frestas de
+## menos de um pixel, e o contorno pixelado virava cada fresta numa linha clara e escura
+## atravessando o chão. A colisão continua do tamanho exato da célula.
+const FOLGA_VISUAL := 0.002
+
 ## Altura (no espaço do tile, de -0.5 a 0.5) da superfície da água.
 const SUPERFICIE_AGUA := 0.35
 ## Água rasa: o leito (colisão) é o topo do bloco, rente ao chão em volta, e a água fica
@@ -183,6 +190,7 @@ static func construir_biblioteca(bioma := 0) -> MeshLibrary:
 						var caixa := BoxShape3D.new()
 						caixa.size = Vector3.ONE
 						formas = [caixa, Transform3D.IDENTITY]
+		malha = _com_folga(malha)
 		malha.surface_set_material(0, load("res://assets/materiais/%s.tres" % trocas.get(d.material, d.material)))
 		biblioteca.create_item(d.id)
 		biblioteca.set_item_name(d.id, d.nome)
@@ -190,6 +198,19 @@ static func construir_biblioteca(bioma := 0) -> MeshLibrary:
 		if not formas.is_empty():
 			biblioteca.set_item_shapes(d.id, formas)
 	return biblioteca
+
+
+## A mesma malha um pouco mais larga em X e Z (ver FOLGA_VISUAL); a altura não muda.
+static func _com_folga(malha: ArrayMesh) -> ArrayMesh:
+	var arrays := malha.surface_get_arrays(0)
+	var vertices: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var escala := (0.5 + FOLGA_VISUAL) / 0.5
+	for i in vertices.size():
+		vertices[i] = Vector3(vertices[i].x * escala, vertices[i].y, vertices[i].z * escala)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	var nova := ArrayMesh.new()
+	nova.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return nova
 
 
 static func _forma_convexa(malha: ArrayMesh) -> ConvexPolygonShape3D:

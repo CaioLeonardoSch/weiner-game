@@ -103,6 +103,9 @@ func _desenhar_objetos_especiais() -> void:
 			var cor := COR_REGRAS if objeto is ZonaSemLargar else Color(0.8, 0.8, 0.8)
 			_caixa(objeto.caixa_editor(), objeto.global_transform, cor, 1.0)
 			_texto(objeto.global_position + Vector3.UP * (objeto.caixa_editor().end.y + 0.1), objeto.nome_no_editor(), cor)
+		elif objeto is Fogueira and (objeto as Fogueira).gravetos_para_acender > 0:
+			_texto(objeto.global_position + Vector3.UP * 0.9,
+				"acende com %d graveto(s)" % (objeto as Fogueira).gravetos_para_acender, COR_REGRAS)
 		if objeto.visibilidade != ObjetoFase.Visibilidade.SEMPRE:
 			var cor := COR_SO_ISO if objeto.visibilidade == ObjetoFase.Visibilidade.SO_ISO else COR_SO_3D
 			var topo: Vector3 = objeto.global_position + Vector3.UP * (editor.caixa_local(objeto).end.y * objeto.scale.y + 0.15)
