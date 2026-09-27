@@ -40,6 +40,9 @@ var aviso_painel := PanelContainer.new()
 var _neve_caindo: CPUParticles3D
 ## Termômetro (fases com frio), no canto de baixo à direita.
 var indicador_calor := IndicadorCalor.new()
+## Fogueira → rótulo 2D em cima dela com os gravetos que faltam ("0 / 2"). Em 2D, no HUD: um
+## texto 3D passaria pelo pixelado e ficaria ilegível (ainda mais sobre a neve).
+var marcas_fogueira := {}
 
 ## Avisos: largura máxima e tamanhos de letra (curto e de uma linha = grande; senão, menor).
 const AVISO_LARGURA_MAXIMA := 720.0
@@ -145,6 +148,7 @@ func _preparar_objetivo() -> void:
 			mostrar_aviso("Boca cheia! %s larga este graveto para pegar outro" % Teclas.nome(&"largar_graveto")))
 	for objeto in fase.todos(Fogueira):
 		var fogueira := objeto as Fogueira
+		marcas_fogueira[fogueira] = _criar_marca()
 		fogueira.acendeu.connect(mostrar_aviso.bind("A fogueira acendeu! Perto do fogo é quentinho", 3.0))
 		fogueira.cresceu.connect(mostrar_aviso.bind("O fogo cresceu!"))
 		fogueira.recebeu.connect(func(_gravetos: int, faltam: int) -> void:
@@ -192,6 +196,7 @@ func _process(delta: float) -> void:
 			cachorro.global_position.z)
 	if objetivo and not concluida:
 		objetivo.processar(delta)
+	_atualizar_marcas()
 	_atualizar_rotulo_acao()
 	# Graveto grande emperrado num vão: lembra que dá para virar (uma vez por fase).
 	_tempo_travado = _tempo_travado + delta if cachorro.graveto_travado else 0.0
@@ -543,6 +548,48 @@ func _com_teclas(texto: String) -> String:
 	for item in Teclas.REMAPEAVEIS:
 		resultado = resultado.replace("{%s}" % item[0], Teclas.nome(item[0]))
 	return resultado
+
+
+## Rótulo com fundo escuro, letra grande e contorno: legível sobre neve clara e em 720p.
+func _criar_marca() -> PanelContainer:
+	var painel := PanelContainer.new()
+	var fundo := StyleBoxFlat.new()
+	fundo.bg_color = Color(0.08, 0.06, 0.05, 0.72)
+	fundo.set_corner_radius_all(6)
+	fundo.content_margin_left = 10
+	fundo.content_margin_right = 10
+	fundo.content_margin_top = 2
+	fundo.content_margin_bottom = 4
+	painel.add_theme_stylebox_override("panel", fundo)
+	painel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var rotulo := Label.new()
+	rotulo.name = "Texto"
+	rotulo.add_theme_font_size_override("font_size", 26)
+	rotulo.add_theme_color_override("font_color", TemaUI.COR_DESTAQUE)
+	rotulo.add_theme_color_override("font_outline_color", Color.BLACK)
+	rotulo.add_theme_constant_override("outline_size", 6)
+	painel.add_child(rotulo)
+	painel.hide()
+	$HUD.add_child(painel)
+	return painel
+
+
+## Cada marca acompanha a sua fogueira na tela (some acesa, escondida ou atrás da câmera).
+func _atualizar_marcas() -> void:
+	var camera := camera_controller.camera
+	for fogueira: Fogueira in marcas_fogueira:
+		var painel: PanelContainer = marcas_fogueira[fogueira]
+		var texto := fogueira.texto_do_contador() if fogueira.visible else ""
+		var ponto := fogueira.global_position + Vector3.UP * 1.2
+		if texto.is_empty() or camera.is_position_behind(ponto):
+			painel.hide()
+			continue
+		var rotulo := painel.get_node(^"Texto") as Label
+		if rotulo.text != "🔥 " + texto:
+			rotulo.text = "🔥 " + texto
+			painel.reset_size()
+		painel.position = (camera.unproject_position(ponto) - painel.size * 0.5).round()
+		painel.show()
 
 
 func _atualizar_rotulo_acao() -> void:

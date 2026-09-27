@@ -36,7 +36,6 @@ var _luz: OmniLight3D
 var _faiscas: CPUParticles3D
 var _fumaca: CPUParticles3D
 var _lenha: MeshInstance3D
-var _contador: Label3D
 var _tempo := 0.0
 
 
@@ -120,7 +119,6 @@ func receber_graveto(graveto: Graveto) -> void:
 	else:
 		recebeu.emit(gravetos, gravetos_para_acender - gravetos)
 	_montar_lenha()
-	_atualizar_contador()
 
 
 ## Já começa acesa. No editor de fases (a fase fica parada lá) só o visual: derreter a neve ali
@@ -132,6 +130,13 @@ func _acender_no_inicio() -> void:
 		acesa = true
 		raio = raio_inicial
 		_atualizar_fogo()
+
+
+## "gravetos / pedidos" enquanto apagada (o jogo mostra em cima da fogueira); "" acesa.
+func texto_do_contador() -> String:
+	if acesa or gravetos_para_acender <= 0:
+		return ""
+	return "%d / %d" % [gravetos, gravetos_para_acender]
 
 
 func _acender() -> void:
@@ -231,7 +236,8 @@ func _derreter_celula(celula: Vector3i) -> void:
 # --- Visual ---------------------------------------------------------------------------------
 
 ## Pedras em anel, a lenha (o que já foi trazido) e, acesa, as chamas, a luz, as faíscas e a
-## fumaça. Apagada, um contador mostra quantos gravetos faltam.
+## fumaça. Quantos gravetos faltam aparece no HUD do jogo (`texto_do_contador`), em 2D: um texto
+## 3D passaria pelo pixelado e ficaria ilegível.
 func _montar() -> void:
 	if not is_node_ready():
 		return
@@ -281,16 +287,6 @@ func _montar() -> void:
 	corpo.add_child(colisao)
 	add_child(corpo)
 
-	_contador = Label3D.new()
-	_contador.name = "Contador"
-	_contador.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_contador.font_size = 44
-	_contador.outline_size = 12
-	_contador.pixel_size = 0.008
-	_contador.no_depth_test = true
-	_contador.position = Vector3(0, 1.0, 0)
-	add_child(_contador)
-	_atualizar_contador()
 	if acesa:
 		_atualizar_fogo()
 
@@ -312,17 +308,8 @@ func _montar_lenha() -> void:
 	_lenha.mesh = Voxel.malha(voxels, 1.0 / 16.0) if not voxels.is_empty() else null
 
 
-func _atualizar_contador() -> void:
-	if _contador == null:
-		return
-	_contador.visible = not acesa and gravetos_para_acender > 0 and not Engine.is_editor_hint()
-	_contador.text = "%d / %d" % [gravetos, gravetos_para_acender]
-	_contador.modulate = Color(1.0, 0.85, 0.5)
-
-
 ## Chamas (três labaredas voxel), luz laranja, faíscas e fumaça — do tamanho do fogo.
 func _atualizar_fogo() -> void:
-	_atualizar_contador()
 	if _chamas.is_empty():
 		for i in 3:
 			var chama := MeshInstance3D.new()

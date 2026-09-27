@@ -18,6 +18,7 @@ chamar res://ferramentas/testes/teste_neve.gd entregar
 esperar 90
 checar not jogo.cachorro.tem_graveto
 checar jogo.get_meta("fogueira").gravetos == 1 and not jogo.get_meta("fogueira").acesa
+checar jogo.marcas_fogueira.values()[0].visible and jogo.marcas_fogueira.values()[0].get_node("Texto").text.ends_with("1 / 2")
 
 # Segundo: acende.
 teleportar 1.5 0.1 -2.5
@@ -26,6 +27,7 @@ checar jogo.cachorro.tem_graveto
 chamar res://ferramentas/testes/teste_neve.gd entregar
 esperar 120
 checar jogo.get_meta("fogueira").acesa
+checar not jogo.marcas_fogueira.values()[0].visible
 checar is_equal_approx(jogo.get_meta("fogueira").raio, 2.5)
 # Derreteu o monte perto (6,0,0), não o de longe (7,0,0); a neve fofa do chão vira terra.
 checar jogo.fase.terreno.get_cell_item(Vector3i(6, 0, 0)) == -1
