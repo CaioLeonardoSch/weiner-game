@@ -17,6 +17,7 @@
 
 [node name="Fase03" type="Node3D" unique_id=2132535282]
 script = ExtResource("1_vm1pl")
+id = "fase_03"
 nome = "Fase 03 — O Monte e o Passarinho"
 habilidades = 6
 

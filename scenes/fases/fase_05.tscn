@@ -13,6 +13,7 @@
 
 [node name="Fase05" type="Node3D" unique_id=521751810]
 script = ExtResource("1_385fa")
+id = "fase_05"
 nome = "Fase 05 — O Pastor"
 objetivo = 1
 raca = &"border_collie"

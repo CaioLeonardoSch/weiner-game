@@ -21,6 +21,10 @@ const HABILIDADE_LATIR := 4
 const OBJETIVO_GRAVETO := 0
 const OBJETIVO_PASTOREIO := 1
 
+## Identidade da fase no save do jogador (fases concluídas). Não muda quando o arquivo é
+## renomeado ou movido: é o que mantém o ✓ entre versões. O editor preenche ao salvar uma fase
+## nova (o nome do arquivo); vazio = o nome do arquivo. Nunca reaproveite o id de outra fase.
+@export var id := ""
 ## Nome mostrado no jogo e no editor.
 @export var nome := "Nova fase"
 @export_flags("Pular", "Cavar", "Latir") var habilidades := 0

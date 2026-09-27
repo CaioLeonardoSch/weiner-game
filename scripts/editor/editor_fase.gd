@@ -273,11 +273,16 @@ func _salvar_como() -> void:
 	while destino != caminho and FileAccess.file_exists(destino):
 		destino = pasta + "%s_%d.tscn" % [arquivo, numero]
 		numero += 1
+	# Arquivo novo é fase nova: id novo (senão, criada a partir de outra, dividiria o ✓ dela).
+	if destino != caminho:
+		fase.id = destino.get_file().get_basename()
 	_gravar(destino)
 
 
 func _gravar(destino: String) -> void:
 	_renomear_fase()
+	if fase.id.is_empty():
+		fase.id = destino.get_file().get_basename()
 	var cena := _empacotar()
 	if cena == null:
 		return
@@ -288,6 +293,7 @@ func _gravar(destino: String) -> void:
 		return
 	caminho = destino
 	Fases.caminho_atual = destino
+	Fases.esquecer_id(destino)
 	modificado = false
 	var problemas := _validar()
 	var lista: PackedStringArray = problemas.graves + problemas.avisos

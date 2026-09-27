@@ -15,6 +15,7 @@
 
 [node name="Fase08" type="Node3D" unique_id=803314596]
 script = ExtResource("1_vn6vq")
+id = "fase_08"
 nome = "Fase 08 — A Ponte de Graveto"
 
 [node name="Terreno" type="GridMap" parent="." unique_id=1351603397]

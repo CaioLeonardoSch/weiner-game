@@ -76,12 +76,29 @@ O jogo exportado precisa de placa de vídeo com Vulkan ou Direct3D 12.
 **Teste de fumaça:** `WeinerGame -- --fumaca=<pasta>` abre o menu, joga a primeira fase, salva
 duas fotos e diz `FUMACA ok` (a CI usa isso para testar o próprio executável).
 
+## Save do jogador (progresso entre versões)
+
+O progresso (fases concluídas e pelagens) fica em `progresso.cfg`, na pasta do jogo
+(`%APPDATA%\WeinerGame` no Windows). Para ninguém perder o progresso numa atualização:
+
+- **A pasta é fixa:** `application/config/custom_user_dir_name = "WeinerGame"` no
+  `project.godot`. Não mude — o jogo novo não acharia o save antigo. O teste `save` confere.
+- **O save tem versão** (`[save] versao`, `Fases.VERSAO_PROGRESSO`). Mudou o formato? Aumente o
+  número, escreva a conversão em `Fases.migrar()` e ponha um save de exemplo da versão antiga
+  em `ferramentas/testes/saves/` (o teste `save` carrega e confere). Um save de uma versão mais
+  nova do jogo não é mexido.
+- **Cada fase tem um id** (`Fase.id`, ex.: `fase_01`) — é ele que vai para o save, não o nome
+  do arquivo. Renomear ou mover o arquivo (ex.: para pastas de região) não apaga o ✓. O editor
+  dá um id novo ao **Salvar como** (fase nova); nunca reaproveite o id de outra fase. Se um id
+  precisar mudar, anote o antigo → novo em `Fases.IDS_RENOMEADOS`.
+
 ## Testes das fases
 
 `ferramentas/testar_fases.sh` joga cada fase com as entradas de `ferramentas/testes/rotas/*.txt`
 (sem janela, em segundos) e confere que ela termina. Ao mudar uma fase, rode de novo; se o
 caminho mudou, ajuste a rota (o formato está no topo de `ferramentas/testes/roteiro.gd`).
-A rota `mecanismos` testa a regra OU / E dos portões e a ferramenta Ligar do editor
+A rota `save` testa a pasta do save, os ids das fases e a migração de saves antigos; a rota
+`mecanismos` testa a regra OU / E dos portões e a ferramenta Ligar do editor
 (`ferramentas/testes/teste_mecanismos.gd`).
 Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
 Os testes não mexem nos arquivos do jogador: usam as opções de fábrica e guardam o progresso
