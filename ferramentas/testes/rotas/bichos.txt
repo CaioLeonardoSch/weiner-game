@@ -1,0 +1,57 @@
+# Bichos e latidos: o dono dormindo acorda com o latido; um cão vizinho ouve e late de volta,
+# e o latido dele espanta um passarinho longe do cachorro; o esquilo leva um graveto largado
+# para a porta da toca, guarda, e foge com um latido (e larga o que estava levando).
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_bichos.gd preparar_vizinho
+esperar 5
+checar jogo.get_meta("dono").dormindo
+checar jogo.get_meta("passaro").global_position.distance_to(jogo.cachorro.global_position) > 5.0
+chamar res://ferramentas/testes/teste_bichos.gd latir_aqui
+esperar 5
+checar not jogo.get_meta("dono").dormindo
+checar not jogo.get_meta("passaro").voou
+esperar 40
+checar jogo.get_meta("passaro").voou
+# Esquilo
+chamar res://ferramentas/testes/teste_bichos.gd preparar_esquilo
+esperar 150
+checar jogo.get_meta("graveto").global_position.distance_to(jogo.get_meta("esquilo").porta()) < 0.5
+# Guardando: encostar não pega.
+teleportar 5.1 0.05 -4.0
+esperar 20
+checar not jogo.get_meta("graveto").ja_pego
+teleportar 3.0 0.05 -1.5
+esperar 20
+# Latido: o esquilo se esconde (estado 3) e o graveto fica livre.
+chamar res://ferramentas/testes/teste_bichos.gd latir_aqui
+esperar 30
+checar jogo.get_meta("esquilo").estado == 3
+teleportar 5.1 0.05 -4.0
+esperar 20
+checar jogo.get_meta("graveto").ja_pego
+# Levando e ouve o latido: larga no caminho.
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_bichos.gd preparar_esquilo
+esperar 5
+teleportar -2.5 0.05 -2.5
+esperar 60
+checar jogo.get_meta("esquilo").estado == 2
+teleportar 2.5 0.05 -1.5
+chamar res://ferramentas/testes/teste_bichos.gd latir_aqui
+esperar 20
+checar jogo.get_meta("esquilo").estado == 3
+checar jogo.get_meta("graveto").com_bicho == null and not jogo.get_meta("graveto").ja_pego
+checar jogo.get_meta("graveto").global_position.distance_to(jogo.get_meta("esquilo").porta()) > 0.8
+# Cão vizinho com ciúme: passar perto dele com um graveto na boca faz ele latir (e o latido
+# dele acorda o dono).
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_bichos.gd preparar_vizinho
+chamar res://ferramentas/testes/teste_bichos.gd graveto_na_boca
+esperar 5
+checar jogo.get_meta("dono").dormindo
+teleportar 0.7 0.05 -2.2
+esperar 60
+checar not jogo.get_meta("dono").dormindo

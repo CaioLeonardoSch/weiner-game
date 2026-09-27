@@ -1,0 +1,60 @@
+# Fase 11 — O Tronco no Rio: empurra o tronco para a correnteza; ele desce e vira ponte no
+# poço fundo. Do outro lado, pega o graveto comum (1,5), molha na lagoinha e pisa na placa
+# verde (pede 3: 1 + 1,5 + 0,5 da água) — o portão trava aberto. Larga o comum, pega o
+# lendário e volta pela ponte de tronco.
+fase res://scenes/fases/fase_11.tscn
+esperar 20
+apertar mover_frente 45
+esperar 50
+apertar mover_direita 150
+esperar 160
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").boiando
+apertar mover_esquerda 8
+esperar 12
+esperar 420
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").afundado
+# Atravessa pelo tronco e pega o graveto comum.
+apertar mover_tras 70
+esperar 75
+apertar mover_direita 50
+esperar 55
+checar jogo.cachorro.global_position.x > 7.5
+apertar mover_frente 60
+esperar 64
+apertar mover_direita 14
+esperar 140
+checar jogo.cachorro.tem_graveto and not jogo.cachorro.graveto.lendario
+# 3D: pela lagoinha (molha) até a placa.
+apertar mover_tras 30
+esperar 34
+apertar mover_esquerda 45
+esperar 50
+checar jogo.cachorro.graveto.molhado > 0.0
+apertar mover_direita 75
+esperar 78
+apertar mover_tras 52
+esperar 60
+checar jogo.fase.canal_ativo(3)
+checar jogo.fase.get_node("Objetos").get_node("Portao").aberto
+# Larga o comum, passa o portão e pega o lendário.
+apertar largar_graveto 2
+esperar 100
+apertar mover_tras 45
+esperar 50
+apertar mover_direita 110
+esperar 115
+apertar mover_frente 17
+esperar 20
+apertar mover_direita 12
+esperar 140
+checar jogo.cachorro.tem_graveto and jogo.cachorro.graveto.lendario
+# Volta (3D): pelo portão (z = -2,5), alinha com o tronco (z = -1,5) e segue até o dono.
+apertar mover_esquerda 16
+esperar 25
+apertar mover_frente 150
+esperar 154
+apertar mover_esquerda 34
+esperar 40
+apertar mover_frente 300
+esperar 310
+checar jogo.concluida

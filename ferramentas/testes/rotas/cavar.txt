@@ -1,0 +1,50 @@
+# Etapa 5 — cavar: desenterrar um graveto, cavar um buraco no chão de terra fofa (o cachorro
+# entra e sai escalando) e cavar por baixo de uma cerca (passagem baixa).
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_cavar.gd preparar
+checar jogo.get_meta("enterrado").enterrado
+# Graveto enterrado: C de frente para o montinho.
+chamar res://ferramentas/testes/teste_cavar.gd cachorro_em_1_5_menos_2_5
+esperar 5
+apertar cavar 2
+esperar 60
+checar not jogo.get_meta("enterrado").enterrado
+# Buraco: C de frente para a terra fofa do chão; entra e sai escalando.
+chamar res://ferramentas/testes/teste_cavar.gd cachorro_em_1_5_menos_4_5
+esperar 5
+apertar cavar 2
+esperar 60
+checar jogo.fase.terreno.get_cell_item(Vector3i(2, -1, -5)) == 19
+apertar mover_direita 18
+esperar 30
+checar jogo.cachorro.global_position.y < -0.4
+apertar mover_direita 40
+esperar 50
+checar jogo.cachorro.global_position.x > 3.2 and jogo.cachorro.global_position.y > -0.1
+# Um bloco empurrado para dentro do buraco tapa o buraco.
+chamar res://ferramentas/testes/teste_cavar.gd bloco_para_buraco
+esperar 5
+apertar mover_esquerda 40
+esperar 60
+checar jogo.get_meta("bloco").afundado
+checar absf(jogo.get_meta("bloco").global_position.y + 1.0) < 0.05
+# Cerca com terra fofa: C abre o vão por baixo; o salsicha passa.
+chamar res://ferramentas/testes/teste_cavar.gd cachorro_em_4_5_menos_2_5
+esperar 5
+apertar mover_direita 20
+esperar 25
+checar jogo.cachorro.global_position.x < 5.4
+apertar cavar 2
+esperar 60
+checar jogo.get_meta("cerca").cavados.size() == 1
+apertar mover_direita 40
+esperar 45
+checar jogo.cachorro.global_position.x > 6.0
+# Border collie (1 m de altura) não passa pelo vão.
+chamar res://ferramentas/testes/teste_cavar.gd virar_border_collie
+chamar res://ferramentas/testes/teste_cavar.gd cachorro_em_4_5_menos_2_5
+esperar 5
+apertar mover_direita 40
+esperar 45
+checar jogo.cachorro.global_position.x < 5.4

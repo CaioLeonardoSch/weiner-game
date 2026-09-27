@@ -1,0 +1,62 @@
+# Etapas 6 e 7: o tronco rola de lado (não ao comprido), cai na correnteza, desce o rio e
+# encaixa na água funda como ponte; o graveto ao comprido empurra de longe (atravessado não);
+# o graveto molhado pesa mais; o tronco caído como pinguela é passagem estreita.
+fase res://scenes/fases/fase_04.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_tronco.gd preparar_tronco
+# Ao comprido: não rola.
+chamar res://ferramentas/testes/teste_tronco.gd cachorro_na_ponta
+esperar 5
+apertar mover_tras 40
+esperar 45
+checar absf(jogo.get_meta("tronco").global_position.x - 2.5) < 0.05
+checar absf(jogo.get_meta("tronco").global_position.z + 5.5) < 0.05
+# De lado: rola para dentro da correnteza e boia.
+chamar res://ferramentas/testes/teste_tronco.gd cachorro_atras
+esperar 5
+apertar mover_direita 40
+esperar 60
+checar absf(jogo.get_meta("tronco").global_position.x - 3.5) < 0.05
+checar jogo.get_meta("tronco").boiando
+# Em cima do tronco, o cachorro desce o rio junto.
+teleportar 3.5 0.7 -5.0
+esperar 20
+eval jogo.set_meta("z", jogo.cachorro.global_position.z)
+esperar 100
+checar jogo.cachorro.global_position.z > jogo.get_meta("z") + 0.8
+checar jogo.cachorro.global_position.y > 0.3
+# Desce o rio até a água funda e vira ponte.
+esperar 400
+checar jogo.get_meta("tronco").afundado
+checar jogo.get_meta("tronco").global_position.z > -2.0
+# Graveto comprido ao comprido: a ponta empurra o bloco de longe (o cachorro fica a mais de
+# 1 m dele).
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_tronco.gd preparar_graveto_empurra
+chamar res://ferramentas/testes/teste_tronco.gd recuar_do_bloco
+esperar 5
+chamar res://ferramentas/testes/teste_tronco.gd virar
+esperar 20
+checar jogo.cachorro.graveto_ao_comprido
+apertar mover_direita 40
+esperar 60
+checar jogo.get_meta("bloco").global_position.x > 5.0
+checar jogo.cachorro.global_position.x < jogo.get_meta("bloco").global_position.x - 1.0
+# Graveto molhado (Fase 04): na água rasa encharca e pesa mais; seca depois.
+fase res://scenes/fases/fase_04.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_tronco.gd dar_graveto
+checar jogo.get_meta("graveto").peso_atual() < 1.1
+teleportar 4.5 0.3 -3.5
+esperar 30
+checar jogo.get_meta("graveto").molhado > 0.0
+checar absf(jogo.get_meta("graveto").peso_atual() - 1.5) < 0.01
+teleportar -1.5 0.3 -2.5
+esperar 520
+checar jogo.get_meta("graveto").peso_atual() < 1.1
+# Tronco caído como pinguela sobre o canal fundo: passagem estreita.
+chamar res://ferramentas/testes/teste_tronco.gd preparar_pinguela
+esperar 5
+checar not jogo.fase.passagem_estreita_em(Vector3(11.5, 0.1, -4.5)).is_empty()
+checar jogo.fase.passagem_estreita_em(Vector3(11.5, 0.1, -5.5)).is_empty()

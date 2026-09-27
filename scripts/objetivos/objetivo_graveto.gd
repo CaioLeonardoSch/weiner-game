@@ -22,6 +22,10 @@ func avisos(fase: Fase) -> PackedStringArray:
 		lista.append("Há %d gravetos lendários — o dono aceita qualquer um deles." % lendarios)
 	if fase.todos(Dono).size() > 1:
 		lista.append("Há mais de um Dono — só o primeiro vale.")
+	var dono_da_fase := fase.primeiro(Dono) as Dono
+	if dono_da_fase and dono_da_fase.dormindo and not fase.tem_habilidade(Fase.HABILIDADE_LATIR) \
+			and fase.todos(CaoVizinho).is_empty():
+		lista.append("O dono está dormindo, mas ninguém late para acordar ele (Latir desligado).")
 	return lista
 
 
@@ -30,6 +34,10 @@ func preparar(novo_jogo: Node) -> void:
 	dono = jogo.fase.primeiro(Dono) as Dono
 	dono.cachorro_chegou.connect(func(corpo: Node3D) -> void:
 		if corpo == jogo.cachorro:
+			_conferir())
+	# Acordou com o cachorro já do lado, graveto na boca.
+	dono.acordou.connect(func() -> void:
+		if dono.contem(jogo.cachorro):
 			_conferir())
 
 
@@ -43,7 +51,9 @@ func _conferir() -> void:
 	var cachorro: Dachshund = jogo.cachorro
 	if not cachorro.tem_graveto or jogo.concluida:
 		return
-	if cachorro.graveto.lendario:
+	if dono.dormindo:
+		jogo.mostrar_aviso("Zzz... O dono está dormindo. Um latido acorda ele — mas com o graveto na boca não dá para latir.", 3.5)
+	elif cachorro.graveto.lendario:
 		jogo.concluir()
 	else:
 		jogo.mostrar_aviso("Esse não! O dono quer o graveto lendário — o dourado.")

@@ -1,0 +1,44 @@
+# Fase 10 — Debaixo da Cerca: cava por baixo da cerca de terra fofa, pula no degrau alto,
+# desenterra o graveto lendário (comprido) no platô e volta passando pelo vão ao comprido.
+fase res://scenes/fases/fase_10.tscn
+esperar 20
+apertar mover_frente 3
+apertar mover_direita 110
+esperar 115
+checar jogo.cachorro.global_position.x < 4.3
+apertar cavar 2
+esperar 60
+apertar mover_direita 90
+esperar 95
+checar jogo.cachorro.global_position.x > 9.0
+# Degrau alto: recua, corre e pula.
+apertar mover_esquerda 14
+esperar 20
+apertar mover_direita 40
+esperar 10
+apertar pular 3
+esperar 40
+checar jogo.cachorro.global_position.y > 0.7
+# Montinho: cava de frente para ele e pega o graveto.
+apertar mover_frente 16
+esperar 20
+apertar mover_direita 50
+esperar 54
+apertar cavar 2
+esperar 70
+apertar mover_direita 14
+esperar 140
+checar jogo.cachorro.tem_graveto and jogo.cachorro.graveto.lendario
+# Volta (3D): desce do platô, alinha com o vão (z = -2,5), vira ao comprido e passa.
+apertar mover_frente 100
+esperar 104
+apertar mover_esquerda 16
+esperar 30
+apertar mover_frente 12
+esperar 30
+apertar virar_graveto 2
+esperar 20
+checar jogo.cachorro.graveto_ao_comprido
+apertar mover_frente 300
+esperar 320
+checar jogo.concluida

@@ -41,6 +41,12 @@ const MATERIAL_COMUM := preload("res://assets/materiais/graveto_comum.tres")
 		_atualizar_forma()
 ## 1 = normal. Mais pesado, mais devagar o cachorro anda carregando.
 @export_range(0.5, 3.0, 0.1) var peso := 1.0
+## Enterrado: só aparece um montinho de terra (com a pontinha do graveto); o cachorro cava
+## (C, com a habilidade Cavar) de frente para ele para desenterrar.
+@export var enterrado := false:
+	set(valor):
+		enterrado = valor
+		_atualizar_enterrado()
 
 var ja_pego := false
 ## Largado sobre um vão, virou ponte: dá para atravessar por cima (com equilíbrio, como a
@@ -54,6 +60,14 @@ var _espera_aviso := 0.0
 ## cachorro precisar sair e encostar de novo. Fora disso, só um encostar novo pega (senão o
 ## graveto recém-largado embaixo do focinho voltaria sozinho para a boca).
 var _barrado_por_passaro := false
+## Um bicho (esquilo) está levando o graveto: não dá para pegar e não pesa em placa.
+var com_bicho: Node = null
+## Molhado (passou na água rasa na boca do cachorro): pesa PESO_MOLHADO a mais até secar.
+var molhado := 0.0
+const PESO_MOLHADO := 0.5
+const TEMPO_PARA_SECAR := 8.0
+var _gotas: CPUParticles3D
+var _montinho: MeshInstance3D
 
 @onready var visual: Node3D = $Visual
 @onready var area: Area3D = $AreaPegar
@@ -68,12 +82,13 @@ func categoria_no_editor() -> String:
 
 
 func propriedades_editaveis() -> Array[StringName]:
-	return [&"lendario", &"comprimento", &"peso"]
+	return [&"lendario", &"comprimento", &"peso", &"enterrado"]
 
 
 func _ready() -> void:
 	_atualizar_forma()
 	_atualizar_visual()
+	_atualizar_enterrado()
 	if not Engine.is_editor_hint():
 		area.body_entered.connect(_on_body_entered)
 		add_to_group(&"pesos")
@@ -82,11 +97,44 @@ func _ready() -> void:
 
 ## Largado no chão, pesa na placa; na boca, o peso entra no do cachorro.
 func peso_na_placa() -> float:
-	return 0.0 if ja_pego else peso
+	return 0.0 if ja_pego or enterrado or com_bicho else peso_atual()
+
+
+## Peso agora: o do graveto, mais a água enquanto está molhado.
+func peso_atual() -> float:
+	return peso + (PESO_MOLHADO if molhado > 0.0 else 0.0)
+
+
+## Na água rasa: encharca (e começa a pingar) — pesa mais por TEMPO_PARA_SECAR segundos.
+func molhar() -> void:
+	molhado = TEMPO_PARA_SECAR
+	if _gotas == null:
+		_gotas = CPUParticles3D.new()
+		var gota := BoxMesh.new()
+		gota.size = Vector3.ONE * 0.035
+		var material := StandardMaterial3D.new()
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.albedo_color = Color("9fd3f2")
+		gota.material = material
+		_gotas.mesh = gota
+		_gotas.amount = 6
+		_gotas.lifetime = 0.5
+		_gotas.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+		_gotas.emission_box_extents = Vector3(0.05, 0.02, comprimento * 0.45)
+		_gotas.direction = Vector3.DOWN
+		_gotas.gravity = Vector3(0, -6.0, 0)
+		_gotas.initial_velocity_min = 0.0
+		_gotas.initial_velocity_max = 0.2
+		visual.add_child(_gotas)
+	_gotas.emitting = true
 
 
 func _process(delta: float) -> void:
-	if ja_pego or em_ponte or Engine.is_editor_hint():
+	if molhado > 0.0:
+		molhado = maxf(molhado - delta, 0.0)
+		if molhado <= 0.0 and _gotas:
+			_gotas.emitting = false
+	if ja_pego or em_ponte or enterrado or com_bicho or Engine.is_editor_hint():
 		return
 	_bloqueio = maxf(_bloqueio - delta, 0.0)
 	_espera_aviso = maxf(_espera_aviso - delta, 0.0)
@@ -101,7 +149,7 @@ func _process(delta: float) -> void:
 
 ## Multiplicador da velocidade do cachorro enquanto carrega este graveto.
 func fator_velocidade() -> float:
-	return 1.0 / (1.0 + maxf(peso - 1.0, 0.0) * 0.3)
+	return 1.0 / (1.0 + maxf(peso_atual() - 1.0, 0.0) * 0.3)
 
 
 ## Volta a ficar disponível no chão (quem posiciona é o jogo).
@@ -120,8 +168,9 @@ func _on_body_entered(body: Node3D) -> void:
 			_espera_aviso = 2.0
 			boca_cheia.emit()
 		return
-	for passaro in get_tree().get_nodes_in_group(&"passaros"):
-		if (passaro as Passaro).guarda(global_position):
+	# Passarinhos pousados perto e esquilos na porta da toca não deixam pegar.
+	for guarda in get_tree().get_nodes_in_group(&"passaros") + get_tree().get_nodes_in_group(&"guardas"):
+		if guarda.guarda(global_position):
 			_barrado_por_passaro = true
 			if _espera_aviso <= 0.0:
 				_espera_aviso = 2.0
@@ -185,6 +234,74 @@ static func _criar_brilho() -> CPUParticles3D:
 	return faiscas
 
 
+# --- Enterrado e bichos --------------------------------------------------------------------
+
+## Desenterra (o cachorro cavou): o graveto pula para fora do montinho.
+func desenterrar() -> void:
+	if not enterrado:
+		return
+	enterrado = false
+	Efeitos.terra(get_parent(), global_position + Vector3.UP * 0.1)
+	visual.position.y = -0.3
+	var tween := create_tween()
+	tween.tween_property(visual, "position:y", 0.25, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(visual, "position:y", 0.0, 0.2).set_trans(Tween.TRANS_BOUNCE)
+
+
+func _atualizar_enterrado() -> void:
+	if not is_node_ready():
+		return
+	($Visual/Haste as Node3D).visible = not enterrado
+	($Visual/Galhinho as Node3D).visible = not enterrado
+	var brilho := get_node_or_null(^"Visual/Brilho") as CPUParticles3D
+	if brilho:
+		brilho.emitting = not enterrado
+	if enterrado and _montinho == null:
+		_montinho = MeshInstance3D.new()
+		_montinho.name = "Montinho"
+		_montinho.mesh = _malha_montinho(lendario)
+		add_child(_montinho)
+	elif not enterrado and _montinho:
+		_montinho.queue_free()
+		_montinho = null
+	if not Engine.is_editor_hint():
+		area.monitoring = not enterrado and com_bicho == null
+		if enterrado:
+			add_to_group(&"enterrados")
+		else:
+			remove_from_group(&"enterrados")
+
+
+## Montinho de terra com a pontinha do graveto de fora (dourada, no lendário).
+static func _malha_montinho(dourado: bool) -> ArrayMesh:
+	var voxels := {}
+	for x in range(-5, 5):
+		for z in range(-5, 5):
+			var r := Vector2(x + 0.5, z + 0.5).length()
+			var altura := int(3.2 - r * 0.6)
+			for y in range(0, altura):
+				voxels[Vector3i(x, y, z)] = Color("7a5230").darkened(0.12 if (x * 3 + z + y) % 4 == 0 else 0.0)
+	var ponta := Color("e8b93c") if dourado else Color("8a6038")
+	for y in range(2, 6):
+		voxels[Vector3i(1 + y / 3, y, 0)] = ponta
+	return Voxel.malha(voxels, 1.0 / 16.0)
+
+
+## Um bicho pegou o graveto (ele passa a posicionar o graveto a cada quadro).
+func levar_por(bicho: Node) -> void:
+	com_bicho = bicho
+	area.set_deferred("monitoring", false)
+	visual.position = Vector3.ZERO
+	visual.rotation = Vector3.ZERO
+
+
+## O bicho largou o graveto em `posicao` (no chão), atravessado na direção `yaw`.
+func largar_do_bicho(posicao: Vector3, yaw: float) -> void:
+	com_bicho = null
+	global_transform = Transform3D(Basis(Vector3.UP, yaw + PI * 0.5), posicao + Vector3.UP * 0.08)
+	soltar()
+
+
 # --- Ponte ---------------------------------------------------------------------------------
 
 ## Vira ponte onde está (o jogo já o colocou sobre o vão, ao longo do eixo Z dele).
@@ -206,7 +323,7 @@ func virar_ponte() -> void:
 	colisao.position.y = -0.08
 	_corpo_ponte.add_child(colisao)
 	add_child(_corpo_ponte)
-	add_to_group(&"pontes_graveto")
+	add_to_group(&"passagens_estreitas")
 
 
 func sair_da_ponte() -> void:
@@ -214,7 +331,7 @@ func sair_da_ponte() -> void:
 	if _corpo_ponte:
 		_corpo_ponte.queue_free()
 		_corpo_ponte = null
-	remove_from_group(&"pontes_graveto")
+	remove_from_group(&"passagens_estreitas")
 
 
 ## Dados de passagem estreita (ver Fase.passagem_estreita_em) se `posicao` está sobre a ponte.

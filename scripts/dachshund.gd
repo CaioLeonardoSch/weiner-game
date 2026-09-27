@@ -69,7 +69,7 @@ var _forma_teste := CapsuleShape3D.new()
 var _tween_graveto: Tween
 var _cavando := false
 var _espera_latido := 0.0
-var _empurrando: Empurravel
+var _empurrando: Node
 ## Na água rasa: multiplicador da velocidade e se há correnteza embaixo.
 var _lentidao_agua := 1.0
 var em_correnteza := false
@@ -114,7 +114,7 @@ func aplicar_raca(nova_raca: Raca, indice_pelagem: int) -> void:
 func peso_total() -> float:
 	var peso := raca.peso if raca else 1.0
 	if tem_graveto and graveto:
-		peso += graveto.peso
+		peso += graveto.peso_atual()
 	return peso
 
 
@@ -148,6 +148,7 @@ func _physics_process(delta: float) -> void:
 		_motivo_puxar_avisado = ""
 	horizontal += _desvio_de_encaixe(horizontal, delta)
 	horizontal += _empurrao_do_balanco(delta, horizontal)
+	horizontal = _rampa_lisa(horizontal)
 	var arrasto := _efeito_da_agua()
 	# Parado à força (câmera em transição, mirante, fase concluída): a água não leva o cachorro
 	# embora sem ele poder reagir.
@@ -158,6 +159,8 @@ func _physics_process(delta: float) -> void:
 	velocity.z = horizontal.z + arrasto.z
 
 	move_and_slide()
+	_soltar_se_pendurado()
+	_escalar_do_buraco(horizontal)
 	voxel.velocidade = Vector2(get_real_velocity().x, get_real_velocity().z).length()
 	voxel.no_chao = is_on_floor()
 	_empurrar(delta, horizontal)
@@ -166,9 +169,11 @@ func _physics_process(delta: float) -> void:
 
 
 ## Altura do pulo agora: o peso do graveto puxa para baixo.
+## Com graveto na boca o pulo é um pouco mais baixo (não passa do Degrau alto); graveto pesado,
+## mais baixo ainda.
 func altura_pulo_atual() -> float:
 	if tem_graveto and graveto:
-		return altura_pulo / (1.0 + maxf(graveto.peso - 1.0, 0.0) * 0.35)
+		return altura_pulo * 0.88 / (1.0 + maxf(graveto.peso_atual() - 1.0, 0.0) * 0.35)
 	return altura_pulo
 
 
@@ -217,8 +222,10 @@ func virar_graveto() -> bool:
 
 # --- Cavar, latir, empurrar ---------------------------------------------------------------
 
-## Cava o bloco de terra fofa na frente do focinho. Devolve "" se começou a cavar, ou o
-## motivo: "sem_habilidade", "boca_cheia", "ocupado" ou "nada" (nada cavável na frente).
+## Cava na frente do focinho, nesta ordem: um graveto enterrado (desenterra), a terra fofa
+## embaixo de uma cerca (abre uma passagem baixa), um bloco de terra fofa (desfaz) ou a terra
+## fofa do chão (vira um buraco). Devolve "" se começou a cavar, ou o motivo:
+## "sem_habilidade", "boca_cheia", "ocupado" ou "nada" (nada cavável na frente).
 func cavar() -> String:
 	if not pode_cavar:
 		return "sem_habilidade"
@@ -226,11 +233,25 @@ func cavar() -> String:
 		return "boca_cheia"
 	if _cavando or not is_on_floor():
 		return "ocupado"
+	var enterrado := _enterrado_na_frente()
+	if enterrado:
+		_animar_cavar(fase.terreno.local_to_map(fase.terreno.to_local(enterrado.global_position)),
+			enterrado.desenterrar)
+		return ""
+	var cerca: Variant = _cerca_cavavel_na_frente()
+	if cerca != null:
+		_animar_cavar(fase.terreno.local_to_map(fase.terreno.to_local(cerca[1])),
+			(cerca[0] as Cerca).cavar_em.bind(cerca[1]))
+		return ""
 	var celula: Variant = _celula_cavavel_na_frente()
-	if celula == null:
-		return "nada"
-	_animar_cavar(celula)
-	return ""
+	if celula != null:
+		_animar_cavar(celula, fase.terreno.set_cell_item.bind(celula, GridMap.INVALID_CELL_ITEM))
+		return ""
+	var chao: Variant = _chao_cavavel_na_frente()
+	if chao != null:
+		_animar_cavar(chao, _abrir_buraco.bind(chao))
+		return ""
+	return "nada"
 
 
 func _celula_cavavel_na_frente() -> Variant:
@@ -243,7 +264,50 @@ func _celula_cavavel_na_frente() -> Variant:
 	return null
 
 
-func _animar_cavar(celula: Vector3i) -> void:
+## Graveto enterrado bem na frente do focinho (até ~1 m).
+func _enterrado_na_frente() -> Graveto:
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	var ponto := global_position + frente * 0.6
+	for no in get_tree().get_nodes_in_group(&"enterrados"):
+		var graveto := no as Graveto
+		var ate := graveto.global_position - ponto
+		if Vector2(ate.x, ate.z).length() < 0.6:
+			return graveto
+	return null
+
+
+## Cerca com terra fofa embaixo, à frente: [cerca, ponto onde o focinho encosta] ou null.
+func _cerca_cavavel_na_frente() -> Variant:
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	var origem := global_position + Vector3.UP * 0.3
+	var raio := PhysicsRayQueryParameters3D.create(origem, origem + frente * 1.0, 4, [get_rid()])
+	var achado := get_world_3d().direct_space_state.intersect_ray(raio)
+	if achado.is_empty():
+		return null
+	var cerca := (achado.collider as Node).get_parent() as Cerca
+	if cerca == null or not cerca.pode_cavar_em(achado.position):
+		return null
+	return [cerca, achado.position]
+
+
+## Terra fofa no chão, logo à frente (a célula da camada do chão, sem nada em cima).
+func _chao_cavavel_na_frente() -> Variant:
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	for distancia: float in [0.7, 0.95]:
+		var ponto := global_position + frente * distancia + Vector3.DOWN * 0.3
+		var celula := fase.terreno.local_to_map(fase.terreno.to_local(ponto))
+		if Tiles.eh_cavavel(fase.terreno.get_cell_item(celula)) \
+				and fase.terreno.get_cell_item(celula + Vector3i.UP) == GridMap.INVALID_CELL_ITEM:
+			return celula
+	return null
+
+
+func _abrir_buraco(celula: Vector3i) -> void:
+	fase.terreno.set_cell_item(celula, Tiles.BURACO)
+
+
+## Três cavadas (o corpo mexe, a terra voa) e então `ao_terminar`.
+func _animar_cavar(celula: Vector3i, ao_terminar: Callable) -> void:
 	_cavando = true
 	var centro := fase.terreno.to_global(fase.terreno.map_to_local(celula))
 	var tween := create_tween()
@@ -252,7 +316,7 @@ func _animar_cavar(celula: Vector3i) -> void:
 		tween.tween_property(modelo, "rotation:z", 0.0, 0.09)
 		tween.tween_callback(Efeitos.terra.bind(get_parent(), centro + Vector3.DOWN * 0.3))
 	await tween.finished
-	fase.terreno.set_cell_item(celula, GridMap.INVALID_CELL_ITEM)
+	ao_terminar.call()
 	Efeitos.terra(get_parent(), centro)
 	_cavando = false
 
@@ -268,14 +332,12 @@ func latir() -> String:
 		return "ocupado"
 	_espera_latido = 0.6
 	Efeitos.latido(get_parent(), boca.global_position)
+	Som.latido(get_parent(), boca.global_position, Som.tom_da_raca(raca))
 	var tween := create_tween()
 	tween.tween_property(modelo, "rotation:z", 0.25, 0.08)
 	tween.tween_property(modelo, "rotation:z", 0.0, 0.15)
 	if fase:
-		for objeto in fase.lista_objetos():
-			# Objetos desativados pela perspectiva (ex.: "só 3D" na isométrica) não ouvem.
-			if objeto.visible and objeto.global_position.distance_to(global_position) <= ALCANCE_LATIDO:
-				objeto.ao_ouvir_latido(global_position)
+		fase.espalhar_latido(global_position, self)
 	return ""
 
 
@@ -342,16 +404,20 @@ func _tentar_puxar(horizontal: Vector3) -> String:
 	return ""
 
 
-## Andar contra um objeto empurrável por um instante empurra ele uma célula.
+## Andar contra um objeto empurrável (bloco, tronco — quem tem `empurrar(direcao)`) por um
+## instante empurra ele uma célula. O graveto na boca também empurra; ao comprido, a ponta vai
+## longe à frente — alcance maior (dá para empurrar algo do outro lado de um vão).
 func _empurrar(delta: float, horizontal: Vector3) -> void:
-	var alvo: Empurravel = null
+	var alvo: Node = null
 	if horizontal.length_squared() > 0.1:
 		var direcao := horizontal.normalized()
 		for i in get_slide_collision_count():
 			var colisao := get_slide_collision(i)
 			var corpo := colisao.get_collider() as Node
-			var empurravel := corpo.get_parent() as Empurravel if corpo else null
-			if empurravel and colisao.get_normal().dot(direcao) < -0.6:
+			var empurravel := corpo.get_parent() if corpo else null
+			if empurravel == null or not empurravel.has_method(&"empurrar"):
+				continue
+			if colisao.get_normal().dot(direcao) < -0.6:
 				alvo = empurravel
 	if alvo != _empurrando:
 		_empurrando = alvo
@@ -448,6 +514,20 @@ func _graveto_cabe(yaw: float, ao_comprido: bool, deslocamento := Vector3.ZERO) 
 	return get_world_3d().direct_space_state.intersect_shape(consulta, 1).is_empty()
 
 
+func _graveto_bate_em_empurravel(yaw: float, deslocamento: Vector3) -> bool:
+	var consulta := PhysicsShapeQueryParameters3D.new()
+	consulta.shape = _forma_teste
+	consulta.transform = Transform3D(Basis.IDENTITY, global_position + deslocamento) \
+		* _transform_colisao_graveto(yaw, graveto_ao_comprido)
+	consulta.collision_mask = collision_mask
+	consulta.exclude = [get_rid()]
+	for achado in get_world_3d().direct_space_state.intersect_shape(consulta, 4):
+		var dono := (achado.collider as Node).get_parent()
+		if dono and dono.has_method(&"empurrar"):
+			return true
+	return false
+
+
 ## Correção de quina: se é o graveto que bate na entrada de um vão, mas ele passaria um
 ## pouco mais para o lado, desliza o cachorro para lá (como os jogos de plataforma fazem
 ## nas quinas). Sem isso, passar com o graveto atravessado exigiria mira de milímetros.
@@ -461,6 +541,9 @@ func _desvio_de_encaixe(horizontal: Vector3, delta: float) -> Vector3:
 	# Só quando quem bate é o graveto (o corpo passaria).
 	graveto_travado = false
 	if _graveto_cabe(yaw, graveto_ao_comprido, passo):
+		return Vector3.ZERO
+	# Ao comprido, contra algo empurrável (bloco, tronco), a ponta empurra: nada de desviar.
+	if graveto_ao_comprido and _graveto_bate_em_empurravel(yaw, passo):
 		return Vector3.ZERO
 	var lado := Vector3(-direcao.z, 0.0, direcao.x)
 	for i in range(1, 9):
@@ -502,7 +585,7 @@ func _empurrao_do_balanco(delta: float, horizontal: Vector3) -> Vector3:
 		modelo.rotation.x = balanco * 0.4
 		return Vector3.ZERO
 
-	var carga := graveto.peso * graveto.comprimento if tem_graveto and graveto else 0.0
+	var carga := graveto.peso_atual() * graveto.comprimento if tem_graveto and graveto else 0.0
 	var excesso := maxf(carga - carga_sem_balanco, 0.0)
 	if excesso <= 0.0 or not is_on_floor():
 		balanco = move_toward(balanco, 0.0, delta * 2.0)
@@ -524,6 +607,57 @@ func _empurrao_do_balanco(delta: float, horizontal: Vector3) -> Vector3:
 	return empurrao + lado.normalized() * balanco * forca_balanco
 
 
+## O graveto tem colisão própria: numa beirada na altura da boca (pulando contra um degrau alto),
+## ele poderia "segurar" o cachorro no ar, pendurado. Apoiado só pelo graveto, o cachorro
+## escorrega para trás, para longe da beirada, e cai.
+func _soltar_se_pendurado() -> void:
+	if not tem_graveto or not is_on_floor():
+		return
+	var pelo_graveto := Vector3.ZERO
+	for i in get_slide_collision_count():
+		var colisao := get_slide_collision(i)
+		if colisao.get_normal().y <= 0.7:
+			continue
+		if colisao.get_local_shape() != colisao_graveto:
+			return
+		pelo_graveto = colisao.get_position()
+	if pelo_graveto == Vector3.ZERO:
+		return
+	var para_longe := global_position - pelo_graveto
+	para_longe.y = 0.0
+	global_position += para_longe.normalized() * 0.06
+	velocity.y = minf(velocity.y, -1.0)
+
+
+# --- Buraco e rampa lisa ---
+
+## Dentro de um buraco (meio metro), andando contra a borda: o cachorro escala para fora com
+## um impulso (sem precisar da habilidade de pular).
+func _escalar_do_buraco(horizontal: Vector3) -> void:
+	if fase == null or not is_on_floor() or not is_on_wall() or horizontal.length_squared() < 0.1:
+		return
+	if not Tiles.eh_buraco(fase.tile_em(global_position + Vector3.DOWN * 0.1)):
+		return
+	if get_wall_normal().dot(horizontal.normalized()) < -0.5:
+		velocity.y = sqrt(2.0 * _gravidade * 0.62)
+
+
+## Rampa lisa: com graveto pesado (1,5 ou mais) na boca o cachorro não firma as patas — não
+## sobe e ainda escorrega para baixo.
+func _rampa_lisa(horizontal: Vector3) -> Vector3:
+	if fase == null or not is_on_floor() or not (tem_graveto and graveto and graveto.peso_atual() >= 1.5):
+		return horizontal
+	if not Tiles.eh_escorregadia(fase.tile_em(global_position + Vector3.DOWN * 0.1)):
+		return horizontal
+	var descida := get_floor_normal()
+	descida.y = 0.0
+	if descida.length() < 0.05:
+		return horizontal
+	descida = descida.normalized()
+	var subindo := minf(horizontal.dot(descida), 0.0)
+	return horizontal - descida * subindo + descida * 2.2
+
+
 # --- Água rasa e correnteza ---
 
 ## Água rasa deixa o cachorro mais lento; correnteza arrasta no sentido do tile. Graveto
@@ -539,13 +673,16 @@ func _efeito_da_agua() -> Vector3:
 	if not definicao.get("rasa", false):
 		return Vector3.ZERO
 	_lentidao_agua = definicao.get("lentidao", 1.0)
+	# O graveto na boca encharca na água rasa (pesa mais por um tempo).
+	if tem_graveto and graveto:
+		graveto.molhar()
 	var forca: float = definicao.get("correnteza", 0.0)
 	if forca <= 0.0:
 		return Vector3.ZERO
 	em_correnteza = true
 	var sentido := terreno.global_basis * terreno.get_cell_item_basis(celula).x
 	sentido.y = 0.0
-	var firmeza := maxf(graveto.peso, 1.0) if tem_graveto and graveto else 1.0
+	var firmeza := maxf(graveto.peso_atual(), 1.0) if tem_graveto and graveto else 1.0
 	return sentido.normalized() * forca / firmeza
 
 

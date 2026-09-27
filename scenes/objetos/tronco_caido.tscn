@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/objetos/objeto_simples.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/objetos/tronco_caido.gd" id="1_script"]
 [ext_resource type="Script" path="res://scripts/assets/modelo_voxel.gd" id="2_modelo"]
 
 [sub_resource type="BoxShape3D" id="Forma"]
@@ -8,7 +8,6 @@ size = Vector3(2, 0.375, 0.5)
 
 [node name="TroncoCaido" type="Node3D"]
 script = ExtResource("1_script")
-nome = "Tronco caído"
 
 [node name="Modelo" type="MeshInstance3D" parent="."]
 script = ExtResource("2_modelo")

@@ -95,6 +95,16 @@ func canal_ligado(canal: int, todas: bool) -> bool:
 	return canal_completo(canal) if todas else canal_ativo(canal)
 
 
+## Um latido em `origem`: os objetos até Dachshund.ALCANCE_LATIDO ouvem (pássaros voam, o dono
+## acorda, um cão vizinho late de volta...). Objetos desativados pela perspectiva (ex.: "só 3D"
+## na isométrica) não ouvem; `quem` latiu não ouve a si mesmo.
+func espalhar_latido(origem: Vector3, quem: Node) -> void:
+	for objeto in lista_objetos():
+		if objeto != quem and objeto.visible \
+				and objeto.global_position.distance_to(origem) <= Dachshund.ALCANCE_LATIDO:
+			objeto.ao_ouvir_latido(origem)
+
+
 ## Habilidades da fase somadas às nativas da raça.
 func habilidades_efetivas() -> int:
 	var dados_raca := Racas.por_id(raca)
@@ -167,11 +177,12 @@ func passagem_estreita_em(posicao: Vector3) -> Dictionary:
 	return {desvio = (posicao - centro).dot(lado), lado = lado, meia_largura = Tiles.meia_largura(id)}
 
 
-## Passagem estreita feita por um objeto (graveto que virou ponte), no mesmo formato de
-## `passagem_estreita_em`.
+## Passagem estreita feita por um objeto (graveto que virou ponte, tronco caído como pinguela),
+## no mesmo formato de `passagem_estreita_em`. Objetos assim ficam no grupo
+## "passagens_estreitas" e têm `passagem_em(posicao)`.
 func passagem_estreita_de_objeto(posicao: Vector3) -> Dictionary:
-	for no in get_tree().get_nodes_in_group(&"pontes_graveto"):
-		var dados: Dictionary = (no as Graveto).passagem_em(posicao)
+	for no in get_tree().get_nodes_in_group(&"passagens_estreitas"):
+		var dados: Dictionary = no.passagem_em(posicao)
 		if not dados.is_empty():
 			return dados
 	return {}

@@ -4,7 +4,8 @@ extends ObjetoFase
 ## Bloco de pedra que o cachorro empurra andando contra ele: anda uma célula da grade por
 ## vez (estilo Sokoban, previsível), se a célula de destino estiver livre e tiver chão.
 ## Segurando `puxar` de frente para ele e andando para trás, o cachorro puxa (sem graveto).
-## Empurrado para dentro da água, afunda até ficar rente ao chão e vira passagem.
+## Empurrado para dentro da água, afunda até ficar rente ao chão e vira passagem; num buraco,
+## cai e tapa o buraco.
 ## Coloque no centro de uma célula (o editor já encaixa).
 
 signal afundou
@@ -100,6 +101,11 @@ func _mover(direcao: Vector3i, ignorar_cachorro: bool) -> bool:
 		# Afunda até o topo ficar rente ao chão em volta.
 		afundado = true
 		tween.tween_property(self, "global_position:y", alvo.y - 0.9, 0.4).set_trans(Tween.TRANS_BACK)
+		tween.tween_callback(afundou.emit)
+	elif Tiles.eh_buraco(chao):
+		# Cai no buraco e tapa: o topo fica rente ao chão, e vira chão.
+		afundado = true
+		tween.tween_property(self, "global_position:y", alvo.y - 1.0, 0.25).set_trans(Tween.TRANS_QUAD)
 		tween.tween_callback(afundou.emit)
 	await tween.finished
 	em_movimento = false
