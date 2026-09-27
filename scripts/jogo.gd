@@ -34,12 +34,22 @@ var contador := Label.new()
 var rotulo_acao := Label.new()
 ## Mirante sendo usado (a câmera gira em volta dele, mostrando a fase da volta).
 var _mirante: Mirante
+## Fundo semitransparente do aviso (o rótulo `aviso` fica dentro dele).
+var aviso_painel := PanelContainer.new()
+
+## Avisos: largura máxima e tamanhos de letra (curto e de uma linha = grande; senão, menor).
+const AVISO_LARGURA_MAXIMA := 720.0
+const AVISO_FONTE_GRANDE := 34
+const AVISO_FONTE_PEQUENA := 22
+const AVISO_CURTO := 40
 
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	aviso.hide()
-	aviso.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_montar_aviso()
+	# Com teclas de nome comprido (ex.: "Mouse esq.") a dica quebra em duas linhas, sem sair da
+	# tela; o tamanho da área muda com a janela.
+	dica.resized.connect(_atualizar_dica)
 	mensagem.hide()
 	cachorro.camera_referencia = camera_controller.camera
 	indicador_equilibrio.cachorro = cachorro
@@ -98,6 +108,7 @@ func _ready() -> void:
 	cachorro.posicionar(inicio.global_position, inicio.global_rotation.y)
 	camera_controller.configurar(cachorro)
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
+	cachorro.puxar_falhou.connect(_on_puxar_falhou)
 	for bloco in fase.todos(Empurravel):
 		(bloco as Empurravel).voltou_ao_inicio.connect(
 			mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
@@ -121,16 +132,19 @@ func _preparar_objetivo() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _mirante:
+		# No mirante: F ou Esc saem de uma vez; reiniciar e o editor continuam valendo.
 		if event.is_action_pressed("acao") or event.is_action_pressed("liberar_mouse"):
 			get_viewport().set_input_as_handled()
 			_sair_do_mirante()
-		return
+			return
+		if not (event.is_action_pressed("reiniciar") or event.is_action_pressed("alternar_editor")):
+			return
 	if event.is_action_pressed("reiniciar"):
 		get_tree().reload_current_scene()
 	elif event.is_action_pressed("alternar_editor"):
 		Fases.abrir_editor()
 	elif event.is_action_pressed("liberar_mouse"):
-		_pausa.abrir()
+		_abrir_pausa()
 	elif event.is_action_pressed("acao") and not concluida:
 		var alvo := cachorro.objeto_da_acao()
 		if alvo:
@@ -287,8 +301,12 @@ func _avisar_motivo(motivo: String, acao: String, sem_alvo: String) -> void:
 				mostrar_aviso(sem_alvo)
 
 
+## Dica do topo: só o que vale agora (reiniciar e editor ficam na pausa, com as teclas).
 func _atualizar_dica() -> void:
 	var t := Teclas.nome
+	if _mirante:
+		_mostrar_dicas(["Mouse: olhar", "%s ou Esc: sair do mirante" % t.call(&"acao")])
+		return
 	var andar := "%s%s%s%s" % [t.call(&"mover_frente"), t.call(&"mover_esquerda"), t.call(&"mover_tras"), t.call(&"mover_direita")]
 	var partes: PackedStringArray = ["%s / ←↑↓→: andar" % andar]
 	var em_3d := cachorro.tem_graveto
@@ -305,9 +323,14 @@ func _atualizar_dica() -> void:
 	if em_3d:
 		partes.append_array(["%s: virar graveto" % t.call(&"virar_graveto"),
 			"%s: devagar" % t.call(&"andar_devagar"), "%s: largar" % t.call(&"largar_graveto")])
-	partes.append_array(["%s: reiniciar" % t.call(&"reiniciar"), "Esc: pausa",
-		"%s: editor" % t.call(&"alternar_editor")])
-	dica.text = "    ".join(partes)
+	partes.append("Esc: pausa")
+	_mostrar_dicas(partes)
+
+
+## Dicas separadas por espaço largo; se não couberem numa linha, quebram entre uma dica e outra.
+func _mostrar_dicas(partes: PackedStringArray) -> void:
+	var tamanho := dica.get_theme_font_size(&"font_size")
+	dica.text = _quebrar_linhas(partes, "    ", dica.get_theme_font(&"font"), tamanho, dica.size.x)
 
 
 ## Ponto do chão logo abaixo de `posicao` (até 0,6 m), ou null.
@@ -340,6 +363,22 @@ func _ponto_para_largar() -> Vector3:
 	return pe
 
 
+## Pausa (Esc): some com o aviso do momento, para ele não ficar por cima do painel.
+func _abrir_pausa() -> void:
+	if _tween_aviso:
+		_tween_aviso.kill()
+	aviso_painel.hide()
+	_pausa.abrir()
+
+
+func _on_puxar_falhou(motivo: String) -> void:
+	match motivo:
+		"boca_cheia":
+			mostrar_aviso("Com o graveto na boca não dá para puxar")
+		"sem_espaco":
+			mostrar_aviso("Sem espaço atrás para puxar o bloco")
+
+
 func _on_cachorro_voltou(motivo: String) -> void:
 	if motivo == "agua":
 		mostrar_aviso("Splash! Salsicha não nada...")
@@ -355,7 +394,7 @@ func concluir() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	# Senão um clique na tela de "fase concluída" prenderia o mouse de novo.
 	camera_controller.set_process_unhandled_input(false)
-	aviso.hide()
+	aviso_painel.hide()
 	var texto := "Fase concluída! 🦴\n"
 	if Fases.testando:
 		texto += "%s: voltar ao editor    %s: jogar de novo" % [Teclas.nome(&"alternar_editor"), Teclas.nome(&"reiniciar")]
@@ -388,14 +427,60 @@ func _agendar(segundos: float, acao: Callable) -> void:
 	tween.tween_callback(acao)
 
 
+## O rótulo do aviso vai para dentro de um painel semitransparente, centralizado no topo.
+func _montar_aviso() -> void:
+	var fundo := StyleBoxFlat.new()
+	fundo.bg_color = Color(0, 0, 0, 0.5)
+	fundo.set_corner_radius_all(6)
+	fundo.content_margin_left = 18
+	fundo.content_margin_right = 18
+	fundo.content_margin_top = 6
+	fundo.content_margin_bottom = 8
+	aviso_painel.add_theme_stylebox_override("panel", fundo)
+	aviso_painel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	aviso_painel.name = "AvisoPainel"
+	var area := aviso.get_parent()
+	area.add_child(aviso_painel)
+	area.move_child(aviso_painel, aviso.get_index())
+	aviso.reparent(aviso_painel, false)
+	aviso.autowrap_mode = TextServer.AUTOWRAP_OFF
+	aviso_painel.hide()
+
+
 func mostrar_aviso(texto: String, segundos := 2.0) -> void:
-	aviso.text = texto
-	aviso.show()
+	var curto := texto.length() <= AVISO_CURTO and not "\n" in texto
+	var tamanho := AVISO_FONTE_GRANDE if curto else AVISO_FONTE_PEQUENA
+	aviso.add_theme_font_size_override("font_size", tamanho)
+	aviso.add_theme_constant_override("outline_size", 8 if curto else 6)
+	var linhas: PackedStringArray = []
+	for paragrafo in texto.split("\n"):
+		linhas.append(_quebrar_linhas(paragrafo.split(" "), " ", aviso.get_theme_font(&"font"), tamanho, AVISO_LARGURA_MAXIMA))
+	aviso.text = "\n".join(linhas)
+	aviso_painel.show()
+	# Encolhe para o texto novo e centraliza no topo.
+	aviso_painel.reset_size()
+	aviso_painel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 72)
 	if _tween_aviso:
 		_tween_aviso.kill()
 	_tween_aviso = create_tween()
 	_tween_aviso.tween_interval(segundos)
-	_tween_aviso.tween_callback(aviso.hide)
+	_tween_aviso.tween_callback(aviso_painel.hide)
+
+
+## Junta `pedacos` com `separador` em linhas de até `largura` px (um pedaço nunca é partido).
+static func _quebrar_linhas(pedacos: PackedStringArray, separador: String, fonte: Font, tamanho: int,
+		largura: float) -> String:
+	var linhas: PackedStringArray = []
+	var linha := ""
+	for pedaco in pedacos:
+		var tentativa := pedaco if linha.is_empty() else linha + separador + pedaco
+		if not linha.is_empty() and fonte.get_string_size(tentativa, HORIZONTAL_ALIGNMENT_LEFT, -1, tamanho).x > largura:
+			linhas.append(linha)
+			linha = pedaco
+		else:
+			linha = tentativa
+	linhas.append(linha)
+	return "\n".join(linhas)
 
 
 ## Troca "{acao}" pelo nome da tecla atual da ação (textos das Zonas de dica).
@@ -439,8 +524,8 @@ func entrar_no_mirante(mirante: Mirante) -> void:
 	camera_controller.transicionar_para_3d()
 	await camera_controller.transicao_concluida
 	camera_controller.pitch_inicial_3d = pitch_normal
-	mostrar_aviso("Do mirante você vê a fase como ela fica na volta. Mouse: olhar    %s ou Esc: sair"
-		% Teclas.nome(&"acao"), 4.0)
+	_atualizar_dica()
+	mostrar_aviso("Do mirante você vê a fase como ela fica na volta", 3.0)
 
 
 func _sair_do_mirante() -> void:
@@ -453,3 +538,4 @@ func _sair_do_mirante() -> void:
 	fase.previa_da_volta(false)
 	_mirante = null
 	cachorro.entrada_bloqueada = false
+	_atualizar_dica()

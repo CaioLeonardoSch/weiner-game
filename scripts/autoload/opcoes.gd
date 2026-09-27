@@ -41,6 +41,12 @@ const PADRAO := {
 	},
 }
 
+## Limites do tamanho da interface. O jogo inteiro já acompanha a resolução (base 1152 × 648
+## esticada até a tela), então a escala é por cima disso: acima de 125% os menus (pausa,
+## opções) não cabem mais na altura da tela 16:9. O editor de fases ignora a escala.
+const ESCALA_MINIMA := 0.75
+const ESCALA_MAXIMA := 1.25
+
 ## Barramentos de áudio que as opções controlam (criados se o projeto não tiver).
 const BARRAMENTOS := {"geral": "Master", "musica": "Musica", "efeitos": "Efeitos", "ambiente": "Ambiente"}
 
@@ -199,7 +205,7 @@ func _aplicar(secao: String, chave: String) -> void:
 		["tela", "fps_max"]:
 			Engine.max_fps = int(v)
 		["tela", "escala_interface"]:
-			get_tree().root.content_scale_factor = float(v)
+			aplicar_escala()
 		["graficos", "pixel"], ["graficos", "contorno"]:
 			var visual := get_node_or_null(^"/root/Visual")
 			if visual:
@@ -215,6 +221,12 @@ func _aplicar(secao: String, chave: String) -> void:
 			_aplicar_audio()
 		["controles", _]:
 			pass  # A câmera lê direto (valor()).
+
+
+## Aplica o tamanho da interface (dentro dos limites). `ignorar`: usa 100% (editor de fases).
+func aplicar_escala(ignorar := false) -> void:
+	var escala := clampf(float(valor("tela", "escala_interface")), ESCALA_MINIMA, ESCALA_MAXIMA)
+	get_tree().root.content_scale_factor = 1.0 if ignorar else escala
 
 
 func _tem_janela() -> bool:

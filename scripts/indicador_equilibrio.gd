@@ -5,6 +5,12 @@ extends Control
 var cachorro: Dachshund
 
 
+func _ready() -> void:
+	# Começa escondida (senão aparece por um instante ao abrir a fase).
+	modulate.a = 0.0
+	visible = false
+
+
 func _process(_delta: float) -> void:
 	var ativo := cachorro != null and cachorro.em_passagem_estreita and absf(cachorro.balanco) > 0.02
 	modulate.a = move_toward(modulate.a, 1.0 if ativo else 0.0, _delta * 4.0)
