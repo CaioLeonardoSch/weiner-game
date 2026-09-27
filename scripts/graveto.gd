@@ -62,11 +62,6 @@ var _espera_aviso := 0.0
 var _barrado_por_passaro := false
 ## Um bicho (esquilo) está levando o graveto: não dá para pegar e não pesa em placa.
 var com_bicho: Node = null
-## Molhado (passou na água rasa na boca do cachorro): pesa PESO_MOLHADO a mais até secar.
-var molhado := 0.0
-const PESO_MOLHADO := 0.5
-const TEMPO_PARA_SECAR := 8.0
-var _gotas: CPUParticles3D
 var _montinho: MeshInstance3D
 
 @onready var visual: Node3D = $Visual
@@ -97,43 +92,10 @@ func _ready() -> void:
 
 ## Largado no chão, pesa na placa; na boca, o peso entra no do cachorro.
 func peso_na_placa() -> float:
-	return 0.0 if ja_pego or enterrado or com_bicho else peso_atual()
-
-
-## Peso agora: o do graveto, mais a água enquanto está molhado.
-func peso_atual() -> float:
-	return peso + (PESO_MOLHADO if molhado > 0.0 else 0.0)
-
-
-## Na água rasa: encharca (e começa a pingar) — pesa mais por TEMPO_PARA_SECAR segundos.
-func molhar() -> void:
-	molhado = TEMPO_PARA_SECAR
-	if _gotas == null:
-		_gotas = CPUParticles3D.new()
-		var gota := BoxMesh.new()
-		gota.size = Vector3.ONE * 0.035
-		var material := StandardMaterial3D.new()
-		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		material.albedo_color = Color("9fd3f2")
-		gota.material = material
-		_gotas.mesh = gota
-		_gotas.amount = 6
-		_gotas.lifetime = 0.5
-		_gotas.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-		_gotas.emission_box_extents = Vector3(0.05, 0.02, comprimento * 0.45)
-		_gotas.direction = Vector3.DOWN
-		_gotas.gravity = Vector3(0, -6.0, 0)
-		_gotas.initial_velocity_min = 0.0
-		_gotas.initial_velocity_max = 0.2
-		visual.add_child(_gotas)
-	_gotas.emitting = true
+	return 0.0 if ja_pego or enterrado or com_bicho else peso
 
 
 func _process(delta: float) -> void:
-	if molhado > 0.0:
-		molhado = maxf(molhado - delta, 0.0)
-		if molhado <= 0.0 and _gotas:
-			_gotas.emitting = false
 	if ja_pego or em_ponte or enterrado or com_bicho or Engine.is_editor_hint():
 		return
 	_bloqueio = maxf(_bloqueio - delta, 0.0)
@@ -149,7 +111,7 @@ func _process(delta: float) -> void:
 
 ## Multiplicador da velocidade do cachorro enquanto carrega este graveto.
 func fator_velocidade() -> float:
-	return 1.0 / (1.0 + maxf(peso_atual() - 1.0, 0.0) * 0.3)
+	return 1.0 / (1.0 + maxf(peso - 1.0, 0.0) * 0.3)
 
 
 ## Volta a ficar disponível no chão (quem posiciona é o jogo).

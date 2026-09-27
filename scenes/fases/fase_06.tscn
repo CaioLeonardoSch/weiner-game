@@ -43,6 +43,7 @@ transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 7.5, 0, -2.5)
 
 [node name="Placa" parent="Objetos" unique_id=1910704209 instance=ExtResource("7_j3o30")]
+tipo = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, -5.5)
 
 [node name="BlocoEmpurravel" parent="Objetos" unique_id=285887184 instance=ExtResource("8_st6xo")]
@@ -54,7 +55,7 @@ transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.939
 
 [node name="ZonaDica" parent="Objetos" unique_id=357189309 instance=ExtResource("10_dpjrv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, -3)
-texto = "A placa amarela abre o portão amarelo — mas só enquanto tiver peso em cima."
+texto = "A placa amarela é de pedra: só algo pesado (o bloco!) segura o portão amarelo aberto."
 tamanho = Vector3(3, 1.5, 5.6)
 
 [node name="Pedra" parent="Objetos" unique_id=114282314 instance=ExtResource("11_p5nuq")]

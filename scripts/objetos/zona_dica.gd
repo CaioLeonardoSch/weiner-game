@@ -33,6 +33,10 @@ func propriedades_editaveis() -> Array[StringName]:
 	return [&"texto", &"tamanho", &"uma_vez"]
 
 
+func icone_desenhado() -> String:
+	return "dica"
+
+
 func prioridade_no_editor() -> int:
 	return 0
 
@@ -62,3 +66,4 @@ func _atualizar() -> void:
 	var colisao := $Area/Colisao as CollisionShape3D
 	colisao.shape = forma
 	colisao.position.y = tamanho.y * 0.5
+	mostrar_volume_no_editor(tamanho, Color(1.0, 0.9, 0.4, 0.12))

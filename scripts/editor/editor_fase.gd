@@ -2,11 +2,14 @@ class_name EditorFase
 extends Node3D
 ## Editor de fases dentro do jogo (F1 abre/fecha, a partir do jogo ou daqui).
 ##
-## Terreno: blocos de 1 m numa grade (GridMap). Clique esquerdo coloca o tile escolhido
-## em cima/ao lado do bloco apontado (ou no plano da camada atual, se não houver bloco);
-## arrastar pinta na mesma camada. Clique direito apaga; Shift + clique troca o tile.
-## Objetos: escolha na paleta e clique para colocar; a ferramenta Selecionar (Esc) seleciona,
-## arrasta e mostra as propriedades no painel da direita.
+## Terreno: blocos de 1 m numa grade (GridMap). Ferramentas (barra no topo, teclas 1 a 5):
+## Pincel (clique coloca em cima/ao lado do bloco apontado, arrastar pinta; direito apaga),
+## Trocar (troca o bloco apontado), Linha (clique marca o começo, a prévia vai até o mouse,
+## outro clique confirma — atalho: Shift), Retângulo (arrastar — atalho: Ctrl) e Balde (atalho:
+## Alt). Ctrl + roda (ou [ e ]) muda o tamanho do pincel. A prévia translúcida mostra o que vai
+## mudar. Objetos: escolha na paleta e clique para colocar (Shift: linha; Ctrl + arrastar:
+## espalhar). O Cursor (Esc) não coloca nada: seleciona, arrasta objetos e, no vazio, gira a
+## vista (Shift: arrasta); Espaço + botão esquerdo gira a vista em qualquer ferramenta.
 ## Mecanismos (placas, portões...) se ligam pela cor do canal; a ferramenta Ligar (L) liga duas
 ## peças com dois cliques e escolhe a cor. Um mecanismo novo já vem com uma cor livre.
 ## Trecho (T): marca um retângulo do mapa (blocos de todas as camadas e objetos) para copiar,
@@ -17,9 +20,19 @@ extends Node3D
 ## F1 testa a fase como está (sem salvar) e volta para cá no mesmo ponto.
 
 enum Modo { SELECAO, TERRENO, OBJETO, LIGAR, TRECHO, COLAR }
+## Ferramentas do terreno.
+enum Ferramenta { PINCEL, TROCAR, LINHA, RETANGULO, BALDE }
 enum Visao { TUDO, ISO, TERCEIRA }
 
 const NOMES_VISAO := ["tudo", "isométrica", "3D"]
+const NOMES_FERRAMENTA := ["Pincel", "Trocar", "Linha", "Retângulo", "Balde"]
+const ICONES_FERRAMENTA := ["pincel", "trocar", "linha", "retangulo", "balde"]
+## Maior lado do pincel (células).
+const PINCEL_MAXIMO := 9
+## Mais blocos que isso na prévia translúcida não aparecem (retângulos enormes).
+const PREVIA_MAXIMA := 4096
+## Quantos itens a seção "Recentes" da paleta guarda.
+const RECENTES_MAXIMO := 8
 ## Maior lado (células) de um retângulo de pintura, para um arrasto sem querer não travar tudo.
 const RETANGULO_MAXIMO := 64
 ## Quanto (pixels) o mouse anda com o botão apertado até virar arrasto: um clique só seleciona.
@@ -39,6 +52,9 @@ var undo := UndoRedo.new()
 var rng := RandomNumberGenerator.new()
 
 var modo := Modo.TERRENO
+var ferramenta := Ferramenta.PINCEL
+## Lado (células) do pincel quadrado: 1×1, 2×2, 3×3...
+var tamanho_pincel := 1
 var tile_atual := Tiles.GRAMA
 ## Giro do tile em quartos de volta (0 a 3).
 var orientacao := 0
@@ -111,6 +127,32 @@ var _desnivel_colagem := 0
 var _modulo_colando := ""
 var _previa: Node3D
 
+# Linha (Shift, ou a ferramenta Linha): começo marcado, fim seguindo o mouse, clique confirma.
+var linha_ativa := false
+var linha_inicio := Vector3i.ZERO
+var linha_fim := Vector3i.ZERO
+var _linha_acao := "colocar"
+## Linha de objetos: do ponto do primeiro clique até o mouse; fantasmas mostram onde ficam.
+var _linha_objetos_inicio := Vector3.ZERO
+var pontos_linha_objetos: Array[Vector3] = []
+var _fantasmas_linha: Array[ObjetoFase] = []
+## Botão esquerdo girando a vista (Cursor no vazio, ou Espaço + botão esquerdo).
+var _arrastando_camera := false
+var _camera_mexeu := false
+## Prévia translúcida dos tiles (pincel, linha, retângulo) e a chave do que ela mostra agora.
+var _previa_tiles: MultiMeshInstance3D
+var _chave_previa := ""
+## Objeto sob o mouse da última vez (o nome dele vai para a barra de status).
+var _ultimo_sob_mouse: ObjetoFase
+## Barra de ferramentas do terreno (em cima da vista) e os botões dela.
+var _barra_ferramentas: PanelContainer
+var _botoes_ferramenta: Array[Button] = []
+var _rotulo_tamanho: Label
+## Seções da paleta: {cabecalho: Button, itens: Array[Control], nome: String}.
+var _secoes: Array[Dictionary] = []
+var _recolhidas := {}
+var _secao_recentes: Dictionary
+
 @onready var camera_editor: CameraEditor = $CameraEditor
 @onready var camera: Camera3D = $CameraEditor/Camera3D
 @onready var icones: GeradorIcones = $Icones
@@ -155,8 +197,11 @@ func _ready() -> void:
 	ajuda.hide()
 	aviso.hide()
 
+	# Marca a árvore: objetos invisíveis no jogo (paredes, zonas) mostram um volume translúcido.
+	get_tree().root.set_meta(&"editor_de_fases", true)
 	_catalogo = Catalogo.objetos()
 	_montar_paleta()
+	_montar_barra_ferramentas()
 
 	var cena := Fases.cena_atual()
 	caminho = Fases.caminho_atual
@@ -174,6 +219,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	Opcoes.aplicar_escala()
+	get_tree().root.remove_meta(&"editor_de_fases")
 	# UndoRedo não é contado por referência: libera o histórico (e os objetos apagados que
 	# só ele guardava) e depois ele mesmo. Sem mudar a versão: a cena já está saindo.
 	undo.clear_history(false)
@@ -373,6 +419,9 @@ func _validar() -> Dictionary:
 			if graveto and (passaro as Passaro).guarda(graveto.global_position) or (passaro as Passaro).bloqueia_passagem:
 				avisos.append("Um passarinho guarda o graveto ou bloqueia o caminho, mas Latir está desligado.")
 				break
+	var pesados := fase.todos(Empurravel).size() + fase.todos(TroncoRolante).size()
+	if pesados == 0 and fase.todos(Placa).any(func(p: ObjetoFase) -> bool: return (p as Placa).tipo == Placa.PEDRA):
+		avisos.append("Há placa de pedra, mas nenhum bloco de pedra nem tronco para acioná-la.")
 	if fase.frio and fase.todos(Fogueira).is_empty() and fase.todos(Celeiro).is_empty():
 		avisos.append("Frio ligado, mas não há Fogueira nem Celeiro para o cachorro se esquentar.")
 	var comuns := fase.todos(Graveto).filter(func(g: ObjetoFase) -> bool: return not (g as Graveto).lendario).size()
@@ -425,14 +474,20 @@ static func _nome_de_arquivo(nome: String) -> String:
 	return resultado.trim_suffix("_")
 
 
-func _testar(confirmado := false) -> void:
+## Testa a fase como está (sem salvar). `daqui` (F2): o cachorro começa no ponto sob o cursor,
+## em vez do Início — como o "jogar daqui" do Mario Maker, para testar um trecho sem refazer tudo.
+func _testar(confirmado := false, daqui := false) -> void:
+	if daqui and not alvo_valido:
+		_avisar("Aponte para o chão onde o cachorro deve começar e aperte F2")
+		return
+	var ponto := Vector3(floorf(ponto_livre.x) + 0.5, ponto_alvo.y, floorf(ponto_livre.z) + 0.5)
 	var problemas := _validar()
 	if not confirmado and problemas.graves.size() > 0:
 		confirmar.dialog_text = "Esta fase não dá para jogar direito:\n\n• %s\n\nTestar mesmo assim?" \
 			% "\n• ".join(problemas.graves)
 		for conexao in confirmar.confirmed.get_connections():
 			confirmar.confirmed.disconnect(conexao.callable)
-		confirmar.confirmed.connect(_testar.bind(true), CONNECT_ONE_SHOT)
+		confirmar.confirmed.connect(_testar.bind(true, daqui), CONNECT_ONE_SHOT)
 		confirmar.popup_centered()
 		return
 	var cena := _empacotar()
@@ -440,6 +495,7 @@ func _testar(confirmado := false) -> void:
 		return
 	Fases.caminho_atual = caminho
 	Fases.estado_editor = _estado()
+	Fases.inicio_do_teste = ponto if daqui else null
 	Fases.testar(cena, modificado)
 
 
@@ -447,6 +503,8 @@ func _estado() -> Dictionary:
 	return {
 		fase = caminho, camera = camera_editor.estado(), modo = modo, tile = tile_atual, orientacao = orientacao,
 		camada = camada, objeto = entrada_objeto.get("caminho", ""), visao = visao,
+		ferramenta = ferramenta, tamanho_pincel = tamanho_pincel,
+		recentes = Fases.estado_editor.get("recentes", []),
 	}
 
 
@@ -459,6 +517,8 @@ func _restaurar_estado(estado: Dictionary) -> void:
 		camera_editor.restaurar(estado.camera)
 	camada = estado.camada
 	orientacao = estado.orientacao
+	ferramenta = estado.get("ferramenta", ferramenta)
+	tamanho_pincel = estado.get("tamanho_pincel", tamanho_pincel)
 	visao = estado.visao
 	_aplicar_visao()
 	match estado.modo:
@@ -484,17 +544,23 @@ func _montar_paleta() -> void:
 	busca.text_changed.connect(_filtrar_paleta)
 	busca.text_submitted.connect(func(_texto: String) -> void: busca.release_focus())
 	paleta.add_child(busca)
-	var selecionar := _botao_paleta("Selecionar (Esc)", null)
-	selecionar.set_meta(&"ferramenta", "selecao")
-	selecionar.pressed.connect(_escolher_selecao)
-	var trecho := _botao_paleta("Trecho: copiar, colar, módulos (T)", null)
+
+	_secao("Ferramentas")
+	var cursor := _botao_paleta("Cursor (Esc)", IconesDesenhados.textura("cursor"))
+	cursor.set_meta(&"ferramenta", "selecao")
+	cursor.tooltip_text = "Não coloca nada: clique seleciona, arrastar move o objeto; no vazio, arrastar gira a vista (Shift: arrasta)"
+	cursor.pressed.connect(_escolher_selecao)
+	var trecho := _botao_paleta("Trecho (T)", IconesDesenhados.textura("trecho"))
 	trecho.set_meta(&"ferramenta", "trecho")
+	trecho.tooltip_text = "Marcar um pedaço do mapa para copiar, recortar, apagar ou salvar como módulo"
 	trecho.pressed.connect(_escolher_trecho)
-	var ligar := _botao_paleta("Ligar mecanismos (L)", null)
+	var ligar := _botao_paleta("Ligar mecanismos (L)", IconesDesenhados.textura("ligar"))
 	ligar.set_meta(&"ferramenta", "ligar")
 	ligar.pressed.connect(_escolher_ligar)
 
-	_cabecalho("Terreno")
+	_secao_recentes = _secao("Recentes")
+
+	_secao("Terreno")
 	var biblioteca: MeshLibrary = load(Tiles.CAMINHO_BIBLIOTECA)
 	for definicao in Tiles.definicoes():
 		var botao := _botao_paleta(definicao.nome, icones.icone_tile(biblioteca, definicao.id))
@@ -506,12 +572,17 @@ func _montar_paleta() -> void:
 	for entrada in _catalogo:
 		if entrada.categoria != categoria:
 			categoria = entrada.categoria
-			_cabecalho(categoria)
+			_secao(categoria)
 		var amostra := entrada.cena.instantiate() as ObjetoFase
-		var botao := _botao_paleta(entrada.nome, icones.icone(amostra))
+		var desenho := amostra.icone_desenhado()
+		var icone := IconesDesenhados.textura(desenho) if not desenho.is_empty() else icones.icone(amostra)
+		if not desenho.is_empty():
+			amostra.free()
+		var botao := _botao_paleta(entrada.nome, icone)
 		botao.set_meta(&"ferramenta", entrada.caminho)
 		botao.pressed.connect(_escolher_objeto.bind(entrada))
 	_montar_modulos()
+	_montar_recentes()
 
 
 ## Seção "Módulos" no fim da paleta: um botão por módulo salvo (clicar começa a colar).
@@ -519,7 +590,11 @@ func _montar_modulos() -> void:
 	for item in _itens_modulos:
 		item.queue_free()
 	_itens_modulos.clear()
-	_itens_modulos.append(_cabecalho("Módulos"))
+	for i in range(_secoes.size() - 1, -1, -1):
+		if _secoes[i].nome == "Módulos":
+			_secoes.remove_at(i)
+	var secao := _secao("Módulos")
+	_itens_modulos.append(secao.cabecalho)
 	var lista := Modulos.listar()
 	if lista.is_empty():
 		var dica := Label.new()
@@ -528,9 +603,10 @@ func _montar_modulos() -> void:
 		dica.add_theme_font_size_override("font_size", 12)
 		dica.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
 		paleta.add_child(dica)
+		secao.itens.append(dica)
 		_itens_modulos.append(dica)
 	for caminho in lista:
-		var botao := _botao_paleta("▦ " + Modulos.nome(caminho), null)
+		var botao := _botao_paleta(Modulos.nome(caminho), IconesDesenhados.textura("modulo"))
 		botao.set_meta(&"ferramenta", "modulo:" + caminho)
 		botao.tooltip_text = caminho
 		botao.pressed.connect(_colar_modulo.bind(caminho))
@@ -538,31 +614,78 @@ func _montar_modulos() -> void:
 	_filtrar_paleta(_texto_busca())
 
 
+## "Recentes": os últimos itens usados (tiles, objetos, módulos), para voltar a eles rápido —
+## como a barra de itens do Mario Maker e a de atalhos do Minecraft. Vale para a sessão toda.
+func _montar_recentes() -> void:
+	if _secao_recentes.is_empty():
+		return
+	for item: Control in _secao_recentes.itens:
+		item.queue_free()
+	_secao_recentes.itens.clear()
+	var posicao: int = _secao_recentes.cabecalho.get_index() + 1
+	var recentes: Array = Fases.estado_editor.get("recentes", [])
+	for chave: String in recentes:
+		var original := _botao_da_ferramenta(chave)
+		if original == null:
+			continue
+		var botao := Button.new()
+		botao.text = original.text
+		botao.icon = original.icon
+		botao.tooltip_text = original.tooltip_text
+		botao.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		botao.focus_mode = Control.FOCUS_NONE
+		botao.set_meta(&"recente", chave)
+		botao.pressed.connect(func() -> void: original.pressed.emit())
+		paleta.add_child(botao)
+		paleta.move_child(botao, posicao)
+		posicao += 1
+		_secao_recentes.itens.append(botao)
+	_secao_recentes.cabecalho.visible = not _secao_recentes.itens.is_empty()
+	_filtrar_paleta(_texto_busca())
+
+
+## Um item foi usado: vai para o começo dos recentes.
+func _lembrar_recente(chave: String) -> void:
+	if chave.is_empty() or _secao_recentes.is_empty():
+		return
+	var recentes: Array = Fases.estado_editor.get("recentes", [])
+	if not recentes.is_empty() and recentes[0] == chave:
+		return
+	recentes.erase(chave)
+	recentes.push_front(chave)
+	Fases.estado_editor["recentes"] = recentes.slice(0, RECENTES_MAXIMO)
+	_montar_recentes()
+
+
+func _botao_da_ferramenta(chave: String) -> Button:
+	for botao in _botoes_paleta.get_buttons():
+		if botao.get_meta(&"ferramenta", "") == chave:
+			return botao
+	return null
+
+
 func _texto_busca() -> String:
 	return (paleta.get_child(0) as LineEdit).text if paleta.get_child_count() > 0 else ""
 
 
-## Mostra só os botões cujo nome tem o texto buscado (e os títulos das seções com algum botão).
+## Mostra só os botões cujo nome tem o texto buscado (e as seções com algum). Seções recolhidas
+## (clique no título) escondem os itens, menos durante uma busca.
 func _filtrar_paleta(texto: String) -> void:
 	var busca := _sem_acento(texto.strip_edges().to_lower())
-	var titulo: Label = null
-	var algum := false
-	for filho in paleta.get_children():
-		if filho is LineEdit:
+	for secao in _secoes:
+		var cabecalho: Button = secao.cabecalho
+		if not is_instance_valid(cabecalho):
 			continue
-		if filho is Label and not (filho as Label).autowrap_mode:
-			if titulo:
-				titulo.visible = algum or busca.is_empty()
-			titulo = filho
-			algum = false
-		elif filho is Button:
-			var mostra := busca.is_empty() or busca in _sem_acento((filho as Button).text.to_lower())
-			(filho as Button).visible = mostra
-			algum = algum or mostra
-		else:
-			(filho as Control).visible = busca.is_empty()
-	if titulo:
-		titulo.visible = algum or busca.is_empty()
+		var recolhida: bool = _recolhidas.get(secao.nome, false) and busca.is_empty()
+		var algum := false
+		for item: Control in secao.itens:
+			if not is_instance_valid(item):
+				continue
+			var combina := busca.is_empty() or (item is Button and busca in _sem_acento((item as Button).text.to_lower()))
+			item.visible = combina and not recolhida
+			algum = algum or combina
+		cabecalho.visible = (algum or busca.is_empty()) and not (secao == _secao_recentes and secao.itens.is_empty())
+		cabecalho.text = ("▸ " if recolhida else "▾ ") + secao.nome
 
 
 static func _sem_acento(texto: String) -> String:
@@ -573,12 +696,23 @@ static func _sem_acento(texto: String) -> String:
 	return texto
 
 
-func _cabecalho(texto: String) -> Label:
-	var rotulo := Label.new()
-	rotulo.text = texto
-	rotulo.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5))
-	paleta.add_child(rotulo)
-	return rotulo
+## Título de seção da paleta: um botão que recolhe e abre a seção. Os botões criados depois dele
+## (até a próxima seção) são os itens dela.
+func _secao(nome: String) -> Dictionary:
+	var cabecalho := Button.new()
+	cabecalho.flat = true
+	cabecalho.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	cabecalho.focus_mode = Control.FOCUS_NONE
+	cabecalho.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5))
+	cabecalho.add_theme_color_override("font_hover_color", Color(1.0, 0.92, 0.7))
+	cabecalho.text = "▾ " + nome
+	paleta.add_child(cabecalho)
+	var secao := {cabecalho = cabecalho, itens = [], nome = nome}
+	cabecalho.pressed.connect(func() -> void:
+		_recolhidas[nome] = not _recolhidas.get(nome, false)
+		_filtrar_paleta(_texto_busca()))
+	_secoes.append(secao)
+	return secao
 
 
 func _botao_paleta(texto: String, icone: Texture2D) -> Button:
@@ -591,6 +725,8 @@ func _botao_paleta(texto: String, icone: Texture2D) -> Button:
 	botao.expand_icon = false
 	botao.focus_mode = Control.FOCUS_NONE
 	paleta.add_child(botao)
+	if not _secoes.is_empty():
+		_secoes[-1].itens.append(botao)
 	return botao
 
 
@@ -613,35 +749,43 @@ func _marcar_botao_da_ferramenta() -> void:
 
 func _escolher_selecao() -> void:
 	_sair_do_trecho()
+	_cancelar_linha()
 	modo = Modo.SELECAO
 	ligar_origem = null
 	_trocar_fantasma(null)
 	_marcar_botao_da_ferramenta()
+	_atualizar_barra_ferramentas()
 	_atualizar_status()
 
 
 func _escolher_ligar() -> void:
 	_sair_do_trecho()
+	_cancelar_linha()
 	modo = Modo.LIGAR
 	ligar_origem = null
 	_trocar_fantasma(null)
 	_marcar_botao_da_ferramenta()
+	_atualizar_barra_ferramentas()
 	_atualizar_status()
 
 
 func _escolher_tile(id: int) -> void:
 	_sair_do_trecho()
+	_cancelar_linha()
 	modo = Modo.TERRENO
 	ligar_origem = null
 	tile_atual = id
 	_trocar_fantasma(null)
 	_selecionar(null)
 	_marcar_botao_da_ferramenta()
+	_atualizar_barra_ferramentas()
+	_lembrar_recente("tile_%d" % id)
 	_atualizar_status()
 
 
 func _escolher_objeto(entrada: Dictionary) -> void:
 	_sair_do_trecho()
+	_cancelar_linha()
 	modo = Modo.OBJETO
 	ligar_origem = null
 	entrada_objeto = entrada
@@ -649,18 +793,22 @@ func _escolher_objeto(entrada: Dictionary) -> void:
 	_fantasma_copiado = false
 	_cor_livre_no_fantasma()
 	_marcar_botao_da_ferramenta()
+	_atualizar_barra_ferramentas()
+	_lembrar_recente(entrada.caminho)
 	_atualizar_status()
 
 
 ## Ferramenta Trecho: marcar um retângulo do mapa.
 func _escolher_trecho() -> void:
 	_sair_do_trecho(false)
+	_cancelar_linha()
 	modo = Modo.TRECHO
 	ligar_origem = null
 	_trocar_fantasma(null)
 	selecionado = null
 	_mostrar_painel_do_trecho()
 	_marcar_botao_da_ferramenta()
+	_atualizar_barra_ferramentas()
 	_atualizar_status()
 
 
@@ -694,8 +842,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Clicou na vista 3D: tira o foco do campo de texto (senão WASD escreve no nome).
 	if event is InputEventMouseButton and event.pressed:
 		get_viewport().gui_release_focus()
+	if _tecla_de_ferramenta(event):
+		return
 	if event.is_action_pressed("alternar_editor"):
 		_testar()
+	elif event.is_action_pressed("editor_testar_daqui"):
+		_testar(false, true)
 	elif event.is_action_pressed("editor_copiar"):
 		_copiar()
 	elif event.is_action_pressed("editor_recortar"):
@@ -721,6 +873,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Esc: fecha a ajuda; senão vai para a ferramenta Selecionar; já nela, desmarca.
 		if ajuda.visible:
 			ajuda.hide()
+		elif linha_ativa:
+			_cancelar_linha()
 		elif modo == Modo.COLAR:
 			_escolher_trecho()
 		elif modo == Modo.TRECHO and tem_trecho:
@@ -760,16 +914,23 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("editor_girar_direita"):
 		_girar(-1)
 	elif event.is_action_pressed("editor_zoom_mais"):
-		camera_editor.zoom(1.0 / 1.12)
+		if Input.is_action_pressed("editor_mod_ctrl"):
+			_mudar_tamanho_pincel(1)
+		else:
+			camera_editor.zoom(1.0 / 1.12)
 	elif event.is_action_pressed("editor_zoom_menos"):
-		camera_editor.zoom(1.12)
+		if Input.is_action_pressed("editor_mod_ctrl"):
+			_mudar_tamanho_pincel(-1)
+		else:
+			camera_editor.zoom(1.12)
 	elif event.is_action_pressed("editor_orbitar"):
 		_orbitando = true
 	elif event.is_action_released("editor_orbitar"):
 		_orbitando = false
-	elif event is InputEventMouseMotion and _orbitando:
+	elif event is InputEventMouseMotion and (_orbitando or _arrastando_camera):
 		var relativo := (event as InputEventMouseMotion).relative
-		if Input.is_action_pressed("editor_mod_shift"):
+		_camera_mexeu = _camera_mexeu or relativo.length() > 0.0
+		if Input.is_action_pressed("editor_mod_shift") or camera_editor.isometrica:
 			camera_editor.arrastar(relativo)
 		else:
 			camera_editor.orbitar(relativo)
@@ -778,11 +939,31 @@ func _unhandled_input(event: InputEvent) -> void:
 		_acao_principal()
 	elif event.is_action_released("editor_acao"):
 		_terminar_arrastos()
+		if _arrastando_camera:
+			_arrastando_camera = false
+			# Clique (sem arrastar) no vazio com o Cursor: desmarca.
+			if modo == Modo.SELECAO and not _camera_mexeu:
+				_selecionar(null)
 	elif event.is_action_pressed("editor_remover"):
 		_atualizar_alvo()
 		_acao_remover()
 	elif event.is_action_released("editor_remover"):
 		_terminar_arrastos()
+
+
+## Teclas 1 a 5 escolhem a ferramenta do terreno; [ e ] mudam o tamanho do pincel. Devolve se
+## a tecla foi usada.
+func _tecla_de_ferramenta(event: InputEvent) -> bool:
+	var tecla := event as InputEventKey
+	if tecla == null or not tecla.pressed or tecla.echo or tecla.ctrl_pressed or tecla.alt_pressed:
+		return false
+	if tecla.physical_keycode >= KEY_1 and tecla.physical_keycode <= KEY_5:
+		_escolher_ferramenta((tecla.physical_keycode - KEY_1) as Ferramenta)
+		return true
+	if tecla.physical_keycode == KEY_BRACKETLEFT or tecla.physical_keycode == KEY_BRACKETRIGHT:
+		_mudar_tamanho_pincel(1 if tecla.physical_keycode == KEY_BRACKETRIGHT else -1)
+		return true
+	return false
 
 
 func _process(_delta: float) -> void:
@@ -791,8 +972,11 @@ func _process(_delta: float) -> void:
 			and not Input.is_action_pressed("editor_acao") and not Input.is_action_pressed("editor_remover"):
 		_terminar_arrastos()
 	_orbitando = _orbitando and Input.is_action_pressed("editor_orbitar")
+	_arrastando_camera = _arrastando_camera and Input.is_action_pressed("editor_acao")
 
 	_atualizar_alvo()
+	if linha_ativa and alvo_valido:
+		_continuar_linha()
 	if _pincel != "" and alvo_valido:
 		_continuar_pincel()
 	if _arrastando_objeto and selecionado:
@@ -808,19 +992,37 @@ func _process(_delta: float) -> void:
 	if _previa:
 		_previa.visible = modo == Modo.COLAR and alvo_valido
 	if fantasma:
-		fantasma.visible = modo == Modo.OBJETO and alvo_valido
+		fantasma.visible = modo == Modo.OBJETO and alvo_valido and not linha_ativa
 		if fantasma.visible:
 			fantasma.position = ponto_alvo + Vector3.UP * _altura_extra(fantasma)
+	_atualizar_previa_tiles()
+	if _rotulo_tamanho and _rotulo_tamanho.text != "%d × %d" % [tamanho_pincel, tamanho_pincel]:
+		_atualizar_barra_ferramentas()
+	if objeto_sob_mouse != _ultimo_sob_mouse:
+		_ultimo_sob_mouse = objeto_sob_mouse
+		_atualizar_status()
 	sobreposicao.queue_redraw()
 
 
 ## O que o clique faria agora (para o cursor): "colocar", "apagar" ou "pintar".
 func acao_do_cursor() -> String:
-	if Input.is_action_pressed("editor_remover") or _pincel == "apagar":
+	if Input.is_action_pressed("editor_remover") or _pincel == "apagar" or (linha_ativa and _linha_acao == "apagar"):
 		return "apagar"
-	if modo == Modo.TERRENO and (Input.is_action_pressed("editor_mod_shift") or _pincel == "pintar"):
+	if modo == Modo.TERRENO and (ferramenta == Ferramenta.TROCAR or _pincel == "pintar"):
 		return "pintar"
 	return "colocar"
+
+
+## A ferramenta do terreno valendo agora: os atalhos (Shift linha, Ctrl retângulo, Alt balde)
+## passam na frente da escolhida na barra.
+func ferramenta_efetiva() -> Ferramenta:
+	if linha_ativa or Input.is_action_pressed("editor_mod_shift"):
+		return Ferramenta.LINHA
+	if Input.is_action_pressed("editor_mod_ctrl"):
+		return Ferramenta.RETANGULO
+	if Input.is_action_pressed("editor_mod_alt"):
+		return Ferramenta.BALDE
+	return ferramenta
 
 
 ## Camada em que a grade é desenhada.
@@ -831,8 +1033,15 @@ func camada_da_grade() -> int:
 
 
 func _acao_principal() -> void:
+	# Espaço + botão esquerdo gira a vista em qualquer ferramenta.
+	if Input.is_physical_key_pressed(KEY_SPACE) and not _digitando():
+		_comecar_arrasto_camera()
+		return
 	if modo == Modo.LIGAR:
 		_clique_ligar(objeto_sob_mouse)
+		return
+	if modo == Modo.SELECAO and objeto_sob_mouse == null:
+		_comecar_arrasto_camera()
 		return
 	if not alvo_valido:
 		return
@@ -845,15 +1054,23 @@ func _acao_principal() -> void:
 		Modo.COLAR:
 			_colar_aqui()
 		Modo.TERRENO:
-			if Input.is_action_pressed("editor_mod_alt"):
-				_balde()
-			elif acao_do_cursor() == "pintar":
-				if atingiu_bloco:
-					_comecar_pincel("pintar", celula_atingida.y)
-			else:
-				_comecar_pincel("colocar", celula_alvo.y)
+			var acao := "pintar" if ferramenta == Ferramenta.TROCAR else "colocar"
+			match ferramenta_efetiva():
+				Ferramenta.LINHA:
+					_clique_linha(acao)
+				Ferramenta.BALDE:
+					_balde()
+				Ferramenta.RETANGULO:
+					_comecar_pincel(acao, (celula_atingida if acao == "pintar" else celula_alvo).y, true)
+				_:
+					if acao == "colocar":
+						_comecar_pincel("colocar", celula_alvo.y)
+					elif atingiu_bloco:
+						_comecar_pincel("pintar", celula_atingida.y)
 		Modo.OBJETO:
-			if Input.is_action_pressed("editor_mod_shift"):
+			if linha_ativa or Input.is_action_pressed("editor_mod_shift"):
+				_clique_linha_objetos()
+			elif Input.is_action_pressed("editor_mod_ctrl"):
 				_comecar_espalhar()
 			else:
 				_colocar_objeto()
@@ -873,8 +1090,17 @@ func _acao_remover() -> void:
 	elif modo == Modo.COLAR:
 		_escolher_trecho()
 	elif modo == Modo.TERRENO:
-		if atingiu_bloco:
-			_comecar_pincel("apagar", celula_atingida.y)
+		match ferramenta_efetiva():
+			Ferramenta.LINHA:
+				_clique_linha("apagar")
+			Ferramenta.RETANGULO:
+				if atingiu_bloco:
+					_comecar_pincel("apagar", celula_atingida.y, true)
+			_:
+				if atingiu_bloco:
+					_comecar_pincel("apagar", celula_atingida.y)
+	elif modo == Modo.OBJETO and linha_ativa:
+		_cancelar_linha()
 	elif modo == Modo.LIGAR:
 		if objeto_sob_mouse:
 			_isolar(objeto_sob_mouse)
@@ -1028,12 +1254,12 @@ func _altura_extra(objeto: ObjetoFase) -> float:
 
 # --- Terreno -----------------------------------------------------------------------------
 
-func _comecar_pincel(tipo: String, camada_pincel: int) -> void:
+func _comecar_pincel(tipo: String, camada_pincel: int, retangulo := false) -> void:
 	_pincel = tipo
 	_camada_pincel = camada_pincel
 	_mudancas_pincel.clear()
 	var celula := celula_atingida if tipo != "colocar" else celula_alvo
-	_retangulo = Input.is_action_pressed("editor_mod_ctrl")
+	_retangulo = retangulo
 	if _retangulo:
 		_retangulo_inicio = Vector2i(celula.x, celula.z)
 		_retangulo_fim = _retangulo_inicio
@@ -1050,20 +1276,28 @@ func retangulo_em_andamento() -> Variant:
 	return AABB(Vector3(minimo.x, _camada_pincel, minimo.y), Vector3(maximo.x - minimo.x + 1, 1, maximo.y - minimo.y + 1))
 
 
-## Durante o arrasto, a pintura fica presa na camada em que começou.
-func _continuar_pincel() -> void:
+## A célula sob o mouse no plano de uma camada (colocar: a base da camada; apagar/pintar: o topo
+## dos blocos dela), ou null. Arrastos e linhas ficam presos na camada em que começaram.
+func _celula_no_plano(camada_plano: int, acao: String) -> Variant:
 	var mouse := get_viewport().get_mouse_position()
 	var origem := camera.project_ray_origin(mouse)
 	var direcao := camera.project_ray_normal(mouse)
 	if absf(direcao.y) < 0.0001:
-		return
-	# Colocar: plano da base da camada; apagar/pintar: plano do topo dos blocos da camada.
-	var altura := float(_camada_pincel) + (0.0 if _pincel == "colocar" else 1.0)
+		return null
+	var altura := float(camada_plano) + (0.0 if acao == "colocar" else 1.0)
 	var t := (altura - origem.y) / direcao.y
 	if t <= 0.0:
-		return
+		return null
 	var ponto := origem + direcao * t
-	var celula := Vector3i(floori(ponto.x), _camada_pincel, floori(ponto.z))
+	return Vector3i(floori(ponto.x), camada_plano, floori(ponto.z))
+
+
+## Durante o arrasto, a pintura fica presa na camada em que começou.
+func _continuar_pincel() -> void:
+	var achada: Variant = _celula_no_plano(_camada_pincel, _pincel)
+	if achada == null:
+		return
+	var celula: Vector3i = achada
 	if _retangulo:
 		_retangulo_fim = Vector2i(
 			clampi(celula.x, _retangulo_inicio.x - RETANGULO_MAXIMO + 1, _retangulo_inicio.x + RETANGULO_MAXIMO - 1),
@@ -1072,7 +1306,23 @@ func _continuar_pincel() -> void:
 		_aplicar_pincel(celula)
 
 
-func _aplicar_pincel(celula: Vector3i) -> void:
+## Posições (X, Z) do pincel quadrado em volta da célula do cursor.
+func deslocamentos_do_pincel() -> Array[Vector2i]:
+	var lista: Array[Vector2i] = []
+	var inicio := -(tamanho_pincel - 1) / 2
+	for dx in tamanho_pincel:
+		for dz in tamanho_pincel:
+			lista.append(Vector2i(inicio + dx, inicio + dz))
+	return lista
+
+
+## O pincel inteiro (tamanho × tamanho) centrado em `centro`.
+func _aplicar_pincel(centro: Vector3i) -> void:
+	for d in deslocamentos_do_pincel():
+		_aplicar_celula(centro + Vector3i(d.x, 0, d.y))
+
+
+func _aplicar_celula(celula: Vector3i) -> void:
 	var item_antigo := terreno.get_cell_item(celula)
 	var orientacao_antiga := terreno.get_cell_item_orientation(celula)
 	var item_novo := tile_atual
@@ -1105,7 +1355,7 @@ func _terminar_pincel() -> void:
 		var caixa: AABB = retangulo_em_andamento()
 		for x in range(int(caixa.position.x), int(caixa.end.x)):
 			for z in range(int(caixa.position.z), int(caixa.end.z)):
-				_aplicar_pincel(Vector3i(x, _camada_pincel, z))
+				_aplicar_celula(Vector3i(x, _camada_pincel, z))
 		_retangulo = false
 	_pincel = ""
 	if _mudancas_pincel.is_empty():
@@ -1127,6 +1377,322 @@ func _terminar_pincel() -> void:
 func _aplicar_celulas(lista: Array) -> void:
 	for dados in lista:
 		terreno.set_cell_item(dados[0], dados[1], dados[2])
+
+
+# --- Ferramentas do terreno, linha e prévia ------------------------------------------------
+
+func _escolher_ferramenta(nova: Ferramenta) -> void:
+	_cancelar_linha()
+	ferramenta = nova
+	if modo != Modo.TERRENO:
+		_escolher_tile(tile_atual)
+	_atualizar_barra_ferramentas()
+	_atualizar_status()
+
+
+func _mudar_tamanho_pincel(passo: int) -> void:
+	tamanho_pincel = clampi(tamanho_pincel + passo, 1, PINCEL_MAXIMO)
+	_atualizar_barra_ferramentas()
+	_atualizar_status()
+
+
+## Um campo de texto está com o foco (as teclas são dele).
+func _digitando() -> bool:
+	var foco := get_viewport().gui_get_focus_owner()
+	return foco is LineEdit or foco is TextEdit
+
+
+func _comecar_arrasto_camera() -> void:
+	_arrastando_camera = true
+	_camera_mexeu = false
+
+
+## Clique da linha do terreno: o primeiro marca o começo (na camada do bloco apontado); o
+## segundo confirma. Com Shift ainda apertado, a próxima linha começa onde esta terminou.
+func _clique_linha(acao: String) -> void:
+	if linha_ativa:
+		if acao != _linha_acao:
+			_cancelar_linha()
+			return
+		_confirmar_linha()
+		return
+	var precisa_de_bloco := acao != "colocar"
+	if precisa_de_bloco and not atingiu_bloco:
+		return
+	linha_ativa = true
+	_linha_acao = acao
+	linha_inicio = celula_atingida if precisa_de_bloco else celula_alvo
+	linha_fim = linha_inicio
+	_atualizar_status()
+
+
+func _continuar_linha() -> void:
+	if modo == Modo.OBJETO:
+		_continuar_linha_objetos()
+		return
+	var achada: Variant = _celula_no_plano(linha_inicio.y, _linha_acao)
+	if achada != null:
+		linha_fim = achada
+
+
+func _cancelar_linha() -> void:
+	linha_ativa = false
+	for fantasma_linha in _fantasmas_linha:
+		fantasma_linha.queue_free()
+	_fantasmas_linha.clear()
+	pontos_linha_objetos.clear()
+	_atualizar_status()
+
+
+## Células da linha reta do começo ao fim (na camada do começo), sem buracos na diagonal.
+func celulas_da_linha() -> Array[Vector3i]:
+	var lista: Array[Vector3i] = []
+	var a := Vector2i(linha_inicio.x, linha_inicio.z)
+	var b := Vector2i(linha_fim.x, linha_fim.z)
+	var passos := maxi(absi(b.x - a.x), absi(b.y - a.y))
+	for i in passos + 1:
+		var t := float(i) / maxf(passos, 1)
+		var p := Vector2(a).lerp(Vector2(b), t).round()
+		var celula := Vector3i(int(p.x), linha_inicio.y, int(p.y))
+		if lista.is_empty() or lista[-1] != celula:
+			lista.append(celula)
+	return lista
+
+
+func _confirmar_linha() -> void:
+	_pincel = _linha_acao
+	_camada_pincel = linha_inicio.y
+	_retangulo = false
+	_mudancas_pincel.clear()
+	for celula in celulas_da_linha():
+		_aplicar_pincel(celula)
+	_terminar_pincel()
+	if Input.is_action_pressed("editor_mod_shift"):
+		linha_inicio = linha_fim
+	else:
+		linha_ativa = false
+	_atualizar_status()
+
+
+## Linha de objetos: primeiro clique marca o começo; fantasmas mostram as cópias (uma por metro,
+## ou mais espaçadas para objetos grandes) até o mouse; o segundo clique coloca todas.
+func _clique_linha_objetos() -> void:
+	if fantasma == null:
+		return
+	if not linha_ativa:
+		linha_ativa = true
+		_linha_objetos_inicio = ponto_alvo
+		_continuar_linha_objetos()
+		_atualizar_status()
+		return
+	_continuar_linha_objetos()
+	var colocados: Array[ObjetoFase] = []
+	for ponto in pontos_linha_objetos:
+		var objeto := fase.adicionar_objeto(entrada_objeto.cena, ponto, 0.0)
+		objeto.transform = Transform3D(fantasma.transform.basis, ponto + Vector3.UP * _altura_extra(fantasma))
+		objeto.visibilidade = fantasma.visibilidade
+		for propriedade in fantasma.propriedades_editaveis():
+			objeto.set(propriedade, fantasma.get(propriedade))
+		colocados.append(objeto)
+		fantasma.ao_colocar_no_editor(rng)
+		_cor_livre_no_fantasma()
+	if not colocados.is_empty():
+		undo.create_action("Linha de %d objeto(s)" % colocados.size())
+		for objeto in colocados:
+			undo.add_do_method(_readicionar.bind(objeto))
+			undo.add_undo_method(_retirar.bind(objeto))
+			undo.add_do_reference(objeto)
+		undo.commit_action(false)
+	var fim := ponto_alvo
+	_cancelar_linha()
+	if Input.is_action_pressed("editor_mod_shift"):
+		linha_ativa = true
+		_linha_objetos_inicio = fim
+
+
+func _continuar_linha_objetos() -> void:
+	var fim := ponto_alvo
+	var espaco := maxf(1.0, snappedf(_espacamento(), 1.0))
+	var plano := Vector3(fim.x - _linha_objetos_inicio.x, 0.0, fim.z - _linha_objetos_inicio.z)
+	var quantos := mini(int(plano.length() / espaco) + 1, 64)
+	pontos_linha_objetos.clear()
+	for i in quantos:
+		var p := _linha_objetos_inicio + plano.normalized() * espaco * i if plano.length() > 0.001 \
+			else _linha_objetos_inicio
+		p.y = _altura_do_chao(p, lerpf(_linha_objetos_inicio.y, fim.y, float(i) / maxf(quantos - 1, 1)))
+		pontos_linha_objetos.append(p)
+	# Fantasmas: um por ponto (reaproveitados).
+	while _fantasmas_linha.size() < pontos_linha_objetos.size():
+		var novo := entrada_objeto.cena.instantiate() as ObjetoFase
+		novo.process_mode = Node.PROCESS_MODE_DISABLED
+		add_child(novo)
+		novo.visibilidade = fantasma.visibilidade
+		for propriedade in fantasma.propriedades_editaveis():
+			novo.set(propriedade, fantasma.get(propriedade))
+		_fantasmas_linha.append(novo)
+	for i in _fantasmas_linha.size():
+		var ativo := i < pontos_linha_objetos.size()
+		_fantasmas_linha[i].visible = ativo
+		if ativo:
+			_fantasmas_linha[i].transform = Transform3D(fantasma.transform.basis,
+				pontos_linha_objetos[i] + Vector3.UP * _altura_extra(fantasma))
+
+
+## Altura do topo do terreno na coluna do ponto (procurando perto de `referencia`).
+func _altura_do_chao(ponto: Vector3, referencia: float) -> float:
+	var x := floori(ponto.x)
+	var z := floori(ponto.z)
+	for y in range(floori(referencia) + 3, floori(referencia) - 5, -1):
+		var item := terreno.get_cell_item(Vector3i(x, y, z))
+		if item != GridMap.INVALID_CELL_ITEM:
+			return y + TOPO_TILE.get(item, 1.0)
+	return referencia
+
+
+## O que a prévia translúcida mostra agora: [ação, células].
+func celulas_da_previa() -> Array:
+	if modo != Modo.TERRENO or _arrastando_camera:
+		return ["", []]
+	var lista: Array[Vector3i] = []
+	# A linha em andamento aparece mesmo com o mouse fora do mapa (até onde ela ia).
+	if linha_ativa:
+		for celula in celulas_da_linha():
+			for d in deslocamentos_do_pincel():
+				lista.append(celula + Vector3i(d.x, 0, d.y))
+		return [_linha_acao, lista]
+	if not alvo_valido:
+		return ["", []]
+	var acao := acao_do_cursor()
+	var retangulo: Variant = retangulo_em_andamento()
+	if retangulo != null:
+		var caixa: AABB = retangulo
+		for x in range(int(caixa.position.x), int(caixa.end.x)):
+			for z in range(int(caixa.position.z), int(caixa.end.z)):
+				lista.append(Vector3i(x, _camada_pincel, z))
+		return [_pincel, lista]
+	if _pincel == "" and ferramenta_efetiva() == Ferramenta.BALDE:
+		return ["", []]
+	var centro := celula_alvo if acao == "colocar" else celula_atingida
+	if acao != "colocar" and not atingiu_bloco:
+		return ["", []]
+	for d in deslocamentos_do_pincel():
+		lista.append(centro + Vector3i(d.x, 0, d.y))
+	return [acao, lista]
+
+
+## Prévia translúcida do que vai mudar: o tile escolhido (na cor dele) onde vai ser colocado ou
+## trocado; uma caixa vermelha onde vai ser apagado. Um MultiMesh só — barato mesmo com milhares.
+func _atualizar_previa_tiles() -> void:
+	var dados := celulas_da_previa()
+	var acao: String = dados[0]
+	var lista: Array = dados[1]
+	var chave := "%s|%d|%d|%s" % [acao, tile_atual, orientacao, str(lista.slice(0, 1)) + str(lista.size()) + str(lista.slice(-1))]
+	if lista.size() > PREVIA_MAXIMA:
+		lista = []
+	if chave == _chave_previa:
+		return
+	_chave_previa = chave
+	if _previa_tiles == null:
+		_previa_tiles = MultiMeshInstance3D.new()
+		_previa_tiles.name = "PreviaTiles"
+		_previa_tiles.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_previa_tiles)
+	if lista.is_empty():
+		_previa_tiles.visible = false
+		return
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	var material := StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var base := Basis.IDENTITY
+	if acao == "apagar":
+		var caixa := BoxMesh.new()
+		caixa.size = Vector3.ONE * 1.02
+		multi.mesh = caixa
+		material.albedo_color = Color(1.0, 0.3, 0.25, 0.35)
+	else:
+		multi.mesh = terreno.mesh_library.get_item_mesh(tile_atual)
+		var cor: Color = Tiles.definicao(tile_atual).get("cor", Color.WHITE)
+		material.albedo_color = Color(cor.r, cor.g, cor.b, 0.5)
+		base = Basis(Vector3.UP, orientacao * PI * 0.5)
+	_previa_tiles.material_override = material
+	multi.instance_count = lista.size()
+	for i in lista.size():
+		var celula: Vector3i = lista[i]
+		multi.set_instance_transform(i, Transform3D(base, terreno.to_global(terreno.map_to_local(celula))))
+	_previa_tiles.multimesh = multi
+	_previa_tiles.visible = true
+
+
+## Barra em cima da vista: as ferramentas do terreno (teclas 1 a 5) e o tamanho do pincel.
+func _montar_barra_ferramentas() -> void:
+	_barra_ferramentas = PanelContainer.new()
+	_barra_ferramentas.name = "BarraFerramentas"
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = Color(0.11, 0.12, 0.14, 0.9)
+	estilo.set_corner_radius_all(6)
+	estilo.content_margin_left = 6
+	estilo.content_margin_right = 6
+	estilo.content_margin_top = 4
+	estilo.content_margin_bottom = 4
+	_barra_ferramentas.add_theme_stylebox_override("panel", estilo)
+	var linha := HBoxContainer.new()
+	_barra_ferramentas.add_child(linha)
+	var grupo := ButtonGroup.new()
+	for i in NOMES_FERRAMENTA.size():
+		var botao := Button.new()
+		botao.icon = IconesDesenhados.textura(ICONES_FERRAMENTA[i])
+		botao.tooltip_text = "%s (%d)%s" % [NOMES_FERRAMENTA[i], i + 1,
+			["", "", " — ou Shift", " — ou Ctrl + arrastar", " — ou Alt + clique"][i]]
+		botao.toggle_mode = true
+		botao.button_group = grupo
+		botao.focus_mode = Control.FOCUS_NONE
+		botao.pressed.connect(_escolher_ferramenta.bind(i))
+		linha.add_child(botao)
+		_botoes_ferramenta.append(botao)
+	linha.add_child(VSeparator.new())
+	var menos := Button.new()
+	menos.text = " − "
+	menos.tooltip_text = "Pincel menor ([ ou Ctrl + roda)"
+	menos.focus_mode = Control.FOCUS_NONE
+	menos.pressed.connect(_mudar_tamanho_pincel.bind(-1))
+	linha.add_child(menos)
+	_rotulo_tamanho = Label.new()
+	_rotulo_tamanho.custom_minimum_size.x = 64
+	_rotulo_tamanho.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	linha.add_child(_rotulo_tamanho)
+	var mais := Button.new()
+	mais.text = " + "
+	mais.tooltip_text = "Pincel maior (] ou Ctrl + roda)"
+	mais.focus_mode = Control.FOCUS_NONE
+	mais.pressed.connect(_mudar_tamanho_pincel.bind(1))
+	linha.add_child(mais)
+	$UI.add_child(_barra_ferramentas)
+	get_viewport().size_changed.connect(_posicionar_barra_ferramentas)
+	_posicionar_barra_ferramentas.call_deferred()
+	_atualizar_barra_ferramentas()
+
+
+## A barra fica no meio da vista 3D, entre a paleta e o painel da direita, logo abaixo do topo.
+func _posicionar_barra_ferramentas() -> void:
+	if _barra_ferramentas == null:
+		return
+	var esquerda := ($UI/PainelPaleta as Control).get_global_rect().end.x
+	var direita := ($UI/PainelInspetor as Control).get_global_rect().position.x
+	var topo := ($UI/BarraTopo as Control).get_global_rect().end.y
+	_barra_ferramentas.reset_size()
+	var largura := _barra_ferramentas.size.x
+	_barra_ferramentas.position = Vector2(roundf((esquerda + direita - largura) * 0.5), topo + 6)
+
+
+func _atualizar_barra_ferramentas() -> void:
+	if _barra_ferramentas == null:
+		return
+	_barra_ferramentas.visible = modo == Modo.TERRENO
+	for i in _botoes_ferramenta.size():
+		_botoes_ferramenta[i].set_pressed_no_signal(i == ferramenta)
+	_rotulo_tamanho.text = "%d × %d" % [tamanho_pincel, tamanho_pincel]
 
 
 # --- Objetos -----------------------------------------------------------------------------
@@ -1412,6 +1978,7 @@ func _comecar_colagem(trecho: Trecho, modulo := "") -> void:
 	_giro_colagem = 0
 	_desnivel_colagem = 0
 	_preparar_colagem()
+	_atualizar_barra_ferramentas()
 	inspetor.mostrar_colagem({largura = trecho.largura, profundidade = trecho.profundidade,
 		blocos = trecho.celulas.size(), objetos = trecho.objetos.size(), modulo = Modulos.nome(modulo) if modulo else ""})
 	_marcar_botao_da_ferramenta()
@@ -1424,6 +1991,7 @@ func _colar_modulo(caminho: String) -> void:
 		_avisar("Não consegui abrir o módulo %s" % caminho.get_file())
 		return
 	_comecar_colagem(trecho, caminho)
+	_lembrar_recente("modulo:" + caminho)
 
 
 ## Gira o trecho e remonta a prévia: um GridMap com os blocos e fantasmas dos objetos.
@@ -1729,32 +2297,38 @@ func _on_versao_mudou() -> void:
 func _atualizar_status() -> void:
 	if not is_node_ready():
 		return
-	var ferramenta := "Selecionar"
+	var texto := "Cursor: clique seleciona; arrastar no vazio gira a vista (Shift: arrasta)"
 	match modo:
 		Modo.TERRENO:
-			ferramenta = "Terreno: %s (giro %d°)" % [Tiles.definicao(tile_atual).nome, orientacao * 90]
+			texto = "%s %d×%d: %s (giro %d°)" % [NOMES_FERRAMENTA[self.ferramenta], tamanho_pincel,
+				tamanho_pincel, Tiles.definicao(tile_atual).nome, orientacao * 90]
+			if linha_ativa:
+				texto += " — clique confirma a linha (Esc cancela)"
 		Modo.OBJETO:
-			ferramenta = "Objeto: %s" % entrada_objeto.get("nome", "")
+			texto = "Objeto: %s" % entrada_objeto.get("nome", "")
+			if linha_ativa:
+				texto += " — linha: clique confirma (Esc cancela)"
 		Modo.TRECHO:
 			if tem_trecho:
 				var cantos := cantos_do_trecho()
-				ferramenta = "Trecho %d × %d: Ctrl+C copiar, Ctrl+X recortar, Del apagar, direito desmarca" % [
+				texto = "Trecho %d × %d: Ctrl+C copiar, Ctrl+X recortar, Del apagar, direito desmarca" % [
 					cantos[1].x - cantos[0].x + 1, cantos[1].y - cantos[0].y + 1]
 			else:
-				ferramenta = "Trecho: arraste no mapa para marcar (Ctrl+V cola o que foi copiado)"
+				texto = "Trecho: arraste no mapa para marcar (Ctrl+V cola o que foi copiado)"
 		Modo.COLAR:
-			ferramenta = "Colar%s: clique cola, Q/E gira (%d°), PgUp/PgDn altura (%+d), Esc sai" % [
+			texto = "Colar%s: clique cola, Q/E gira (%d°), PgUp/PgDn altura (%+d), Esc sai" % [
 				" " + Modulos.nome(_modulo_colando) if not _modulo_colando.is_empty() else "",
 				_giro_colagem * 90, _desnivel_colagem]
 		Modo.LIGAR:
 			if ligar_origem:
-				ferramenta = "Ligar: %s (%s) → clique no que ligar (Shift: continuar; Esc: cancelar)" % [
+				texto = "Ligar: %s (%s) → clique no que ligar (Shift: continuar; Esc: cancelar)" % [
 					ligar_origem.nome_no_editor(), Canais.nome(ligar_origem.get(&"canal")).to_lower()]
 			else:
-				ferramenta = "Ligar: clique numa placa ou num portão (direito: soltar das ligações)"
+				texto = "Ligar: clique numa placa ou num portão (direito: soltar das ligações)"
 	var arquivo := caminho.get_file() if not caminho.is_empty() else "(não salva)"
-	status.text = "%s   |   Camada %d (PgUp/PgDn)   |   Visão: %s   |   %s%s   |   H: atalhos" % [
-		ferramenta, camada, NOMES_VISAO[visao], arquivo, "  •  modificada" if modificado else ""]
+	var sob := "   |   " + objeto_sob_mouse.nome_no_editor() if objeto_sob_mouse else ""
+	status.text = "%s%s   |   Camada %d   |   Visão: %s   |   %s%s   |   H: atalhos" % [
+		texto, sob, camada, NOMES_VISAO[visao], arquivo, "  •  modificada" if modificado else ""]
 
 
 func _avisar(texto: String, segundos := 2.5) -> void:

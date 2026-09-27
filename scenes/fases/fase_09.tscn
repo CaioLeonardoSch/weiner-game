@@ -51,9 +51,9 @@ visibilidade = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, -5.3)
 
 [node name="Placa" parent="Objetos" unique_id=1068605094 instance=ExtResource("8_iixbm")]
+tipo = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -5.5)
 canal = 2
-peso_minimo = 3.0
 
 [node name="BlocoEmpurravel" parent="Objetos" unique_id=17058926 instance=ExtResource("9_ptwv2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -3.5)
@@ -73,7 +73,7 @@ transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.939
 
 [node name="ZonaDica" parent="Objetos" unique_id=706032530 instance=ExtResource("13_54xte")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, -2)
-texto = "Os pontinhos da placa dizem quanto peso ela pede."
+texto = "Placa de pedra: só uma pedra ou um tronco segura ela. A de madeira aceita qualquer coisa."
 tamanho = Vector3(3, 1.5, 2)
 
 [node name="Pedra" parent="Objetos" unique_id=75106634 instance=ExtResource("14_mlgoo")]

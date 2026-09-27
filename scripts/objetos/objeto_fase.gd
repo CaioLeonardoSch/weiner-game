@@ -64,11 +64,53 @@ func peso_na_placa() -> float:
 	return 0.0
 
 
+## Pesado o bastante para a placa de PEDRA (o bloco de pedra, o tronco). A de madeira aceita
+## qualquer coisa com `peso_na_placa()` acima de zero.
+func pesado_para_placa() -> bool:
+	return false
+
+
 ## Mecanismos ligados por canal (a cor, ver Canais): "aciona" (placa...), "reage" (portão...)
 ## ou "" (não é mecanismo). Mecanismos têm a propriedade `canal`, que a ferramenta Ligar do
 ## editor troca.
 func papel_no_canal() -> String:
 	return ""
+
+
+## Ícone desenhado da paleta (ver IconesDesenhados), para objetos sem modelo para fotografar
+## (zonas, parede invisível, início); "" usa uma foto do próprio objeto.
+func icone_desenhado() -> String:
+	return ""
+
+
+## Está numa fase aberta no editor de fases do jogo (o editor marca a raiz da árvore)?
+func no_editor_de_fases() -> bool:
+	return is_inside_tree() and get_tree().root.has_meta(&"editor_de_fases")
+
+
+## Objetos invisíveis no jogo (paredes, zonas) ganham no editor um volume translúcido do
+## `tamanho` deles, para dar para ver onde estão sem atrapalhar. No jogo, nada aparece.
+func mostrar_volume_no_editor(tamanho: Vector3, cor: Color) -> void:
+	var volume := get_node_or_null(^"VolumeEditor") as MeshInstance3D
+	if not no_editor_de_fases():
+		if volume:
+			volume.queue_free()
+		return
+	if volume == null:
+		volume = MeshInstance3D.new()
+		volume.name = "VolumeEditor"
+		volume.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		var material := StandardMaterial3D.new()
+		material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		material.albedo_color = cor
+		volume.material_override = material
+		add_child(volume)
+	var caixa := BoxMesh.new()
+	caixa.size = tamanho
+	volume.mesh = caixa
+	volume.position = Vector3(0, tamanho.y * 0.5, 0)
 
 
 ## Só pode haver um na fase (o Início do cachorro): fica de fora dos trechos copiados.

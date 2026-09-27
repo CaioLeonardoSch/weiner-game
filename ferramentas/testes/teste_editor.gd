@@ -1,5 +1,6 @@
 extends RefCounted
-## Testes do editor modular (rota ferramentas/testes/rotas/editor.txt): trecho (copiar, colar,
+## Testes do editor modular (e do Editor de fases 2: pincel com tamanho, linha com prévia,
+## ferramentas, recentes, ícones e volumes das paredes invisíveis) (rota ferramentas/testes/rotas/editor.txt): trecho (copiar, colar,
 ## girar, apagar, desfazer), balde, módulos (salvar e carregar), bioma e regiões. Guarda o
 ## resultado em jogo.get_meta("editor_ok").
 
@@ -21,6 +22,7 @@ static func rodar(jogo: Node) -> String:
 	_modulos(editor, checar)
 	_bioma(editor, checar)
 	_regioes(checar)
+	_editor_2(editor, checar)
 	jogo.remove_child(editor)
 	editor.free()
 	jogo.set_meta(&"editor_ok", falhas.is_empty())
@@ -130,3 +132,73 @@ static func _regioes(checar: Callable) -> void:
 	var lista := Fases.listar()
 	checar.call("fases da floresta em ordem", Fases.fases_da_regiao(&"floresta").size() == lista.size()
 		and lista[0].get_file() == "fase_01.tscn")
+
+
+## Pincel 3×3, linha de blocos (clique, clique), linha de objetos, teclas das ferramentas,
+## recentes, ícones em todos os botões da paleta e o volume translúcido da parede invisível.
+static func _editor_2(editor, checar: Callable) -> void:
+	var terreno: GridMap = editor.terreno
+	var fase: Fase = editor.fase
+	editor._escolher_tile(Tiles.PEDRA)
+	editor.tamanho_pincel = 3
+	editor.celula_alvo = Vector3i(30, 0, 30)
+	editor._comecar_pincel("colocar", 0)
+	editor._terminar_pincel()
+	var pedras := 0
+	for dx in range(-1, 2):
+		for dz in range(-1, 2):
+			if terreno.get_cell_item(Vector3i(30 + dx, 0, 30 + dz)) == Tiles.PEDRA:
+				pedras += 1
+	checar.call("pincel 3×3 coloca 9 blocos", pedras == 9)
+	editor.undo.undo()
+	checar.call("desfazer o pincel 3×3", terreno.get_cell_item(Vector3i(31, 0, 31)) == GridMap.INVALID_CELL_ITEM)
+
+	editor.tamanho_pincel = 1
+	editor.atingiu_bloco = false
+	editor.celula_alvo = Vector3i(40, 0, 40)
+	editor._clique_linha("colocar")
+	checar.call("linha: o primeiro clique só marca o começo", editor.linha_ativa
+		and terreno.get_cell_item(Vector3i(40, 0, 40)) == GridMap.INVALID_CELL_ITEM)
+	editor.linha_fim = Vector3i(45, 0, 43)
+	checar.call("linha: a prévia mostra 6 blocos", editor.celulas_da_linha().size() == 6
+		and (editor.celulas_da_previa()[1] as Array).size() == 6)
+	editor._confirmar_linha()
+	var na_linha := 0
+	for celula: Vector3i in [Vector3i(40, 0, 40), Vector3i(45, 0, 43), Vector3i(43, 0, 42)]:
+		if terreno.get_cell_item(celula) == Tiles.PEDRA:
+			na_linha += 1
+	checar.call("linha: o segundo clique coloca", na_linha == 3 and not editor.linha_ativa)
+	editor.undo.undo()
+	checar.call("desfazer a linha (uma ação só)", terreno.get_cell_item(Vector3i(45, 0, 43)) == GridMap.INVALID_CELL_ITEM)
+
+	var entrada: Dictionary = editor._catalogo.filter(func(c): return c.caminho.ends_with("pedra.tscn"))[0]
+	editor._escolher_objeto(entrada)
+	var antes := fase.todos(Pedra).size()
+	editor.ponto_alvo = Vector3(50.5, 0, 50.5)
+	editor._clique_linha_objetos()
+	editor.ponto_alvo = Vector3(54.5, 0, 50.5)
+	editor._continuar_linha_objetos()
+	checar.call("linha de objetos: 5 fantasmas", editor.pontos_linha_objetos.size() == 5)
+	editor._clique_linha_objetos()
+	checar.call("linha de objetos: 5 pedras colocadas", fase.todos(Pedra).size() == antes + 5 and not editor.linha_ativa)
+	checar.call("recentes: a pedra no topo", (Fases.estado_editor.get("recentes", []) as Array)[0] == entrada.caminho
+		and not editor._secao_recentes.itens.is_empty())
+
+	var tecla := InputEventKey.new()
+	tecla.pressed = true
+	tecla.physical_keycode = KEY_4
+	editor._tecla_de_ferramenta(tecla)
+	checar.call("tecla 4: ferramenta Retângulo (e volta ao terreno)", editor.ferramenta == EditorFase.Ferramenta.RETANGULO
+		and editor.modo == EditorFase.Modo.TERRENO)
+	tecla.physical_keycode = KEY_BRACKETRIGHT
+	editor._tecla_de_ferramenta(tecla)
+	checar.call("] aumenta o pincel", editor.tamanho_pincel == 2)
+
+	var sem_icone: PackedStringArray = []
+	for botao in editor._botoes_paleta.get_buttons():
+		if botao.icon == null:
+			sem_icone.append(botao.text)
+	checar.call("todos os botões da paleta têm ícone (%s)" % ", ".join(sem_icone), sem_icone.is_empty())
+
+	var parede := fase.adicionar_objeto(load("res://scenes/objetos/parede_invisivel.tscn"), Vector3(60.5, 0, 60.5))
+	checar.call("parede invisível aparece translúcida no editor", parede.get_node_or_null("VolumeEditor") != null)

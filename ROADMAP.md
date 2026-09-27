@@ -8,7 +8,7 @@ cavar (5), empurrar e puxar (6), água rasa e correnteza (7), latir e passarinho
 melhorias principais do editor, o menu principal com pausa, o cachorro em voxel com raças e
 pelagens, o objetivo da fase como dado (graveto ou pastoreio) e as Fases 02 a 12. As etapas 3 a
 8 estão fechadas (as ideias que sobraram delas também: rampa lisa, degrau alto, buraco, graveto
-enterrado, cavar sob a cerca, tronco que rola e boia, graveto molhado, esquilo, dono dormindo,
+enterrado, cavar sob a cerca, tronco que rola e boia, esquilo, dono dormindo,
 cão vizinho e o som do latido — Fases 10, 11 e 12). Depois vieram o bioma de neve (tiles e
 texturas, céu, entorno, neve caindo), as regiões no menu, o frio e a fogueira montada com
 gravetos, o celeiro para o rebanho e o editor modular (trechos, copiar/colar entre fases, módulos,
@@ -27,7 +27,7 @@ nova entra — a Fase 01, por exemplo, depende de o cachorro *não* pular o barr
 Já é assim: `Fase.habilidades` (flags no painel da fase no editor), somadas às habilidades
 nativas da raça; o `jogo.gd` liga só essas.
 
-## Próxima etapa — Editor de fases 2
+## Editor de fases 2 ✅ (feito)
 
 Pedido depois de testar o editor: construir mais rápido e ver melhor o que está sendo feito. Antes,
 uma olhada em como outros jogos com construção em grade resolvem isso:
@@ -48,30 +48,31 @@ uma olhada em como outros jogos com construção em grade resolvem isso:
 
 O plano:
 
-1. **Tamanho do pincel**: Ctrl + roda do mouse (ou [ e ]) aumenta e diminui a área — 1×1, 2×2, 3×3...
+1. ✅ **Tamanho do pincel**: Ctrl + roda do mouse (ou [ e ]) aumenta e diminui a área — 1×1, 2×2, 3×3...
    — para colocar, apagar e trocar vários blocos de uma vez (um chão de grama inteiro).
-2. **Linha com prévia**: Shift + clique marca o começo; a prévia mostra os blocos (ou objetos) em
+2. ✅ **Linha com prévia**: Shift + clique marca o começo; a prévia mostra os blocos (ou objetos) em
    linha reta até o mouse; outro clique confirma. Substitui o "Shift + arrastar espalha" dos
    objetos (o pincel de floresta passa para Ctrl + arrastar).
-3. **Barra de ferramentas do terreno**: Pincel, Trocar, Linha, Retângulo e Balde (teclas 1 a 5),
+3. ✅ **Barra de ferramentas do terreno**: Pincel, Trocar, Linha, Retângulo e Balde (teclas 1 a 5),
    com os atalhos de sempre (Shift linha, Ctrl retângulo, Alt balde).
-4. **Cursor**: uma ferramenta com ícone de seta que não coloca nada — clique seleciona, arrastar um
+4. ✅ **Cursor**: uma ferramenta com ícone de seta que não coloca nada — clique seleciona, arrastar um
    objeto move, arrastar no vazio gira a vista (com Shift, arrasta). Em qualquer ferramenta,
    **Espaço + botão esquerdo** gira a vista.
-5. **Prévia translúcida** do que vai ser colocado (pincel, linha, retângulo), na cor do tile.
-6. **Menos texto na tela**: nada de rótulos em cima dos objetos; o nome do que está sob o mouse vai
+5. ✅ **Prévia translúcida** do que vai ser colocado (pincel, linha, retângulo), na cor do tile.
+6. ✅ **Menos texto na tela**: nada de rótulos em cima dos objetos; o nome do que está sob o mouse vai
    para a barra de status.
-7. **Paredes invisíveis e zonas** com um efeito leve (translúcido) só no editor.
-8. **Ícones para tudo** na paleta: ferramentas, início do cachorro, zonas, paredes, módulos.
-9. **Recentes** no topo da paleta (os últimos itens usados) e categorias que se recolhem.
-10. **Testar daqui (F2)**: joga a fase com o cachorro começando onde está o cursor.
+7. ✅ **Paredes invisíveis e zonas** com um efeito leve (translúcido) só no editor.
+8. ✅ **Ícones para tudo** na paleta: ferramentas, início do cachorro, zonas, paredes, módulos.
+9. ✅ **Recentes** no topo da paleta (os últimos itens usados) e categorias que se recolhem.
+10. ✅ **Testar daqui (F2)**: joga a fase com o cachorro começando onde está o cursor.
 
 Junto, duas mudanças de mecânica pedidas:
 
-- **Placas de madeira e de pedra** (no lugar do peso mínimo com pontinhos): a de madeira é acionada
+- ✅ **Placas de madeira e de pedra** (no lugar do peso mínimo com pontinhos): a de madeira é acionada
   por qualquer coisa em cima (o cachorro, um graveto, uma ovelha, um bloco...); a de pedra só por
   algo pesado — o bloco de pedra e o tronco. A cor da moldura continua dizendo o que ela aciona.
-- **Sem graveto molhado**: a água não muda mais o peso do graveto.
+- ✅ **Sem graveto molhado**: a água não muda mais o peso do graveto. (A Fase 11 ficou com uma placa
+  de madeira; a 06 e a 09, com placas de pedra.)
 
 ## Versão de teste: Floresta e Neve
 
@@ -155,7 +156,7 @@ com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso.
 - ✅ **Nivelamentos**: *Escada baixa/alta* (colide como rampa, parece degraus) e *Canto de
   rampa* externo e interno, baixo e alto. A Fase 04 tem um monte fechado com cantos e uma escada.
 - ✅ **Rampa lisa** (baixa e alta): com graveto pesado (1,5+) o cachorro escorrega e não sobe —
-  caminho de mão única para quem carrega peso (e um graveto molhado pesa mais!).
+  caminho de mão única para quem carrega peso.
 - ✅ **Degrau alto** (0,72 m): só pulando, e com graveto na boca o pulo não chega. Fase 10.
 - ✅ **Túneis**: montados no editor — tampas "só isométrico"/"só 3D" (caminhos que abrem ou fecham
   na volta) e túneis de uma célula, onde graveto comprido só passa ao comprido. Tocas de texugo
@@ -197,9 +198,7 @@ sozinho para onde começou.
 - ✅ **Água** funda (sem colisão, "Splash!"), **Água rasa** (atravessável, mais lenta) e
   **Correnteza** (água rasa que arrasta no sentido +X do tile; graveto pesado deixa o cachorro
   mais firme). O shader da água mostra o fluxo. Fase 04 ("A Correnteza").
-- ✅ **Graveto molhado**: na boca, na água rasa, encharca e pesa +0,5 por 8 s (pinga) — mais lento,
-  pulo mais baixo, mais firme na correnteza, escorrega na rampa lisa e pesa mais numa placa.
-  Fase 11 usa isso numa placa.
+- ~~Graveto molhado~~: existiu e foi retirado (a água não muda o peso do graveto).
 - ✅ **Objetos que boiam e descem a correnteza**: o tronco desce o rio célula por célula, com o
   cachorro em cima, até encalhar; parando sobre água funda, encaixa e vira ponte. Fase 11
   ("O Tronco no Rio"). Folhas boiando ficam como enfeite para depois.

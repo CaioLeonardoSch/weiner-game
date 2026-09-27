@@ -20,21 +20,25 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
 | Tecla | Jogo | Editor de fases |
 |---|---|---|
 | WASD / setas | andar | mover a câmera |
-| Mouse | câmera 3D | clique esq. coloca, dir. apaga, meio gira |
+| Mouse | câmera 3D | clique esq. coloca, dir. apaga, meio gira; Cursor: arrastar no vazio gira |
 | E | largar o graveto | girar (com Q) |
 | Q | virar o graveto (atravessado ↔ ao comprido) | girar (com E) |
-| Espaço | pular (se a fase liberar) | — |
+| Espaço | pular (se a fase liberar) | segurando + botão esquerdo: girar a vista |
 | C | cavar terra fofa (se a fase liberar) | — |
 | B | latir (se a fase liberar) | — |
 | F | ação do que está à frente (morder o mirante, pegar a ponte de graveto...) | — |
 | F (segurando) + trás | puxar o bloco de pedra (sem graveto): segurando F perto do bloco, o cachorro vira de frente e agarra | — |
-| Ctrl + arrastar | — | preencher um retângulo de tiles |
-| Shift + arrastar | — | espalhar o objeto escolhido (pincel de floresta) |
+| 1 a 5 | — | ferramentas do terreno: Pincel, Trocar, Linha, Retângulo, Balde |
+| Ctrl + roda, [ e ] | — | tamanho do pincel (1×1, 2×2, 3×3...) |
+| Shift + clique, clique | — | linha com prévia (tiles ou objetos): o 2º clique confirma |
+| Ctrl + arrastar | — | retângulo de tiles; com um objeto, espalhar cópias (pincel de floresta) |
+| Alt + clique | — | balde |
 | G | — | conta-gotas (pega o tile/objeto sob o cursor) |
 | Shift | andar devagar (equilíbrio) | modificador (trocar tile, girar 15°) |
 | R | reiniciar | subir camada (com F: descer) |
-| Esc | pausa (solta o mouse; ao continuar, prende de novo); no mirante, sai dele | ferramenta Selecionar / desmarcar |
+| Esc | pausa (solta o mouse; ao continuar, prende de novo); no mirante, sai dele | Cursor / cancelar linha / desmarcar |
 | **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
+| F2 | — | testar daqui (o cachorro começa no cursor) |
 | F3 | liga/desliga o pixelado | idem |
 | H | — | lista de atalhos do editor |
 
@@ -156,16 +160,16 @@ cercado fica no lado oeste; dentro dele a ovelha se acalma e não sai mais.
 
 ## Fase 06 — "O Portão"
 
-Uma cerca viva atravessa a trilha com um **portão amarelo**. A **placa de pressão amarela** abre
-o portão — mas só enquanto tiver peso em cima: o cachorro sozinho abre, mas o portão fecha quando
-ele sai. A saída é **empurrar o bloco de pedra** para a placa.
+Uma cerca viva atravessa a trilha com um **portão amarelo**. A **placa de pressão amarela** é de
+**pedra**: só algo pesado segura o portão aberto — o cachorro sozinho não. A saída é **empurrar o
+bloco de pedra** para a placa.
 
 ## Fase 07 — "A Chave e o Prêmio"
 
 O **graveto lendário** (dourado) está sobre uma placa azul, segurando o portão azul aberto. Pegou,
 o portão fecha — com o cachorro do lado de dentro. Qualquer placa da mesma cor segura o portão:
-antes, é preciso levar um **graveto comum** (pesado como o lendário) para a outra placa azul,
-lá fora. O cachorro sozinho (peso 1) não basta.
+antes, é preciso levar um **graveto comum** para a outra placa azul (de madeira: qualquer coisa
+aciona), lá fora — o cachorro não pode ficar em cima dela e passar pelo portão ao mesmo tempo.
 
 ## Fase 08 — "A Ponte de Graveto"
 
@@ -177,9 +181,8 @@ e voltar pela ponte de graveto.
 
 ## Fase 09 — "O Passeio Completo"
 
-Junta tudo: mirante, ponte só da ida, uma **placa vermelha que pede peso 3** (os pontinhos no
-tampo dizem quanto — só o bloco de pedra basta) segurando o portão vermelho, e o graveto
-comprido que vira a ponte da volta.
+Junta tudo: mirante, ponte só da ida, uma **placa vermelha de pedra** (só o bloco de pedra aciona)
+segurando o portão vermelho, e o graveto comprido que vira a ponte da volta.
 
 ## Fase 10 — "Debaixo da Cerca"
 
@@ -191,9 +194,8 @@ está enterrado, é só cavar. Ele é comprido: na volta, pelo vão da cerca, s�
 ## Fase 11 — "O Tronco no Rio"
 
 Não há ponte: o jeito é empurrar o **tronco** de lado para dentro da correnteza. Ele desce o rio
-(dá para ir em cima) e encaixa no poço fundo, virando ponte. Do outro lado, a **placa verde pede
-3**: o salsicha com o graveto comum pesa 2,5 — mas **graveto molhado pesa mais**. Uma passada na
-lagoinha rasa, e o portão verde abre (e trava aberto).
+(dá para ir em cima) e encaixa no poço fundo, virando ponte. Do outro lado, a **placa verde** (de
+madeira) abre o portão verde — e ele trava aberto.
 
 ## Fase 12 — "O Vizinho"
 
@@ -209,12 +211,13 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
   **comuns** (marrons) também trocam a perspectiva ao serem pegos, mas servem de ferramenta
   (peso numa placa, algo para trocar). Com um graveto na boca não dá para pegar outro — largue
   antes.
-- **Canais são cores:** uma **placa de pressão** aciona tudo da mesma cor enquanto o peso em
-  cima chega ao mínimo dela; um **portão** da mesma cor abre (ou fecha, com *inverter*). Várias
-  placas da mesma cor: basta uma acionada. O portão nunca fecha em cima de alguém.
-- **Pesos:** salsicha 1 (border collie 1,5; pug 1,8), cachorro com graveto = raça + graveto,
-  graveto largado = o peso dele, bloco de pedra 3, ovelha 1,5, passarinho 0,3.
-- **Pontinhos na placa:** cada pontinho no tampo é uma unidade de peso que ela pede.
+- **Canais são cores:** uma **placa de pressão** aciona tudo da mesma cor enquanto tiver algo em
+  cima; um **portão** da mesma cor abre (ou fecha, com *inverter*). Várias placas da mesma cor:
+  basta uma acionada. O portão nunca fecha em cima de alguém.
+- **Madeira ou pedra** (como no Minecraft): a placa de **madeira** (tábuas) é acionada por
+  qualquer coisa — o cachorro, um graveto largado, uma ovelha, um passarinho, o bloco, o tronco;
+  a de **pedra** (laje cinza) só por algo pesado — o **bloco de pedra** e o **tronco**. Pisando
+  numa de pedra, o jogo avisa que ela precisa de algo pesado.
 - **Graveto-ponte:** um graveto de 1,6 m ou mais, largado **ao comprido** sobre um vão de uma
   célula (riacho, buraco) com chão dos dois lados, encaixa na grade e vira uma pinguela (com o
   equilíbrio da Tábua). Para pegar de volta, chegue por uma das pontas e aperte F.
@@ -309,7 +312,6 @@ o rabo, balançar as orelhas).
 - **Peso**: deixa o cachorro mais lento e o pulo mais baixo, mas mais firme na correnteza
   (o arrasto é dividido pelo peso). Com qualquer graveto na boca o pulo já é um pouco mais baixo
   (não passa do *Degrau alto*), e graveto pesado (1,5+) escorrega na *Rampa lisa*.
-- **Molhado**: na água rasa, na boca, o graveto encharca e pesa +0,5 por 8 s (pinga).
 - **Empurra**: o graveto na boca empurra blocos e troncos; ao comprido, de longe.
 - **Equilíbrio**: em passagens estreitas (tile *Tábua*), carga = peso × comprimento acima de 1,2
   faz o cachorro balançar; o balanço cresce com o quadrado da velocidade e é menor ao comprido.
@@ -340,8 +342,8 @@ Fase (scripts/fase.gd: nome, giro da câmera 3D)
 ```
 
 **Pelo editor do jogo (F1)** — o jeito principal. Escolha um tile ou objeto na paleta à esquerda
-e clique; a ferramenta Selecionar (Esc) seleciona e arrasta objetos e mostra as propriedades à
-direita. A visão (V) alterna entre ver tudo, **isométrica** (o que o jogador vê na ida) e **3D**
+e clique; o **Cursor** (Esc) não coloca nada: seleciona e arrasta objetos, mostra as
+propriedades à direita e, arrastando no vazio, gira a vista (com Shift, arrasta). A visão (V) alterna entre ver tudo, **isométrica** (o que o jogador vê na ida) e **3D**
 (a volta). **Salvar** (Ctrl+S) grava por cima do arquivo da fase. Para criar uma fase nova:
 **Nova** (parte de um modelo) ou abra uma fase existente, mude o nome e use **Salvar como** — o
 arquivo novo leva o nome da fase (`Fase 02 — A ponte` → `scenes/fases/fase_02_a_ponte.tscn`).
@@ -352,11 +354,30 @@ Num jogo exportado as fases salvas vão para `user://fases/`.
 **Pelo editor do Godot** — também funciona: pinte o GridMap `Terreno` com a biblioteca de tiles e
 arraste cenas de `scenes/objetos/` para dentro de `Objetos`.
 
-Atalhos de construção: **Ctrl + arrastar** preenche um retângulo com o tile escolhido (um só
-desfazer); **Shift + arrastar** com um objeto escolhido espalha cópias com espaçamento e
-variações sorteadas — o "pincel de floresta"; **G** é o conta-gotas. Ao **Testar** o editor valida
-a fase (falta início, dono ou graveto; início sem chão...) e pede confirmação se houver problema
-grave; ao salvar, mostra os avisos.
+Construindo rápido (ideias tiradas de Mario Maker, do Minecraft criativo e do Axiom — ver o
+ROADMAP):
+
+- **Ferramentas do terreno** na barra em cima da vista (teclas 1 a 5): **Pincel**, **Trocar**,
+  **Linha**, **Retângulo** e **Balde**. Os atalhos valem com qualquer uma: Shift = linha, Ctrl =
+  retângulo, Alt = balde.
+- **Tamanho do pincel**: Ctrl + roda do mouse (ou [ e ]) — 1×1 até 9×9; colocar, apagar e trocar
+  usam o pincel inteiro (um chão de grama num instante).
+- **Linha com prévia**: Shift + clique marca o começo, a prévia vai até o mouse e outro clique
+  confirma (segurando Shift, a próxima linha começa dali). Vale para tiles e para objetos (uma
+  fila de árvores, pedras, cercas). Esc cancela.
+- **Prévia translúcida** na cor do tile mostra o que vai ser colocado; em vermelho, o que vai ser
+  apagado.
+- **Ctrl + arrastar** com um objeto espalha cópias sorteadas (o "pincel de floresta").
+- **Espaço + botão esquerdo** gira a vista em qualquer ferramenta.
+- **Paleta**: busca no topo, seções que recolhem (clique no título) e **Recentes** com os últimos
+  itens usados. Tudo tem ícone.
+- **Sem texto por cima dos objetos**: o nome do que está sob o mouse aparece na barra de status.
+  Paredes invisíveis e zonas aparecem translúcidas (só no editor).
+- **G** é o conta-gotas. **F2 testa daqui**: o cachorro começa onde está o cursor.
+
+Ao **Testar** o editor valida a fase (falta início, dono ou graveto; início sem chão...) e pede
+confirmação se houver problema grave; ao salvar, mostra os avisos (placa de pedra sem nada pesado
+na fase, frio sem fogueira...).
 
 Nas propriedades da fase (nada selecionado) ficam a **região**, o **bioma**, o **objetivo**, a
 **raça** do cachorro, as **habilidades** que a fase libera (pular, cavar, latir; a raça pode

@@ -13,6 +13,10 @@ func categoria_no_editor() -> String:
 	return "Regras"
 
 
+func icone_desenhado() -> String:
+	return "inicio"
+
+
 func unico_na_fase() -> bool:
 	return true
 

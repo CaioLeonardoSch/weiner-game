@@ -9,6 +9,7 @@ static func rodar(jogo: Node) -> String:
 		if not cond:
 			falhas.append(nome)
 	_regras(jogo, checar)
+	_placas(jogo, checar)
 	_ferramenta_ligar(jogo, checar)
 	jogo.set_meta(&"mecanismos_ok", falhas.is_empty())
 	return "mecanismos: %s" % ("tudo certo" if falhas.is_empty() else ", ".join(falhas))
@@ -35,6 +36,23 @@ static func _regras(jogo: Node, checar: Callable) -> void:
 	checar.call("as duas: E aberto", e._quer_abrir and e.aberto)
 	p1._mudar(false)
 	checar.call("sai de uma: E quer fechar, OU segue aberto", not e._quer_abrir and ou._quer_abrir)
+	jogo.remove_child(fase)
+	fase.free()
+
+
+## Placa de madeira: qualquer coisa aciona (um graveto largado). Placa de pedra: só o bloco.
+static func _placas(jogo: Node, checar: Callable) -> void:
+	var fase = Fase.nova("teste")
+	jogo.add_child(fase)
+	var madeira = fase.adicionar_objeto(load("res://scenes/objetos/placa.tscn"), Vector3(20.5, 0, 20.5), 0)
+	var pedra = fase.adicionar_objeto(load("res://scenes/objetos/placa.tscn"), Vector3(23.5, 0, 20.5), 0)
+	pedra.tipo = Placa.PEDRA
+	checar.call("placas vazias não acionam", not madeira.acionada_por_algo() and not pedra.acionada_por_algo())
+	var graveto = fase.adicionar_objeto(load("res://scenes/objetos/graveto_comum.tscn"), Vector3(20.5, 0.08, 20.5), 0)
+	var outro = fase.adicionar_objeto(load("res://scenes/objetos/graveto_comum.tscn"), Vector3(23.5, 0.08, 20.5), 0)
+	checar.call("graveto aciona a de madeira, não a de pedra", madeira.acionada_por_algo() and not pedra.acionada_por_algo())
+	var bloco = fase.adicionar_objeto(load("res://scenes/objetos/bloco_empurravel.tscn"), Vector3(23.5, 0, 20.5), 0)
+	checar.call("bloco aciona a de pedra", pedra.acionada_por_algo())
 	jogo.remove_child(fase)
 	fase.free()
 

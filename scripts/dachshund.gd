@@ -131,14 +131,6 @@ func aplicar_raca(nova_raca: Raca, indice_pelagem: int) -> void:
 	colisao.position.y = forma.height * 0.5
 
 
-## Peso sobre uma placa de pressão: o da raça mais o do graveto na boca.
-func peso_total() -> float:
-	var peso := raca.peso if raca else 1.0
-	if tem_graveto and graveto:
-		peso += graveto.peso_atual()
-	return peso
-
-
 ## Coloca o cachorro numa posição, olhando para `yaw` (radianos; 0 = +X).
 func posicionar(posicao: Vector3, yaw: float) -> void:
 	global_position = posicao
@@ -204,7 +196,7 @@ func _physics_process(delta: float) -> void:
 ## mais baixo ainda.
 func altura_pulo_atual() -> float:
 	if tem_graveto and graveto:
-		return altura_pulo * 0.88 / (1.0 + maxf(graveto.peso_atual() - 1.0, 0.0) * 0.35)
+		return altura_pulo * 0.88 / (1.0 + maxf(graveto.peso - 1.0, 0.0) * 0.35)
 	return altura_pulo
 
 
@@ -616,7 +608,7 @@ func _empurrao_do_balanco(delta: float, horizontal: Vector3) -> Vector3:
 		modelo.rotation.x = balanco * 0.4
 		return Vector3.ZERO
 
-	var carga := graveto.peso_atual() * graveto.comprimento if tem_graveto and graveto else 0.0
+	var carga := graveto.peso * graveto.comprimento if tem_graveto and graveto else 0.0
 	var excesso := maxf(carga - carga_sem_balanco, 0.0)
 	if excesso <= 0.0 or not is_on_floor():
 		balanco = move_toward(balanco, 0.0, delta * 2.0)
@@ -676,7 +668,7 @@ func _escalar_do_buraco(horizontal: Vector3) -> void:
 ## Rampa lisa: com graveto pesado (1,5 ou mais) na boca o cachorro não firma as patas — não
 ## sobe e ainda escorrega para baixo.
 func _rampa_lisa(horizontal: Vector3) -> Vector3:
-	if fase == null or not is_on_floor() or not (tem_graveto and graveto and graveto.peso_atual() >= 1.5):
+	if fase == null or not is_on_floor() or not (tem_graveto and graveto and graveto.peso >= 1.5):
 		return horizontal
 	if not Tiles.eh_escorregadia(fase.tile_em(global_position + Vector3.DOWN * 0.1)):
 		return horizontal
@@ -708,16 +700,13 @@ func _efeito_do_piso() -> Vector3:
 	_na_agua_rasa = definicao.get("rasa", false)
 	if not _na_agua_rasa:
 		return Vector3.ZERO
-	# O graveto na boca encharca na água rasa (pesa mais por um tempo).
-	if tem_graveto and graveto:
-		graveto.molhar()
 	var forca: float = definicao.get("correnteza", 0.0)
 	if forca <= 0.0:
 		return Vector3.ZERO
 	em_correnteza = true
 	var sentido := terreno.global_basis * terreno.get_cell_item_basis(celula).x
 	sentido.y = 0.0
-	var firmeza := maxf(graveto.peso_atual(), 1.0) if tem_graveto and graveto else 1.0
+	var firmeza := maxf(graveto.peso, 1.0) if tem_graveto and graveto else 1.0
 	return sentido.normalized() * forca / firmeza
 
 

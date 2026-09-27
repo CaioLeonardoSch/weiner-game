@@ -55,7 +55,6 @@ travar_aberto = true
 [node name="Placa" parent="Objetos" unique_id=1849503347 instance=ExtResource("9_s6ba4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, -5.5)
 canal = 3
-peso_minimo = 3.0
 
 [node name="GravetoComum" parent="Objetos" unique_id=1137136439 instance=ExtResource("10_6pb80")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 9.5, 0.08, -4.5)
@@ -67,7 +66,7 @@ transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.939
 
 [node name="ZonaDica2" parent="Objetos" unique_id=1169501622 instance=ExtResource("7_3g6w0")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 0, -4.5)
-texto = "A placa pede 3. Você com esse graveto pesa 2,5... graveto molhado pesa mais!"
+texto = "A placa verde é de madeira: qualquer coisa aciona — e o portão fica aberto de vez."
 tamanho = Vector3(3, 1.5, 2.2)
 
 [node name="Flores" parent="Objetos" unique_id=1182745977 instance=ExtResource("12_mvpoj")]

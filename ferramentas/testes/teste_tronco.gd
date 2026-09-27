@@ -1,6 +1,6 @@
 extends RefCounted
 ## Ajudantes da rota ferramentas/testes/rotas/tronco.txt (Etapas 6 e 7: tronco que rola e boia,
-## empurrar com o graveto ao comprido, graveto molhado, tronco caído como pinguela).
+## empurrar com o graveto ao comprido, tronco caído como pinguela).
 
 
 static func _colocar(jogo: Node, nome: String, posicao: Vector3, yaw := 0.0) -> ObjetoFase:
