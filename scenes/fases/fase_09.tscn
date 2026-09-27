@@ -19,6 +19,7 @@
 
 [node name="Fase09" type="Node3D" unique_id=202551966]
 script = ExtResource("1_oxkwo")
+id = "fase_09"
 nome = "Fase 09 — O Passeio Completo"
 
 [node name="Terreno" type="GridMap" parent="." unique_id=2120649568]

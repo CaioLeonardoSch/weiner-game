@@ -9,7 +9,18 @@ const PASTA_USUARIO := "user://fases/"
 const CENA_JOGO := "res://scenes/jogo.tscn"
 const CENA_EDITOR := "res://scenes/editor/editor_fase.tscn"
 const CENA_MENU := "res://scenes/menu.tscn"
+## O save do jogador. A pasta user:// é fixa (application/config/custom_user_dir_name =
+## "WeinerGame" no project.godot; no Windows, %APPDATA%\\WeinerGame): NÃO MUDE, senão o jogo
+## novo não acha o progresso de quem já jogava. O teste "save" confere isso.
 const ARQUIVO_PROGRESSO := "user://progresso.cfg"
+## Formato do progresso.cfg. Mudou o formato? Aumente o número e escreva a conversão em
+## `migrar()`, e acrescente um save de exemplo da versão antiga em ferramentas/testes/saves/.
+##   1 — sem chave de versão; fases concluídas pelo nome do arquivo ("fase_01.tscn").
+##   2 — [save] versao; fases concluídas pelo id da fase (Fase.id, ex.: "fase_01").
+const VERSAO_PROGRESSO := 2
+## Fases cujo id mudou: id antigo → id novo (o ✓ passa para o novo). Renomear ou mover o
+## arquivo NÃO muda o id; só anote aqui se o próprio id for trocado.
+const IDS_RENOMEADOS := {}
 
 ## Arquivo da fase em uso ("" = fase nova, ainda não salva).
 var caminho_atual := ""
@@ -24,6 +35,8 @@ var estado_editor := {}
 var progresso := ConfigFile.new()
 ## Progresso só na memória, sem ler nem gravar o save do jogador (testes automáticos).
 var _so_memoria := false
+## caminho da fase → id (ver id_da_fase).
+var _ids := {}
 
 
 func _ready() -> void:
@@ -32,8 +45,8 @@ func _ready() -> void:
 		if argumento.begins_with("--fumaca="):
 			fumaca = argumento.get_slice("=", 1)
 			usar_progresso_em_memoria()
-	if not _so_memoria:
-		progresso.load(ARQUIVO_PROGRESSO)
+	if not _so_memoria and progresso.load(ARQUIVO_PROGRESSO) == OK and migrar(progresso):
+		salvar_progresso()
 	var lista := listar()
 	if not lista.is_empty():
 		caminho_atual = lista[0]
@@ -109,26 +122,72 @@ func testar(cena: PackedScene, modificado: bool) -> void:
 
 ## Nome da fase (propriedade `nome` da raiz), lido sem instanciar a cena.
 func nome_da_fase(caminho: String) -> String:
+	var nome := str(propriedade_da_fase(caminho, &"nome", ""))
+	return nome if not nome.is_empty() else caminho.get_file().get_basename()
+
+
+## Id da fase (Fase.id; se vazio, o nome do arquivo sem extensão). É o que vai para o save.
+func id_da_fase(caminho: String) -> String:
+	if caminho.is_empty():
+		return ""
+	if not _ids.has(caminho):
+		var id := str(propriedade_da_fase(caminho, &"id", ""))
+		_ids[caminho] = id if not id.is_empty() else caminho.get_file().get_basename()
+	return _ids[caminho]
+
+
+## O editor gravou este arquivo: o id pode ter mudado.
+func esquecer_id(caminho: String) -> void:
+	_ids.erase(caminho)
+
+
+## Uma propriedade da raiz da cena da fase, lida sem instanciar (ou `padrao`).
+func propriedade_da_fase(caminho: String, propriedade: StringName, padrao: Variant) -> Variant:
 	var cena := ResourceLoader.load(caminho, "PackedScene") as PackedScene
 	if cena:
 		var estado := cena.get_state()
 		for i in estado.get_node_property_count(0):
-			if estado.get_node_property_name(0, i) == &"nome":
-				return str(estado.get_node_property_value(0, i))
-	return caminho.get_file().get_basename()
+			if estado.get_node_property_name(0, i) == propriedade:
+				return estado.get_node_property_value(0, i)
+	return padrao
 
 
 func concluida(caminho: String) -> bool:
-	return caminho.get_file() in progresso.get_value("fases", "concluidas", PackedStringArray())
+	return id_da_fase(caminho) in progresso.get_value("fases", "concluidas", PackedStringArray())
 
 
 func marcar_concluida(caminho: String) -> void:
 	if caminho.is_empty() or concluida(caminho):
 		return
 	var lista: PackedStringArray = progresso.get_value("fases", "concluidas", PackedStringArray())
-	lista.append(caminho.get_file())
+	lista.append(id_da_fase(caminho))
 	progresso.set_value("fases", "concluidas", lista)
 	salvar_progresso()
+
+
+## Converte um progresso de versão antiga para o formato atual (VERSAO_PROGRESSO) e aplica os
+## ids renomeados. Devolve true se mudou algo (aí quem chamou salva). Um save de uma versão
+## MAIS NOVA do jogo fica como está: nada é apagado, as chaves desconhecidas continuam lá.
+static func migrar(cfg: ConfigFile, renomeados: Dictionary = IDS_RENOMEADOS) -> bool:
+	var versao := int(cfg.get_value("save", "versao", 1))
+	if versao > VERSAO_PROGRESSO:
+		push_warning("progresso.cfg da versão %d (este jogo conhece até a %d)" % [versao, VERSAO_PROGRESSO])
+		return false
+	var antes := cfg.encode_to_text()
+	var concluidas := PackedStringArray(cfg.get_value("fases", "concluidas", PackedStringArray()))
+	if versao < 2:
+		# 1 → 2: nome do arquivo → id (o id das fases de antes é o nome do arquivo).
+		for i in concluidas.size():
+			concluidas[i] = concluidas[i].get_file().get_basename()
+	var atuais := PackedStringArray()
+	for id in concluidas:
+		var novo: String = renomeados.get(id, id)
+		if novo not in atuais:
+			atuais.append(novo)
+	if cfg.has_section_key("fases", "concluidas") or not atuais.is_empty():
+		cfg.set_value("fases", "concluidas", atuais)
+	cfg.set_value("save", "versao", VERSAO_PROGRESSO)
+	return cfg.encode_to_text() != antes
 
 
 func salvar_progresso() -> void:

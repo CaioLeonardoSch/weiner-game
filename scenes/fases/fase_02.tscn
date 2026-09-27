@@ -16,6 +16,7 @@
 
 [node name="Fase02" type="Node3D" unique_id=1261231836]
 script = ExtResource("1_xe0hr")
+id = "fase_02"
 nome = "Fase 02 — A Pinguela"
 habilidades = 1
 
