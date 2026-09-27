@@ -28,6 +28,10 @@ const CANTO_RAMPA_BAIXA := 15
 const CANTO_RAMPA_ALTA := 16
 const CANTO_INTERNO_BAIXA := 17
 const CANTO_INTERNO_ALTA := 18
+const BURACO := 19
+const RAMPA_LISA_BAIXA := 20
+const RAMPA_LISA_ALTA := 21
+const DEGRAU_ALTO := 22
 
 ## Altura (no espaço do tile, de -0.5 a 0.5) da superfície da água.
 const SUPERFICIE_AGUA := 0.35
@@ -51,6 +55,9 @@ const _ESCADA_ALTA := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.3
 	Vector2(0.0, 0.125), Vector2(-0.5, 0.125)]
 # Tábua estreita rente ao chão da célula (o topo fica na altura do chão vizinho), para
 # atravessar água ou buracos. Largura em Z: 0,36 m.
+# Degrau alto: 0,72 m — só pulando, e com graveto na boca o pulo não chega (medido: sem
+# graveto o cachorro sobe até ~0,75 m; com graveto, até ~0,65 m).
+const _DEGRAU := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.22), Vector2(-0.5, 0.22)]
 const _TABUA := [Vector2(-0.5, -0.58), Vector2(0.5, -0.58), Vector2(0.5, -0.5), Vector2(-0.5, -0.5)]
 
 
@@ -58,7 +65,10 @@ const _TABUA := [Vector2(-0.5, -0.58), Vector2(0.5, -0.58), Vector2(0.5, -0.5), 
 ## ("perfil" = o próprio formato, "nenhuma"), z (profundidade da extrusão) e cor no editor.
 ## `agua`: o cachorro que cai dentro volta para o último ponto seguro.
 ## `estreita`: passagem estreita — com graveto grande e pesado, o cachorro se desequilibra.
-## `cavavel`: o cachorro (com a habilidade Cavar) desfaz o bloco cavando.
+## `cavavel`: o cachorro (com a habilidade Cavar) desfaz o bloco cavando; no chão (camada -1),
+## cavar vira um `buraco` (meio metro fundo: o cachorro sai escalando; um bloco empurrado para
+## dentro tapa o buraco).
+## `escorregadia`: com graveto pesado na boca o cachorro escorrega e não sobe (rampa lisa).
 ## `rasa`: água rasa, dá para atravessar a pé; `lentidao` multiplica a velocidade e
 ## `correnteza` (m/s) arrasta o cachorro no sentido +X do tile (gire no editor com Q/E).
 ## Colisão: "perfil" (o formato), "bloco" (cubo cheio) ou "nenhuma"; `colisao_perfil` usa
@@ -86,6 +96,10 @@ static func definicoes() -> Array[Dictionary]:
 		{id = CANTO_RAMPA_ALTA, nome = "Canto de rampa alta", forma = "canto_externo", base = 0.0, material = "grama", cor = Color("74b350")},
 		{id = CANTO_INTERNO_BAIXA, nome = "Canto interno baixa", forma = "canto_interno", base = -0.5, material = "grama", cor = Color("8fcf66")},
 		{id = CANTO_INTERNO_ALTA, nome = "Canto interno alta", forma = "canto_interno", base = 0.0, material = "grama", cor = Color("7dbd57")},
+		{id = BURACO, nome = "Buraco", perfil = _MEIO, material = "terra", buraco = true, cor = Color("6e4a2a")},
+		{id = RAMPA_LISA_BAIXA, nome = "Rampa lisa baixa", perfil = _RAMPA_BAIXA, material = "pedra_lisa", escorregadia = true, cor = Color("9fb3c0")},
+		{id = RAMPA_LISA_ALTA, nome = "Rampa lisa alta", perfil = _RAMPA_ALTA, material = "pedra_lisa", escorregadia = true, cor = Color("8aa0ae")},
+		{id = DEGRAU_ALTO, nome = "Degrau alto", perfil = _DEGRAU, material = "pedra", cor = Color("a0a4ac")},
 	]
 
 
@@ -106,6 +120,14 @@ static func eh_estreita(id: int) -> bool:
 
 static func eh_cavavel(id: int) -> bool:
 	return definicao(id).get("cavavel", false)
+
+
+static func eh_buraco(id: int) -> bool:
+	return definicao(id).get("buraco", false)
+
+
+static func eh_escorregadia(id: int) -> bool:
+	return definicao(id).get("escorregadia", false)
 
 
 ## Meia largura (m) da passagem estreita, no eixo Z do tile.

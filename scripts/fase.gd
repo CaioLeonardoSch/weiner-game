@@ -95,6 +95,16 @@ func canal_ligado(canal: int, todas: bool) -> bool:
 	return canal_completo(canal) if todas else canal_ativo(canal)
 
 
+## Um latido em `origem`: os objetos até Dachshund.ALCANCE_LATIDO ouvem (pássaros voam, o dono
+## acorda, um cão vizinho late de volta...). Objetos desativados pela perspectiva (ex.: "só 3D"
+## na isométrica) não ouvem; `quem` latiu não ouve a si mesmo.
+func espalhar_latido(origem: Vector3, quem: Node) -> void:
+	for objeto in lista_objetos():
+		if objeto != quem and objeto.visible \
+				and objeto.global_position.distance_to(origem) <= Dachshund.ALCANCE_LATIDO:
+			objeto.ao_ouvir_latido(origem)
+
+
 ## Habilidades da fase somadas às nativas da raça.
 func habilidades_efetivas() -> int:
 	var dados_raca := Racas.por_id(raca)
