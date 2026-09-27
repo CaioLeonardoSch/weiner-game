@@ -25,6 +25,9 @@ static func criar() -> Theme:
 		caixa.bg_color = cores[estado]
 		caixa.set_content_margin_all(10)
 		caixa.content_margin_left = 16
+		# Um pouco mais baixo que largo: com a interface em 125% o menu inteiro cabe na tela.
+		caixa.content_margin_top = 8
+		caixa.content_margin_bottom = 8
 		caixa.border_color = Color(0.05, 0.05, 0.06)
 		caixa.set_border_width_all(2)
 		if estado == "focus":

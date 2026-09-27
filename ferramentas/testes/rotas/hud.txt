@@ -1,0 +1,54 @@
+# HUD e controles (issue #13): barra de equilíbrio escondida no começo; mirante sai com um
+# Esc e aceita R; puxar vira até agarrar e avisa por que não puxou; a correnteza não leva o
+# cachorro parado à força.
+fase res://scenes/fases/fase_08.tscn
+checar not jogo.indicador_equilibrio.visible
+esperar 20
+# Mirante: F morde; um Esc só já sai.
+teleportar 3.5 0.05 -4.4
+esperar 5
+apertar mover_frente 6
+esperar 20
+apertar acao 2
+esperar 120
+checar jogo._mirante != null
+checar jogo.dica.text.contains("sair do mirante")
+apertar liberar_mouse 2
+esperar 90
+checar jogo._mirante == null
+checar not jogo.get_tree().paused
+# De novo no mirante: R reinicia a fase.
+apertar acao 2
+esperar 120
+checar jogo._mirante != null
+apertar reiniciar 2
+esperar 30
+checar jogo._mirante == null and jogo.fase != null
+# Puxar contra o portão: vira para o bloco segurando F (chegando de lado) e avisa que não tem
+# espaço atrás.
+fase res://scenes/fases/fase_06.tscn
+esperar 20
+chamar res://ferramentas/testes/teste_hud.gd puxar_contra_o_portao
+esperar 5
+apertar acao 70
+apertar mover_esquerda 14
+esperar 40
+checar absf(jogo.cachorro.modelo.rotation.y) > 3.1
+apertar mover_direita 12
+esperar 15
+checar jogo.aviso_painel.visible and jogo.aviso.text.begins_with("Sem espaço")
+esperar 30
+# Correnteza (Fase 04): parado à força, a água não leva o cachorro.
+fase res://scenes/fases/fase_04.tscn
+esperar 20
+teleportar 4.5 0.3 -10.5
+esperar 10
+# Solto, a correnteza leva o cachorro (confere que ele está mesmo na correnteza)...
+eval jogo.set_meta("z", jogo.cachorro.global_position.z)
+esperar 30
+checar jogo.cachorro.global_position.z - jogo.get_meta("z") > 0.2
+# ... parado à força, não.
+eval jogo.cachorro.set("entrada_bloqueada", true)
+eval jogo.set_meta("z", jogo.cachorro.global_position.z)
+esperar 60
+checar absf(jogo.cachorro.global_position.z - jogo.get_meta("z")) < 0.05

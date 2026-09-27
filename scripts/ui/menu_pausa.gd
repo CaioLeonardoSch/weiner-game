@@ -4,6 +4,8 @@ extends CanvasLayer
 ## Pausa a árvore inteira; só este nó continua recebendo entrada.
 
 var _botoes: VBoxContainer
+## Modo do mouse antes de pausar (no 3D ele estava preso na câmera): volta assim ao continuar.
+var _mouse_antes := Input.MOUSE_MODE_VISIBLE
 
 
 func _init() -> void:
@@ -47,13 +49,13 @@ func _ready() -> void:
 
 	_botao("Continuar", fechar)
 	_botao("Opções", _abrir_opcoes)
-	_botao("Reiniciar a fase", func() -> void:
+	_botao("Reiniciar a fase (%s)" % Teclas.nome(&"reiniciar"), func() -> void:
 		get_tree().paused = false
 		get_tree().reload_current_scene())
 	if Fases.testando:
-		_botao("Voltar ao editor", Fases.abrir_editor)
+		_botao("Voltar ao editor (%s)" % Teclas.nome(&"alternar_editor"), Fases.abrir_editor)
 	else:
-		_botao("Editar esta fase", Fases.editar.bind(Fases.caminho_atual))
+		_botao("Editar esta fase (%s)" % Teclas.nome(&"alternar_editor"), Fases.editar.bind(Fases.caminho_atual))
 	_botao("Menu principal", Fases.abrir_menu)
 	hide()
 
@@ -69,6 +71,7 @@ func _abrir_opcoes() -> void:
 
 
 func abrir() -> void:
+	_mouse_antes = Input.mouse_mode
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	show()
@@ -78,6 +81,7 @@ func abrir() -> void:
 func fechar() -> void:
 	hide()
 	get_tree().paused = false
+	Input.mouse_mode = _mouse_antes
 
 
 func _unhandled_input(event: InputEvent) -> void:

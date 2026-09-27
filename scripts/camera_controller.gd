@@ -121,11 +121,8 @@ func _usar_ortografica() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if estado != Estado.TERCEIRA_PESSOA:
 		return
-	if event.is_action_pressed("liberar_mouse") and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		# Só solta o mouse; o próximo Esc (já com o mouse solto) abre a pausa.
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("capturar_mouse"):
+	# Esc (liberar_mouse) é do jogo: abre a pausa, que solta o mouse e prende de novo ao voltar.
+	if event.is_action_pressed("capturar_mouse"):
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		# Movimento do mouse não é mapeável no InputMap; o analógico usa as ações camera_*.

@@ -95,8 +95,11 @@ func _montar_interface() -> void:
 	raiz.add_child(painel)
 
 	var margem := MarginContainer.new()
-	for lado in ["left", "right", "top", "bottom"]:
+	# Margens e espaços contidos: com a interface em 125% o menu inteiro ainda cabe na altura.
+	for lado in ["left", "right"]:
 		margem.add_theme_constant_override("margin_" + lado, 28)
+	for lado in ["top", "bottom"]:
+		margem.add_theme_constant_override("margin_" + lado, 20)
 	painel.add_child(margem)
 
 	var coluna := VBoxContainer.new()
@@ -117,7 +120,7 @@ func _montar_interface() -> void:
 	coluna.add_child(subtitulo)
 
 	var espaco := Control.new()
-	espaco.custom_minimum_size.y = 18
+	espaco.custom_minimum_size.y = 10
 	coluna.add_child(espaco)
 
 	_titulo_tela = Label.new()
@@ -132,7 +135,7 @@ func _montar_interface() -> void:
 
 	_tela = VBoxContainer.new()
 	_tela.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_tela.add_theme_constant_override("separation", 8)
+	_tela.add_theme_constant_override("separation", 6)
 	rolagem.add_child(_tela)
 
 	var rodape := Label.new()

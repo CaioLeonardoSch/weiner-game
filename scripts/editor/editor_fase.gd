@@ -100,6 +100,8 @@ var _fantasma_copiado := false
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# O editor usa a tela toda (paleta, vista, painel): o tamanho da interface não vale aqui.
+	Opcoes.aplicar_escala(true)
 	rng.randomize()
 	sobreposicao.editor = self
 	sobreposicao.camera = camera
@@ -139,6 +141,7 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	Opcoes.aplicar_escala()
 	# UndoRedo não é contado por referência: libera o histórico (e os objetos apagados que
 	# só ele guardava) e depois ele mesmo. Sem mudar a versão: a cena já está saindo.
 	undo.clear_history(false)

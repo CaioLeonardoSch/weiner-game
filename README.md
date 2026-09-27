@@ -14,6 +14,9 @@ pelagem do cachorro (com prévia ao fundo) ou abrir o **editor de fases** — nu
 numa nova, do zero. Para jogar uma fase direto, abra a cena dela e use F6 (rodar cena atual).
 O progresso (fases concluídas, pelagens escolhidas) fica em `user://progresso.cfg`.
 
+A dica no topo da tela mostra só os controles que valem no momento; reiniciar (R) e o editor
+(F1) aparecem na pausa, com as teclas.
+
 | Tecla | Jogo | Editor de fases |
 |---|---|---|
 | WASD / setas | andar | mover a câmera |
@@ -23,13 +26,14 @@ O progresso (fases concluídas, pelagens escolhidas) fica em `user://progresso.c
 | Espaço | pular (se a fase liberar) | — |
 | C | cavar terra fofa (se a fase liberar) | — |
 | B | latir (se a fase liberar) | — |
-| F (segurando) + trás | puxar o bloco de pedra (sem graveto) | — |
+| F | ação do que está à frente (morder o mirante, pegar a ponte de graveto...) | — |
+| F (segurando) + trás | puxar o bloco de pedra (sem graveto): segurando F perto do bloco, o cachorro vira de frente e agarra | — |
 | Ctrl + arrastar | — | preencher um retângulo de tiles |
 | Shift + arrastar | — | espalhar o objeto escolhido (pincel de floresta) |
 | G | — | conta-gotas (pega o tile/objeto sob o cursor) |
 | Shift | andar devagar (equilíbrio) | modificador (trocar tile, girar 15°) |
 | R | reiniciar | subir camada (com F: descer) |
-| Esc | pausa (continuar, reiniciar, editar, menu) | ferramenta Selecionar / desmarcar |
+| Esc | pausa (solta o mouse; ao continuar, prende de novo); no mirante, sai dele | ferramenta Selecionar / desmarcar |
 | **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
 | F3 | liga/desliga o pixelado | idem |
 | H | — | lista de atalhos do editor |
@@ -39,7 +43,8 @@ O progresso (fases concluídas, pelagens escolhidas) fica em `user://progresso.c
 **Opções** (menu principal ou pausa), guardadas em `user://opcoes.cfg` (autoload `Opcoes`):
 
 - **Tela**: janela, tela cheia (padrão, na resolução do monitor) ou tela cheia exclusiva;
-  tamanho da janela; VSync; limite de FPS; tamanho da interface.
+  tamanho da janela; VSync; limite de FPS; tamanho da interface (75% a 125% — o jogo inteiro
+  já acompanha a resolução do monitor; o editor de fases usa sempre 100%).
 - **Gráficos**: intensidade do pixelado, contorno, sombras, brilho.
 - **Áudio**: volumes (geral, música, efeitos, ambiente) — prontos para quando houver som.
 - **Controles**: sensibilidade da câmera, inverter Y e **trocar as teclas** (clique e aperte

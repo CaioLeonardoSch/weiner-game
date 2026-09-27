@@ -13,6 +13,8 @@ extends CharacterBody3D
 
 ## Caiu num lugar sem volta (água, abismo) e foi levado de volta para terra firme.
 signal voltou_ao_ponto_seguro(motivo: String)
+## Tentou puxar um bloco e não deu ("boca_cheia", "sem_espaco"); uma vez por aperto de F.
+signal puxar_falhou(motivo: String)
 
 ## Até onde o latido chega (m).
 const ALCANCE_LATIDO := 5.0
@@ -74,6 +76,8 @@ var em_correnteza := false
 ## Puxando um bloco: o cachorro recua uma célula junto com ele.
 const DURACAO_PUXAR := 0.35
 var _tempo_puxando := 0.0
+## Motivo já avisado neste aperto de F (para não repetir o aviso a cada quadro).
+var _motivo_puxar_avisado := ""
 var _sentido_puxar := Vector3.ZERO
 var _tempo_empurrando := 0.0
 
@@ -136,10 +140,19 @@ func _physics_process(delta: float) -> void:
 		_tempo_puxando -= delta
 		horizontal = _sentido_puxar / DURACAO_PUXAR
 	elif not entrada_bloqueada and Input.is_action_pressed("acao"):
-		_tentar_puxar(horizontal)
+		var motivo := _tentar_puxar(horizontal)
+		if not motivo.is_empty() and motivo != _motivo_puxar_avisado:
+			_motivo_puxar_avisado = motivo
+			puxar_falhou.emit(motivo)
+	if not Input.is_action_pressed("acao"):
+		_motivo_puxar_avisado = ""
 	horizontal += _desvio_de_encaixe(horizontal, delta)
 	horizontal += _empurrao_do_balanco(delta, horizontal)
 	var arrasto := _efeito_da_agua()
+	# Parado à força (câmera em transição, mirante, fase concluída): a água não leva o cachorro
+	# embora sem ele poder reagir.
+	if entrada_bloqueada:
+		arrasto = Vector3.ZERO
 	horizontal *= _lentidao_agua
 	velocity.x = horizontal.x + arrasto.x
 	velocity.z = horizontal.z + arrasto.z
@@ -378,11 +391,19 @@ func _velocidade_entrada() -> Vector3:
 
 
 func _girar_modelo(delta: float) -> void:
-	# Segurando para puxar, o cachorro não vira: fica de frente para o bloco e anda de ré.
-	if Input.is_action_pressed("acao") or _tempo_puxando > 0.0:
+	# Puxando, o cachorro não vira: fica de frente para o bloco e anda de ré.
+	if _tempo_puxando > 0.0:
 		return
+	var alvo := _yaw_alvo
+	# Segurando F com um bloco à frente: agarra — vira de frente para ele, alinhado à grade (dá
+	# para chegar meio de lado), e fica assim enquanto segurar, andando de ré para puxar.
+	if Input.is_action_pressed("acao") and not tem_graveto:
+		var bloco := _bloco_na_frente()
+		if bloco:
+			var para_o_bloco := bloco.global_position - global_position
+			alvo = snappedf(atan2(-para_o_bloco.z, para_o_bloco.x), PI * 0.5)
 	# O modelo olha para +X quando rotation.y == 0.
-	var novo := lerp_angle(modelo.rotation.y, _yaw_alvo, 1.0 - exp(-velocidade_giro * delta))
+	var novo := lerp_angle(modelo.rotation.y, alvo, 1.0 - exp(-velocidade_giro * delta))
 	if is_equal_approx(novo, modelo.rotation.y):
 		return
 	# Com o graveto na boca, só gira se o graveto não bater em nada no caminho.

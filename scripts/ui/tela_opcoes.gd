@@ -40,9 +40,9 @@ func _ready() -> void:
 	var margem := MarginContainer.new()
 	margem.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for lado in ["left", "right"]:
-		margem.add_theme_constant_override("margin_" + lado, 90)
+		margem.add_theme_constant_override("margin_" + lado, 48)
 	for lado in ["top", "bottom"]:
-		margem.add_theme_constant_override("margin_" + lado, 40)
+		margem.add_theme_constant_override("margin_" + lado, 24)
 	area.add_child(margem)
 
 	var coluna := VBoxContainer.new()
@@ -108,7 +108,8 @@ func _aba_tela() -> void:
 	_escolha(lista, "Tamanho da janela", "tela", "tamanho_janela", OPCOES_TAMANHO)
 	_marca(lista, "Sincronia vertical (VSync)", "tela", "vsync")
 	_escolha(lista, "Limite de quadros por segundo", "tela", "fps_max", OPCOES_FPS)
-	_deslizador(lista, "Tamanho da interface", "tela", "escala_interface", 0.75, 1.5, 0.05, "%d%%", 100.0)
+	_deslizador(lista, "Tamanho da interface", "tela", "escala_interface", Opcoes.ESCALA_MINIMA,
+		Opcoes.ESCALA_MAXIMA, 0.05, "%d%%", 100.0)
 	_nota(lista, "Em monitores largos (21:9, 32:9) o jogo ocupa a tela toda: o mundo aparece dos lados e a interface fica no centro.")
 
 
