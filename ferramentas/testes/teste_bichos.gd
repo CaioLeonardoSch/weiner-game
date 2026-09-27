@@ -35,3 +35,11 @@ static func preparar_esquilo(jogo: Node) -> String:
 	jogo.set_meta(&"graveto", graveto)
 	return "esquilo %s, graveto %s" % [esquilo.global_position, graveto.global_position]
 
+
+
+## Um graveto comum direto na boca (sem a troca de câmera).
+static func graveto_na_boca(jogo: Node) -> String:
+	var graveto := _colocar(jogo, "graveto_comum", jogo.cachorro.global_position) as Graveto
+	graveto.ja_pego = true
+	jogo.cachorro.pegar_graveto(graveto)
+	return "graveto na boca"

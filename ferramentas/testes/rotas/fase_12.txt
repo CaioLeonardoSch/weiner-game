@@ -1,0 +1,48 @@
+# Fase 12 — O Vizinho: um latido espanta o passarinho do vão do muro; outro assusta o esquilo
+# que guarda o lendário na porta da toca (ele se esconde) — dá tempo de pegar. Na volta, com o
+# graveto na boca, outro passarinho fecha o vão (e ali não dá para largar o graveto): passar
+# perto do cão vizinho faz ele latir de ciúme, e o passarinho voa. O dono cochilou: larga o
+# graveto, late, pega de novo e entrega.
+fase res://scenes/fases/fase_12.tscn
+esperar 20
+apertar mover_direita 80
+esperar 85
+apertar latir 2
+esperar 30
+checar jogo.fase.get_node("Objetos").get_node("Passaro").voou
+checar jogo.fase.get_node("Objetos").get_node("Dono").dormindo
+apertar mover_direita 170
+esperar 175
+apertar latir 2
+esperar 20
+checar jogo.fase.get_node("Objetos").get_node("Esquilo").estado == 3
+apertar mover_direita 52
+esperar 58
+apertar mover_frente 38
+esperar 140
+checar jogo.cachorro.tem_graveto and jogo.cachorro.graveto.lendario
+# Volta (3D): pela frente do quintal do vizinho (ele late) e pelo vão do muro.
+apertar mover_esquerda 19
+esperar 25
+apertar mover_frente 130
+esperar 164
+checar jogo.fase.get_node("Objetos").get_node("Passaro2").voou
+apertar mover_esquerda 10
+esperar 20
+apertar mover_frente 250
+esperar 260
+checar jogo.fase.get_node("Objetos").get_node("Dono").dormindo
+checar not jogo.concluida
+# Dono dormindo: larga o graveto, late e pega de novo.
+apertar largar_graveto 2
+esperar 100
+apertar latir 2
+esperar 20
+checar not jogo.fase.get_node("Objetos").get_node("Dono").dormindo
+apertar mover_tras 10
+esperar 15
+apertar mover_esquerda 20
+esperar 140
+apertar mover_frente 60
+esperar 70
+checar jogo.concluida

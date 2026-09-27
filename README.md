@@ -179,6 +179,28 @@ Junta tudo: mirante, ponte só da ida, uma **placa vermelha que pede peso 3** (o
 tampo dizem quanto — só o bloco de pedra basta) segurando o portão vermelho, e o graveto
 comprido que vira a ponte da volta.
 
+## Fase 10 — "Debaixo da Cerca"
+
+Uma **cerca com terra fofa** embaixo atravessa a trilha: cavando (C) de frente para ela, o
+salsicha abre um vão por baixo. Depois, um **degrau alto** — só pulando, e com graveto na boca o
+pulo não chega (caminho de mão única). No platô, um **montinho de terra**: o graveto lendário
+está enterrado, é só cavar. Ele é comprido: na volta, pelo vão da cerca, só passa ao comprido (Q).
+
+## Fase 11 — "O Tronco no Rio"
+
+Não há ponte: o jeito é empurrar o **tronco** de lado para dentro da correnteza. Ele desce o rio
+(dá para ir em cima) e encaixa no poço fundo, virando ponte. Do outro lado, a **placa verde pede
+3**: o salsicha com o graveto comum pesa 2,5 — mas **graveto molhado pesa mais**. Uma passada na
+lagoinha rasa, e o portão verde abre (e trava aberto).
+
+## Fase 12 — "O Vizinho"
+
+Um latido espanta o passarinho do vão do muro. O **esquilo** guarda o graveto lendário na porta da
+toca: um latido e ele se esconde por alguns segundos — corra. Na volta, com o graveto na boca,
+outro passarinho fecha o vão, e ali não dá para largar o graveto… mas o **cão vizinho** late de
+ciúme quando o salsicha passa com o graveto, e o latido dele espanta o passarinho. E o **dono
+cochilou**: larga o graveto, late, pega de novo e entrega.
+
 ## Gravetos, placas e portões
 
 - **Graveto lendário × comum:** o dono só aceita o **lendário** (dourado, com brilho). Os
@@ -204,6 +226,23 @@ comprido que vira a ponte da volta.
   ligam as placas aos portões, e o portão que reage a mais de uma placa mostra a regra ("OU" /
   "E"). A validação avisa placa sem portão (e vice-versa) e regra E com uma placa só. Ver
   *Ligando mecanismos* em "Criando fases".
+
+## Cavar, empurrar e bichos
+
+- **Cavar (C)**, de frente para: um **montinho** (graveto enterrado — desenterra); uma **cerca
+  com terra fofa** (abre um vão baixo naquele metro: salsicha e pug passam, border collie não);
+  um bloco de **terra fofa** (some); a **terra fofa do chão** (vira um *Buraco* de meio metro — o
+  cachorro sai escalando, e um bloco empurrado para dentro tapa o buraco).
+- **Tronco que rola**: ocupa duas células; empurrado de lado rola uma célula. Na água funda vira
+  ponte; na correnteza desce o rio (com o cachorro em cima) até encalhar ou encaixar na funda.
+- **Tronco caído** com *pinguela*: atravessado sobre um vão, é passagem estreita (equilíbrio).
+- **Esquilo** (e a toca): leva gravetos largados por perto (até `raio` m) para a porta da toca e
+  guarda; um latido assusta — larga o que levava e se esconde por `tempo_escondido` s.
+- **Cão vizinho**: late de volta quando ouve um latido e late de ciúme quando um cachorro com
+  graveto passa perto (3 m); o latido dele alcança o que está perto dele.
+- **Dono dormindo** (`dormindo`, no painel do Dono): "Zzz" — só recebe o graveto depois de um
+  latido (a validação avisa se ninguém pode latir).
+- **Som**: o latido é gerado por código (`scripts/som.gd`), com o tom pela altura da raça.
 
 ## Raças e pelagens
 
@@ -231,7 +270,10 @@ o rabo, balançar as orelhas).
 - **Q** alterna entre atravessado e ao comprido (apontando para a frente). Ao comprido passa em
   vãos estreitos, mas o graveto vai longe à frente e bate em paredes ao virar.
 - **Peso**: deixa o cachorro mais lento e o pulo mais baixo, mas mais firme na correnteza
-  (o arrasto é dividido pelo peso).
+  (o arrasto é dividido pelo peso). Com qualquer graveto na boca o pulo já é um pouco mais baixo
+  (não passa do *Degrau alto*), e graveto pesado (1,5+) escorrega na *Rampa lisa*.
+- **Molhado**: na água rasa, na boca, o graveto encharca e pesa +0,5 por 8 s (pinga).
+- **Empurra**: o graveto na boca empurra blocos e troncos; ao comprido, de longe.
 - **Equilíbrio**: em passagens estreitas (tile *Tábua*), carga = peso × comprimento acima de 1,2
   faz o cachorro balançar; o balanço cresce com o quadrado da velocidade e é menor ao comprido.
   Com o centro do corpo fora da tábua, ele cai. Ajustes no grupo "Equilíbrio" de
@@ -331,7 +373,9 @@ Nada de arquivos externos: tudo é gerado pelo próprio Godot.
   Tiles especiais: *Água* (funda, sem colisão), *Água rasa* (leito rente ao chão, deixa mais
   lento), *Correnteza* (água rasa que arrasta no sentido +X do tile — gire o tile no editor para
   mudar o sentido; as listras da água mostram o fluxo), *Escada baixa/alta* (colide como
-  rampa), *Canto de rampa* (externo e interno, baixo e alto) para fechar montes e barrancos.
+  rampa), *Canto de rampa* (externo e interno, baixo e alto) para fechar montes e barrancos,
+  *Rampa lisa* baixa/alta (graveto pesado escorrega), *Degrau alto* (0,72 m, só pulando sem
+  graveto) e *Buraco* (o que a terra fofa do chão vira ao ser cavada).
 - **Modelos voxel em texto** — `assets/voxel/*.txt`: camadas desenhadas com letras, uma cor por
   letra (formato em [assets/voxel/LEIA-ME.md](assets/voxel/LEIA-ME.md)). Exemplos: `dono.txt`,
   `tronco_caido.txt`. Use com o nó `ModeloVoxel`.

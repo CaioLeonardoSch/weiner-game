@@ -44,3 +44,14 @@ esperar 20
 checar jogo.get_meta("esquilo").estado == 3
 checar jogo.get_meta("graveto").com_bicho == null and not jogo.get_meta("graveto").ja_pego
 checar jogo.get_meta("graveto").global_position.distance_to(jogo.get_meta("esquilo").porta()) > 0.8
+# Cão vizinho com ciúme: passar perto dele com um graveto na boca faz ele latir (e o latido
+# dele acorda o dono).
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_bichos.gd preparar_vizinho
+chamar res://ferramentas/testes/teste_bichos.gd graveto_na_boca
+esperar 5
+checar jogo.get_meta("dono").dormindo
+teleportar 0.7 0.05 -2.2
+esperar 60
+checar not jogo.get_meta("dono").dormindo

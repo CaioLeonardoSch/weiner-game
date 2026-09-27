@@ -6,7 +6,10 @@ sozinhos no editor), o editor de fases dentro do jogo (F1), o graveto com colis�
 equilíbrio (etapa 3), habilidades por fase com o pulo, escadas e cantos de rampa (etapa 4),
 cavar (5), empurrar e puxar (6), água rasa e correnteza (7), latir e passarinhos (8), as
 melhorias principais do editor, o menu principal com pausa, o cachorro em voxel com raças e
-pelagens, o objetivo da fase como dado (graveto ou pastoreio) e as Fases 02 a 09. Do Pacote 1
+pelagens, o objetivo da fase como dado (graveto ou pastoreio) e as Fases 02 a 12. As etapas 3 a
+8 estão fechadas (as ideias que sobraram delas também: rampa lisa, degrau alto, buraco, graveto
+enterrado, cavar sob a cerca, tronco que rola e boia, graveto molhado, esquilo, dono dormindo,
+cão vizinho e o som do latido — Fases 10, 11 e 12). Do Pacote 1
 (Etapa 10) já existem o botão de ação (F), gravetos lendário e comuns, placas de pressão e
 portões por canal de cor, o graveto-ponte e o mirante. Também o menu de opções (tela, gráficos,
 áudio, teclas), a tela para monitores largos e a exportação para Windows, Linux e macOS (ver
@@ -61,86 +64,95 @@ Como isso vira jogo:
   vem de `Fase.raca` — que continua útil como raça padrão para testar no editor. Toda fase
   precisa ter solução com cada raça compatível da região.
 
-## Etapa 3 — Graveto de verdade ✅ (feito)
+## Etapa 3 — Graveto de verdade ✅ (feito, com ideias para depois)
 
 Colisão própria do graveto na boca, bloqueio de giro, correção de quina, virar o graveto ao
 comprido (Q), peso (velocidade e pulo) e equilíbrio em passagens estreitas (tile *Tábua*),
-com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso. Ficou para depois:
+com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso.
 
-- **Formatos T/Y**: gravetos com galhos exigindo ângulo. A base já existe (forma de colisão do
-  graveto no corpo); faltaria uma forma composta por formato e mais ângulos de virar
-  (hoje são dois: atravessado e ao comprido).
-- **Inclinar o graveto** (para cima/baixo) para passar por baixo/cima de obstáculos baixos.
-- **Mais passagens estreitas**: tronco caído como pinguela, beirada de penhasco. Basta marcar
-  `estreita = true` no tile (ou criar um objeto que responda a `Fase.passagem_estreita_em`).
-  O próprio graveto também pode virar pinguela — ver Etapa 10.
+- ✅ **Mais passagens estreitas**: o *Tronco caído* com `pinguela` (atravessado sobre um vão) e o
+  graveto que vira ponte (Etapa 10) são passagens estreitas feitas por objetos (grupo
+  `passagens_estreitas`, método `passagem_em`).
+- Ideias para depois (mudam o controle do graveto; melhor desenhar junto com fases para elas):
+  - **Formatos T/Y**: gravetos com galhos exigindo ângulo. A base já existe (forma de colisão do
+    graveto no corpo); faltaria uma forma composta por formato e mais ângulos de virar (hoje são
+    dois: atravessado e ao comprido).
+  - **Inclinar o graveto** (para cima/baixo) para passar por baixo/cima de obstáculos baixos.
+  - **Beirada de penhasco** como passagem estreita (um tile `estreita` na borda).
 
-## Etapa 4 — Movimento: pular, subir e descer níveis (quase toda ✅)
+## Etapa 4 — Movimento: pular, subir e descer níveis ✅ (feito)
 
 - ✅ **Habilidades por fase**: `Fase.habilidades` (flags, no painel da fase no editor).
-- ✅ **Pular** (Espaço): 0,65 m sem graveto — sobe meio bloco, não um bloco inteiro; o peso
-  do graveto reduz a altura.
+- ✅ **Pular** (Espaço): 0,65 m sem graveto — sobe meio bloco, não um bloco inteiro. Com graveto
+  na boca o pulo é 12% mais baixo, e o peso baixa mais.
 - ✅ **Nivelamentos**: *Escada baixa/alta* (colide como rampa, parece degraus) e *Canto de
-  rampa* externo e interno, baixo e alto (malhas geradas em `Tiles.malha_canto`). A Fase 04
-  tem um monte fechado com cantos e uma escada até o platô.
-- Ideias: rampa "de mão única" (escorrega, não dá para subir com graveto pesado), degrau alto
-  que só se sobe pulando sem graveto.
-- **Mais túneis**: já dá para montar no editor; variações úteis: tampas "só 3D" (caminhos que
-  existem na ida e fecham na volta) e túneis baixos que só passam com o graveto ao comprido.
-  Tocas de texugo e portinholas (Etapa 10) levam a ideia adiante.
+  rampa* externo e interno, baixo e alto. A Fase 04 tem um monte fechado com cantos e uma escada.
+- ✅ **Rampa lisa** (baixa e alta): com graveto pesado (1,5+) o cachorro escorrega e não sobe —
+  caminho de mão única para quem carrega peso (e um graveto molhado pesa mais!).
+- ✅ **Degrau alto** (0,72 m): só pulando, e com graveto na boca o pulo não chega. Fase 10.
+- ✅ **Túneis**: montados no editor — tampas "só isométrico"/"só 3D" (caminhos que abrem ou fecham
+  na volta) e túneis de uma célula, onde graveto comprido só passa ao comprido. Tocas de texugo
+  e portinholas (Etapa 10) levam a ideia adiante.
+- Correção feita junto: o graveto numa beirada na altura da boca não segura mais o cachorro
+  pendurado no ar.
 
 ## Etapa 5 — Cavar ✅ (feito)
 
-Tile **Terra fofa** (`cavavel`), habilidade *Cavar* e ação C: desfaz o bloco na frente do
-focinho, na altura do corpo, com animação e torrões de terra. Não cava com o graveto na boca.
-Usada na Fase 03 (túnel cavado num monte). Ideias para depois:
+Tile **Terra fofa** (`cavavel`), habilidade *Cavar* e ação C. Não cava com o graveto na boca.
 
-- Cavar para baixo (buraco) — precisa de jeito de sair (rampa de terra, pulo).
-- Graveto enterrado: objeto que só aparece depois de cavar a célula onde ele está.
-- Cavar por baixo de cercas (passagem baixa), combinando com graveto ao comprido.
+- ✅ Bloco de terra fofa na frente do focinho: some (túnel cavado — Fase 03).
+- ✅ **Cavar para baixo**: terra fofa no chão vira **Buraco** (meio metro). O cachorro sai
+  escalando a borda; um bloco empurrado para dentro cai e tapa o buraco.
+- ✅ **Graveto enterrado** (`Graveto.enterrado`): só um montinho com a pontinha de fora; cavar de
+  frente desenterra. Fase 10.
+- ✅ **Cavar por baixo de cercas**: *Cerca* com `terra_fofa` — cavar abre um vão baixo naquele
+  metro (0,66 m): salsicha e pug passam, border collie não; graveto comprido, só ao comprido.
+  Fase 10 ("Debaixo da Cerca").
 
 ## Etapa 6 — Empurrar ✅ (feito)
 
 Objeto **Bloco empurrável**: andar contra ele por um instante empurra uma célula (estilo
 Sokoban), se o destino estiver livre e tiver chão. Empurrado para dentro da água, afunda até
-ficar rente ao chão e vira passagem. Não entra em cima do graveto nem de passarinhos; se
-ficar encurralado num canto (nenhum empurrão possível), volta sozinho para onde começou.
-Ideias para depois:
+ficar rente ao chão e vira passagem; num buraco, tapa o buraco. Se ficar encurralado, volta
+sozinho para onde começou.
 
-- Tronco empurrável que rola e vira ponte sobre dois blocos de água.
-- Empurrar com o graveto ao comprido (alcance maior) ou só sem graveto.
-- Blocos que tampam túneis (abrir caminho empurrando).
-- Placas de pressão — detalhadas na Etapa 10 (bloco como peso é o uso mais direto).
-- ✅ **Puxar**: segurando F e andando para trás (sem graveto), o cachorro puxa o bloco que
-  está à frente dele uma célula. Tira blocos de nichos e desfaz empurrões errados. Usado na
-  Fase 04.
+- ✅ **Puxar**: segurando F de frente para o bloco e andando para trás (sem graveto). Segurando
+  F perto do bloco, o cachorro vira de frente e agarra; se não dá, avisa por quê. Fase 04.
+- ✅ **Tronco que rola** (duas células): empurrado de lado rola uma célula (ao comprido não). Na
+  água funda afunda e vira ponte larga; na água rasa boia (Etapa 7). Fase 11.
+- ✅ **Empurrar com o graveto**: o graveto na boca empurra também; ao comprido, a ponta vai longe
+  (alcance maior — empurrar algo do outro lado de um vão).
+- ✅ **Blocos que tampam túneis**: montado no editor (bloco na boca do túnel).
+- ✅ Placas de pressão (Etapa 10).
 
-## Etapa 7 — Riachos e água (em parte ✅)
+## Etapa 7 — Riachos e água ✅ (feito)
 
 - ✅ **Água** funda (sem colisão, "Splash!"), **Água rasa** (atravessável, mais lenta) e
-  **Correnteza** (água rasa que arrasta no sentido +X do tile; o graveto pesado deixa o cachorro
-  mais firme). O shader da água mostra o sentido do fluxo. Levado pela correnteza até a água
-  funda, o cachorro cai. Fase 04 ("A Correnteza").
-- Próximos passos:
-  - Graveto molhado pesa mais (por alguns segundos depois de passar na água rasa)?
-  - Objetos que boiam e descem a correnteza (folhas, tronco) — dá para subir neles.
-  - **Travessia**: tronco empurrado, pedras de apoio (meio bloco + pulo), graveto ou tronco
-    como ponte (Etapa 10), comporta que baixa a água (Etapa 10) e, no mar, o barquinho
-    (Etapa 12).
+  **Correnteza** (água rasa que arrasta no sentido +X do tile; graveto pesado deixa o cachorro
+  mais firme). O shader da água mostra o fluxo. Fase 04 ("A Correnteza").
+- ✅ **Graveto molhado**: na boca, na água rasa, encharca e pesa +0,5 por 8 s (pinga) — mais lento,
+  pulo mais baixo, mais firme na correnteza, escorrega na rampa lisa e pesa mais numa placa.
+  Fase 11 usa isso numa placa.
+- ✅ **Objetos que boiam e descem a correnteza**: o tronco desce o rio célula por célula, com o
+  cachorro em cima, até encalhar; parando sobre água funda, encaixa e vira ponte. Fase 11
+  ("O Tronco no Rio"). Folhas boiando ficam como enfeite para depois.
+- ✅ **Travessias**: tronco, pedras de apoio (meio bloco + pulo, no editor), graveto como ponte
+  (Etapa 10). Ainda por vir: comporta que baixa a água (Etapa 10) e o barquinho (Etapa 12).
 
 ## Etapa 8 — Latir ✅ (feito)
 
-Habilidade *Latir* e ação B: onda e "Au!" em volta do cachorro; objetos até 5 m recebem
-`ao_ouvir_latido(origem)` (método base em `ObjetoFase`). **Passarinho**: pousado a até 1 m do
-graveto, não deixa pegar; com `bloqueia_passagem`, fica no caminho; ao ouvir o latido, voa
-embora. Não dá para latir com o graveto na boca. Ideias para depois:
+Habilidade *Latir* e ação B: onda, "Au!" e o **som do latido** (gerado por código, tom pela
+raça — agudo no salsicha e no pug, grave no border collie); objetos até 5 m recebem
+`ao_ouvir_latido(origem)` (`Fase.espalhar_latido`). Não dá para latir com o graveto na boca.
 
-- Pássaros pousados numa alavanca ou contrapeso: o latido faz o mecanismo mexer, mas eles
-  voltam com o tempo — ver "Pássaros no contrapeso", Etapa 10.
-- Esquilo que pega o graveto e foge (latir faz largar) — só vale se houver um bom motivo para
-  ele querer o graveto (ex.: na neve, estocando coisas para o inverno).
-- Acordar o dono / outros cachorros que respondem ao latido.
-- Som do latido gerado por código (`AudioStreamGenerator`), mantendo "nada de assets externos".
+- ✅ **Passarinho**: guarda o graveto ou bloqueia a passagem; o latido espanta. Fase 03.
+- ✅ **Esquilo** (com a toca): junta gravetos largados por perto na porta da toca e guarda; um
+  latido assusta (larga o que levava e se esconde um tempo). Fase 12.
+- ✅ **Acordar o dono**: `Dono.dormindo` — só recebe o graveto depois de um latido. Fase 12.
+- ✅ **Outros cachorros**: o *Cão vizinho* late de volta quando ouve um latido e late de ciúme
+  quando passa perto um cachorro com graveto na boca; o latido dele alcança o que está perto
+  dele. É o jeito de latir com o graveto na boca. Fase 12 ("O Vizinho").
+- Pássaros no contrapeso (voam e voltam, corrida contra o tempo): Etapa 10.
 
 ## Etapa 9 — Truques (rolar, abanar o rabo, ficar em duas patas)
 
@@ -296,8 +308,8 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
   velocidade e habilidades nativas; a fase escolhe a raça. Já existem salsicha, pug e border
   collie.
 - ✅ **Objetivo da fase como dado** (`Fase.objetivo`): trazer o graveto ao dono (o de sempre) ou
-  levar as ovelhas ao cercado. Cada objetivo diz o que a fase precisa (`Fase.requisitos()`) e
-  o `jogo.gd` prepara e confere o objetivo (`_preparar_objetivo` / `_verificar_objetivo`).
+  levar as ovelhas ao cercado. Cada objetivo é uma classe em `scripts/objetivos/` que diz o que
+  a fase precisa (`faltando`, `avisos`) e prepara e confere a fase (`preparar`, `processar`).
 - ✅ **Border Collie**: objetos *Ovelha* (foge do cachorro, anda em rebanho, se espanta com o
   latido, não entra na água funda) e *Cercado*; Fase 05 ("O Pastor").
 - **Raças com mecânica própria.** Cada raça resolve os quebra-cabeças do seu jeito; a raça é
@@ -354,9 +366,9 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
   fazenda (já há fases), neve (Etapa 11), mar (Etapa 12), casa à noite, cidade grande e suas
   ruas, Brasil (cidade, favela, interior), Reino Unido... Lugares reais precisam ser
   reconhecíveis — com os elementos que todo mundo identifica — e retratados com respeito.
-- Colisão por raça: hoje todas usam a cápsula do salsicha; um border collie alto passaria por
-  onde não deveria (a altura importa em túneis). Dá para derivar a cápsula das medidas da raça.
-- Som por raça (latido grave/agudo), quando houver áudio.
+- ✅ Colisão por raça: a cápsula vem das medidas da raça (`raio_colisao`, `altura_colisao`) — o
+  border collie não passa no vão cavado embaixo da cerca.
+- ✅ Som por raça: o tom do latido sai da altura da raça.
 - Cuidado com propriedade intelectual: nada de nomes, personagens ou visual copiados de
   filmes e quadrinhos — homenagens genéricas (um gato laranja guloso, uma máscara mágica) são
   o caminho seguro.
@@ -371,10 +383,20 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
 - Se um dia houver objetos transparentes que precisem de contorno, trocar o quad de contorno por
   um `CompositorEffect`.
 
+## Áudio
+
+- ✅ Barramentos e volumes nas opções (geral, música, efeitos, ambiente) e o primeiro som: o
+  latido, gerado por código (`scripts/som.gd`), no barramento Efeitos.
+- Faltam: passos (grama, terra, água), água corrente, pássaros, portão, cavar, música e ambiente
+  por tema. Mantendo "nada de assets externos", tudo pode sair do mesmo gerador (`Som`), ou
+  entrar como arquivos quando houver quem componha.
+
 ## Técnico
 
-- Preset de exportação incluindo `*.txt` (modelos voxel) nos arquivos não-recurso.
-- Testes automatizados de fase: um roteiro que joga a fase com entradas simuladas e confere que
-  dá para chegar ao graveto e voltar (foi assim que a Fase 01 foi testada nesta etapa).
-- ✅ Menu inicial, seleção de fases, pausa, progresso salvo. Falta: opções (volume, tela
-  cheia, sensibilidade do mouse, tamanho do pixel) e remapear teclas.
+- ✅ Exportação para Windows, Linux e macOS (inclui os modelos voxel `*.txt`), com teste de
+  fumaça na CI.
+- ✅ Testes automatizados: `ferramentas/testar_fases.sh` joga cada fase com entradas simuladas
+  (rotas em `ferramentas/testes/rotas/`), mais rotas das mecânicas (mecanismos, save, hud,
+  bichos, cavar, movimento, tronco). Rodam na CI em todo push.
+- ✅ Menu inicial, seleção de fases, pausa, progresso salvo (com versão e migração), opções (tela,
+  gráficos, áudio, controles) e remapear teclas.

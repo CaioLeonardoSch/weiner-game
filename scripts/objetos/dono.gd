@@ -69,7 +69,7 @@ func _process(delta: float) -> void:
 	# "Zzz" subindo e voltando, devagar.
 	_tempo += delta
 	var ciclo := fmod(_tempo, 2.0) / 2.0
-	_zzz.position = Vector3(0.25 + ciclo * 0.2, 2.0 + ciclo * 0.45, 0)
+	_zzz.position = Vector3(0.35 + ciclo * 0.25, 2.25 + ciclo * 0.5, 0)
 	_zzz.modulate.a = 1.0 - ciclo * 0.8
 
 
@@ -81,11 +81,11 @@ func _atualizar_sono() -> void:
 		_zzz.name = "Zzz"
 		_zzz.text = "Zzz"
 		_zzz.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		_zzz.font_size = 48
+		_zzz.font_size = 64
 		_zzz.outline_size = 12
 		_zzz.pixel_size = 0.008
 		_zzz.modulate = Color(0.85, 0.9, 1.0)
-		_zzz.position = Vector3(0.25, 2.0, 0)
+		_zzz.position = Vector3(0.35, 2.25, 0)
 		add_child(_zzz)
 	elif not dormindo and _zzz:
 		_zzz.queue_free()

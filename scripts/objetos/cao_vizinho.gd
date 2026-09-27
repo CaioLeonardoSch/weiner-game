@@ -1,10 +1,11 @@
 @tool
 class_name CaoVizinho
 extends ObjetoFase
-## Um cachorro da vizinhança (atrás de uma cerca, num quintal...). Não sai do lugar, mas
-## responde a latidos: ouviu um, late de volta logo depois — e o latido dele alcança o que
-## está perto DELE (pássaros, o dono dormindo, outro cão vizinho, que passa adiante).
-## É o jeito de latir onde o cachorro não chega, ou com o graveto na boca.
+## Um cachorro da vizinhança (atrás de uma cerca, num quintal...). Não sai do lugar, mas late:
+## - quando ouve um latido (late de volta logo depois);
+## - quando vê passar perto (até ALCANCE_CIUME) um cachorro com graveto na boca — ciúme!
+## O latido dele alcança o que está perto DELE (pássaros, o dono dormindo, outro cão vizinho,
+## que passa adiante). É o jeito de latir onde o cachorro não chega, ou com o graveto na boca.
 
 ## Raça (id de assets/racas/*.tres) e pelagem.
 @export var raca := &"border_collie":
@@ -19,6 +20,8 @@ extends ObjetoFase
 ## Espera entre ouvir e responder (s), e o tempo até responder de novo.
 const DEMORA := 0.5
 const DESCANSO := 2.0
+## Distância (m) em que um cachorro com graveto na boca faz o vizinho latir.
+const ALCANCE_CIUME := 3.0
 
 var _descanso := 0.0
 var _modelo: ModeloCachorro
@@ -52,6 +55,13 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_descanso = maxf(_descanso - delta, 0.0)
+	if Engine.is_editor_hint() or _descanso > 0.0:
+		return
+	for no in get_tree().get_nodes_in_group(&"cachorro"):
+		var cachorro := no as Dachshund
+		if cachorro and cachorro.tem_graveto \
+				and cachorro.global_position.distance_to(global_position) <= ALCANCE_CIUME:
+			ao_ouvir_latido(cachorro.global_position)
 
 
 func ao_ouvir_latido(_origem: Vector3) -> void:
