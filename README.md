@@ -84,6 +84,8 @@ caminho mudou, ajuste a rota (o formato está no topo de `ferramentas/testes/rot
 A rota `mecanismos` testa a regra OU / E dos portões e a ferramenta Ligar do editor
 (`ferramentas/testes/teste_mecanismos.gd`).
 Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
+Os testes não mexem nos arquivos do jogador: usam as opções de fábrica e guardam o progresso
+só na memória (se o `progresso.cfg` real mudar durante um teste, o teste falha).
 
 ## Fase 01 — "O Primeiro Graveto"
 

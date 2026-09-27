@@ -22,16 +22,31 @@ var testando := false
 var estado_editor := {}
 ## Progresso e preferências do jogador (fases concluídas, skin...), em user://progresso.cfg.
 var progresso := ConfigFile.new()
+## Progresso só na memória, sem ler nem gravar o save do jogador (testes automáticos).
+var _so_memoria := false
 
 
 func _ready() -> void:
-	progresso.load(ARQUIVO_PROGRESSO)
+	var fumaca := ""
+	for argumento in OS.get_cmdline_user_args():
+		if argumento.begins_with("--fumaca="):
+			fumaca = argumento.get_slice("=", 1)
+			usar_progresso_em_memoria()
+	if not _so_memoria:
+		progresso.load(ARQUIVO_PROGRESSO)
 	var lista := listar()
 	if not lista.is_empty():
 		caminho_atual = lista[0]
-	for argumento in OS.get_cmdline_user_args():
-		if argumento.begins_with("--fumaca="):
-			_teste_de_fumaca.call_deferred(argumento.get_slice("=", 1))
+	if not fumaca.is_empty():
+		_teste_de_fumaca.call_deferred(fumaca)
+
+
+## Testes: começa com o progresso vazio e nunca lê nem grava user://progresso.cfg (fases
+## concluídas e pelagens ficam só na memória). Chamado antes de o autoload entrar na árvore,
+## o arquivo nem chega a ser lido.
+func usar_progresso_em_memoria() -> void:
+	_so_memoria = true
+	progresso = ConfigFile.new()
 
 
 ## Todas as fases (projeto + usuário), em ordem de nome de arquivo.
@@ -117,7 +132,8 @@ func marcar_concluida(caminho: String) -> void:
 
 
 func salvar_progresso() -> void:
-	progresso.save(ARQUIVO_PROGRESSO)
+	if not _so_memoria:
+		progresso.save(ARQUIVO_PROGRESSO)
 
 
 ## A primeira fase ainda não concluída (ou a primeira de todas, se já zerou).
@@ -157,7 +173,7 @@ func abrir_editor() -> void:
 ## Teste de fumaça do jogo exportado (`WeinerGame -- --fumaca=<pasta>`): abre o menu, joga a
 ## primeira fase, salva duas fotos na pasta e confere o básico (fases e raças encontradas,
 ## modelos voxel em texto carregados — eles precisam do filtro *.txt na exportação).
-## Sai com código 0 se deu tudo certo. Usado pela CI.
+## Sai com código 0 se deu tudo certo. Usado pela CI. Não mexe no save do jogador.
 func _teste_de_fumaca(pasta: String) -> void:
 	var problemas: PackedStringArray = []
 	await _esperar_quadros(60)
