@@ -19,3 +19,5 @@ apertar mover_frente 400
 esperar 200
 esperar 205
 checar jogo.concluida
+# Concluir marca a fase (em memória: o save do jogador não muda).
+checar jogo.get_node("/root/Fases").concluida("res://scenes/fases/fase_01.tscn")

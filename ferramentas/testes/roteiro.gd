@@ -15,6 +15,8 @@ extends SceneTree
 ##   foto <arquivo.png>      salva a tela (não funciona com --headless)
 ##   cena <caminho>, mouse x y, clique b x y, segurar b x y 0|1, sair
 ## Sai com código 0 se todas as checagens passaram, 1 se alguma falhou.
+## Nada é lido nem gravado nos arquivos do jogador: as opções são as de fábrica e o progresso
+## fica só na memória. Se o save real (user://progresso.cfg) mudar durante o teste, é falha.
 
 var _passos: PackedStringArray = []
 var _i := 0
@@ -22,6 +24,8 @@ var _espera := 0
 var _soltar := {}
 var _eventos_depois: Array = []
 var _falhas := 0
+## Impressão digital do save real no começo (ver _encerrar).
+var _save_antes := ""
 
 
 func _initialize() -> void:
@@ -33,10 +37,15 @@ func _initialize() -> void:
 			for passo in linha.get_slice("#", 0).split(";", false):
 				if not passo.strip_edges().is_empty():
 					_passos.append(passo.strip_edges())
-	# Testes sempre com as opções de fábrica (sem tela cheia, teclas padrão...).
+	# Testes sempre com as opções de fábrica (sem tela cheia, teclas padrão...) e sem tocar no
+	# progresso do jogador (fases concluídas, pelagens).
 	var opcoes := root.get_node_or_null("Opcoes")
 	if opcoes and opcoes.has_method("usar_padrao_sem_salvar"):
 		opcoes.usar_padrao_sem_salvar()
+	var fases := root.get_node_or_null("Fases")
+	if fases and fases.has_method("usar_progresso_em_memoria"):
+		fases.usar_progresso_em_memoria()
+	_save_antes = _impressao_do_save()
 	change_scene_to_file(ProjectSettings.get_setting("application/run/main_scene"))
 
 
@@ -133,6 +142,13 @@ func _avaliar(texto: String) -> Variant:
 	return e.execute([current_scene], self)
 
 
+func _impressao_do_save() -> String:
+	return FileAccess.get_md5("user://progresso.cfg") if FileAccess.file_exists("user://progresso.cfg") else "-"
+
+
 func _encerrar() -> void:
+	if _impressao_do_save() != _save_antes:
+		_falhas += 1
+		print("FALHOU: o teste mexeu no save do jogador (user://progresso.cfg)")
 	print("RESULTADO: ", "passou" if _falhas == 0 else "%d falha(s)" % _falhas)
 	quit(1 if _falhas > 0 else 0)
