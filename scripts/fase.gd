@@ -177,11 +177,12 @@ func passagem_estreita_em(posicao: Vector3) -> Dictionary:
 	return {desvio = (posicao - centro).dot(lado), lado = lado, meia_largura = Tiles.meia_largura(id)}
 
 
-## Passagem estreita feita por um objeto (graveto que virou ponte), no mesmo formato de
-## `passagem_estreita_em`.
+## Passagem estreita feita por um objeto (graveto que virou ponte, tronco caído como pinguela),
+## no mesmo formato de `passagem_estreita_em`. Objetos assim ficam no grupo
+## "passagens_estreitas" e têm `passagem_em(posicao)`.
 func passagem_estreita_de_objeto(posicao: Vector3) -> Dictionary:
-	for no in get_tree().get_nodes_in_group(&"pontes_graveto"):
-		var dados: Dictionary = (no as Graveto).passagem_em(posicao)
+	for no in get_tree().get_nodes_in_group(&"passagens_estreitas"):
+		var dados: Dictionary = no.passagem_em(posicao)
 		if not dados.is_empty():
 			return dados
 	return {}
