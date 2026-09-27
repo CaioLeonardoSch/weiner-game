@@ -13,5 +13,9 @@ func categoria_no_editor() -> String:
 	return "Regras"
 
 
+func unico_na_fase() -> bool:
+	return true
+
+
 func caixa_editor() -> AABB:
 	return AABB(Vector3(-0.45, 0.0, -0.18), Vector3(1.0, 0.55, 0.36))

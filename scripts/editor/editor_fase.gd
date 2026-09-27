@@ -9,10 +9,14 @@ extends Node3D
 ## arrasta e mostra as propriedades no painel da direita.
 ## Mecanismos (placas, portões...) se ligam pela cor do canal; a ferramenta Ligar (L) liga duas
 ## peças com dois cliques e escolhe a cor. Um mecanismo novo já vem com uma cor livre.
+## Trecho (T): marca um retângulo do mapa (blocos de todas as camadas e objetos) para copiar,
+## recortar, apagar ou salvar como módulo; Ctrl+V cola (girando com Q/E), também em outra fase.
+## Módulos salvos (scenes/modulos/) aparecem na paleta e colam do mesmo jeito — ver Trecho e
+## Modulos. Alt + clique no terreno é o balde (troca uma mancha inteira de blocos iguais).
 ## Tudo passa pelo desfazer/refazer (Ctrl+Z / Ctrl+Y). Ctrl+S salva em scenes/fases/.
 ## F1 testa a fase como está (sem salvar) e volta para cá no mesmo ponto.
 
-enum Modo { SELECAO, TERRENO, OBJETO, LIGAR }
+enum Modo { SELECAO, TERRENO, OBJETO, LIGAR, TRECHO, COLAR }
 enum Visao { TUDO, ISO, TERCEIRA }
 
 const NOMES_VISAO := ["tudo", "isométrica", "3D"]
@@ -82,6 +86,30 @@ var _tween_aviso: Tween
 var ligar_origem: ObjetoFase
 ## O fantasma veio do conta-gotas: mantém a cor copiada em vez de pegar uma livre.
 var _fantasma_copiado := false
+## Bioma cujo céu e luz estão aplicados (para refazer só quando mudar).
+var _bioma_aplicado := -1
+## Bioma dos ícones dos tiles na paleta, e os botões deles (id → Button).
+var _bioma_icones := Biomas.FLORESTA
+var _botoes_tile := {}
+## Botões da seção "Módulos" da paleta (remontada ao salvar um módulo).
+var _itens_modulos: Array[Control] = []
+## Maior mancha (blocos) que o balde troca de uma vez.
+const BALDE_MAXIMO := 6000
+
+# Trecho: retângulo de colunas marcado (cantos inclusive) e as camadas que ele ocupa.
+var tem_trecho := false
+var trecho_inicio := Vector2i.ZERO
+var trecho_fim := Vector2i.ZERO
+var camadas_trecho := Vector2i.ZERO
+var _marcando_trecho := false
+# Colar: o trecho (já girado), onde vai o canto e a prévia (terreno e objetos-fantasma).
+var colagem: Trecho
+var origem_colagem := Vector3i.ZERO
+var _colagem_base: Trecho
+var _giro_colagem := 0
+var _desnivel_colagem := 0
+var _modulo_colando := ""
+var _previa: Node3D
 
 @onready var camera_editor: CameraEditor = $CameraEditor
 @onready var camera: Camera3D = $CameraEditor/Camera3D
@@ -109,6 +137,10 @@ func _ready() -> void:
 	inspetor.propriedade_alterada.connect(_alterar_propriedade)
 	inspetor.pedido_apagar.connect(_apagar_selecionado)
 	inspetor.pedido_duplicar.connect(_duplicar_selecionado)
+	inspetor.pedido_copiar.connect(_copiar)
+	inspetor.pedido_recortar.connect(_recortar)
+	inspetor.pedido_apagar_trecho.connect(_apagar_trecho)
+	inspetor.pedido_salvar_modulo.connect(_salvar_modulo)
 	campo_nome.text_submitted.connect(func(_texto: String) -> void: campo_nome.release_focus())
 	campo_nome.focus_exited.connect(_renomear_fase)
 	%BotaoMenu.pressed.connect(_confirmar_se_modificado.bind(Fases.abrir_menu))
@@ -162,6 +194,8 @@ func _carregar(nova: Fase) -> void:
 	fase.process_mode = Node.PROCESS_MODE_DISABLED
 	terreno = fase.terreno
 	campo_nome.text = fase.nome
+	_bioma_aplicado = -1
+	_aplicar_ambiente()
 	_caixas.clear()
 	_aplicar_visao()
 	_selecionar(null)
@@ -339,6 +373,19 @@ func _validar() -> Dictionary:
 			if graveto and (passaro as Passaro).guarda(graveto.global_position) or (passaro as Passaro).bloqueia_passagem:
 				avisos.append("Um passarinho guarda o graveto ou bloqueia o caminho, mas Latir está desligado.")
 				break
+	if fase.frio and fase.todos(Fogueira).is_empty() and fase.todos(Celeiro).is_empty():
+		avisos.append("Frio ligado, mas não há Fogueira nem Celeiro para o cachorro se esquentar.")
+	var comuns := fase.todos(Graveto).filter(func(g: ObjetoFase) -> bool: return not (g as Graveto).lendario).size()
+	var pedidos := 0
+	for fogueira in fase.todos(Fogueira):
+		pedidos += (fogueira as Fogueira).gravetos_para_acender
+	if pedidos > comuns:
+		avisos.append("As fogueiras pedem %d graveto(s) para acender, mas a fase só tem %d graveto(s) comum(ns)." % [pedidos, comuns])
+	var tem_neve := not terreno.get_used_cells_by_item(Tiles.NEVE_FOFA).is_empty() \
+		or not terreno.get_used_cells_by_item(Tiles.MONTE_DE_NEVE).is_empty() \
+		or not terreno.get_used_cells_by_item(Tiles.GELO).is_empty()
+	if tem_neve and fase.bioma != Biomas.NEVE:
+		avisos.append("Há neve ou gelo no terreno, mas o bioma da fase é Floresta.")
 	for bloco in fase.todos(Empurravel):
 		var local := terreno.to_local(bloco.global_position)
 		if absf(fposmod(local.x, 1.0) - 0.5) > 0.05 or absf(fposmod(local.z, 1.0) - 0.5) > 0.05:
@@ -421,6 +468,8 @@ func _restaurar_estado(estado: Dictionary) -> void:
 					_escolher_objeto(entrada)
 		Modo.SELECAO:
 			_escolher_selecao()
+		Modo.TRECHO, Modo.COLAR:
+			_escolher_trecho()
 		_:
 			_escolher_tile(estado.tile)
 	_marcar_botao_da_ferramenta()
@@ -429,9 +478,18 @@ func _restaurar_estado(estado: Dictionary) -> void:
 # --- Paleta ------------------------------------------------------------------------------
 
 func _montar_paleta() -> void:
+	var busca := LineEdit.new()
+	busca.placeholder_text = "Buscar na paleta…"
+	busca.clear_button_enabled = true
+	busca.text_changed.connect(_filtrar_paleta)
+	busca.text_submitted.connect(func(_texto: String) -> void: busca.release_focus())
+	paleta.add_child(busca)
 	var selecionar := _botao_paleta("Selecionar (Esc)", null)
 	selecionar.set_meta(&"ferramenta", "selecao")
 	selecionar.pressed.connect(_escolher_selecao)
+	var trecho := _botao_paleta("Trecho: copiar, colar, módulos (T)", null)
+	trecho.set_meta(&"ferramenta", "trecho")
+	trecho.pressed.connect(_escolher_trecho)
 	var ligar := _botao_paleta("Ligar mecanismos (L)", null)
 	ligar.set_meta(&"ferramenta", "ligar")
 	ligar.pressed.connect(_escolher_ligar)
@@ -442,6 +500,7 @@ func _montar_paleta() -> void:
 		var botao := _botao_paleta(definicao.nome, icones.icone_tile(biblioteca, definicao.id))
 		botao.set_meta(&"ferramenta", "tile_%d" % definicao.id)
 		botao.pressed.connect(_escolher_tile.bind(definicao.id))
+		_botoes_tile[definicao.id] = botao
 
 	var categoria := ""
 	for entrada in _catalogo:
@@ -452,13 +511,74 @@ func _montar_paleta() -> void:
 		var botao := _botao_paleta(entrada.nome, icones.icone(amostra))
 		botao.set_meta(&"ferramenta", entrada.caminho)
 		botao.pressed.connect(_escolher_objeto.bind(entrada))
+	_montar_modulos()
 
 
-func _cabecalho(texto: String) -> void:
+## Seção "Módulos" no fim da paleta: um botão por módulo salvo (clicar começa a colar).
+func _montar_modulos() -> void:
+	for item in _itens_modulos:
+		item.queue_free()
+	_itens_modulos.clear()
+	_itens_modulos.append(_cabecalho("Módulos"))
+	var lista := Modulos.listar()
+	if lista.is_empty():
+		var dica := Label.new()
+		dica.text = "Nenhum ainda: marque um trecho (T) e salve como módulo."
+		dica.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		dica.add_theme_font_size_override("font_size", 12)
+		dica.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+		paleta.add_child(dica)
+		_itens_modulos.append(dica)
+	for caminho in lista:
+		var botao := _botao_paleta("▦ " + Modulos.nome(caminho), null)
+		botao.set_meta(&"ferramenta", "modulo:" + caminho)
+		botao.tooltip_text = caminho
+		botao.pressed.connect(_colar_modulo.bind(caminho))
+		_itens_modulos.append(botao)
+	_filtrar_paleta(_texto_busca())
+
+
+func _texto_busca() -> String:
+	return (paleta.get_child(0) as LineEdit).text if paleta.get_child_count() > 0 else ""
+
+
+## Mostra só os botões cujo nome tem o texto buscado (e os títulos das seções com algum botão).
+func _filtrar_paleta(texto: String) -> void:
+	var busca := _sem_acento(texto.strip_edges().to_lower())
+	var titulo: Label = null
+	var algum := false
+	for filho in paleta.get_children():
+		if filho is LineEdit:
+			continue
+		if filho is Label and not (filho as Label).autowrap_mode:
+			if titulo:
+				titulo.visible = algum or busca.is_empty()
+			titulo = filho
+			algum = false
+		elif filho is Button:
+			var mostra := busca.is_empty() or busca in _sem_acento((filho as Button).text.to_lower())
+			(filho as Button).visible = mostra
+			algum = algum or mostra
+		else:
+			(filho as Control).visible = busca.is_empty()
+	if titulo:
+		titulo.visible = algum or busca.is_empty()
+
+
+static func _sem_acento(texto: String) -> String:
+	var trocas := {"á": "a", "à": "a", "â": "a", "ã": "a", "é": "e", "ê": "e", "í": "i",
+		"ó": "o", "ô": "o", "õ": "o", "ú": "u", "ç": "c"}
+	for letra in trocas:
+		texto = texto.replace(letra, trocas[letra])
+	return texto
+
+
+func _cabecalho(texto: String) -> Label:
 	var rotulo := Label.new()
 	rotulo.text = texto
 	rotulo.add_theme_color_override("font_color", Color(1.0, 0.85, 0.5))
 	paleta.add_child(rotulo)
+	return rotulo
 
 
 func _botao_paleta(texto: String, icone: Texture2D) -> Button:
@@ -483,11 +603,16 @@ func _marcar_botao_da_ferramenta() -> void:
 			chave = entrada_objeto.get("caminho", "")
 		Modo.LIGAR:
 			chave = "ligar"
+		Modo.TRECHO:
+			chave = "trecho"
+		Modo.COLAR:
+			chave = "modulo:" + _modulo_colando if not _modulo_colando.is_empty() else "trecho"
 	for botao in _botoes_paleta.get_buttons():
 		botao.set_pressed_no_signal(botao.get_meta(&"ferramenta") == chave)
 
 
 func _escolher_selecao() -> void:
+	_sair_do_trecho()
 	modo = Modo.SELECAO
 	ligar_origem = null
 	_trocar_fantasma(null)
@@ -496,6 +621,7 @@ func _escolher_selecao() -> void:
 
 
 func _escolher_ligar() -> void:
+	_sair_do_trecho()
 	modo = Modo.LIGAR
 	ligar_origem = null
 	_trocar_fantasma(null)
@@ -504,6 +630,7 @@ func _escolher_ligar() -> void:
 
 
 func _escolher_tile(id: int) -> void:
+	_sair_do_trecho()
 	modo = Modo.TERRENO
 	ligar_origem = null
 	tile_atual = id
@@ -514,6 +641,7 @@ func _escolher_tile(id: int) -> void:
 
 
 func _escolher_objeto(entrada: Dictionary) -> void:
+	_sair_do_trecho()
 	modo = Modo.OBJETO
 	ligar_origem = null
 	entrada_objeto = entrada
@@ -522,6 +650,30 @@ func _escolher_objeto(entrada: Dictionary) -> void:
 	_cor_livre_no_fantasma()
 	_marcar_botao_da_ferramenta()
 	_atualizar_status()
+
+
+## Ferramenta Trecho: marcar um retângulo do mapa.
+func _escolher_trecho() -> void:
+	_sair_do_trecho(false)
+	modo = Modo.TRECHO
+	ligar_origem = null
+	_trocar_fantasma(null)
+	selecionado = null
+	_mostrar_painel_do_trecho()
+	_marcar_botao_da_ferramenta()
+	_atualizar_status()
+
+
+## Saindo da ferramenta Trecho (ou da colagem): some a prévia; `desmarcar` tira o retângulo.
+func _sair_do_trecho(desmarcar := true) -> void:
+	if _previa:
+		_previa.queue_free()
+		_previa = null
+	colagem = null
+	_modulo_colando = ""
+	_marcando_trecho = false
+	if desmarcar and tem_trecho:
+		tem_trecho = false
 
 
 func _trocar_fantasma(cena: PackedScene) -> void:
@@ -544,6 +696,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().gui_release_focus()
 	if event.is_action_pressed("alternar_editor"):
 		_testar()
+	elif event.is_action_pressed("editor_copiar"):
+		_copiar()
+	elif event.is_action_pressed("editor_recortar"):
+		_recortar()
+	elif event.is_action_pressed("editor_colar"):
+		_comecar_colagem(Fases.area_transferencia as Trecho)
+	elif event.is_action_pressed("editor_trecho"):
+		_escolher_trecho()
 	elif event.is_action_pressed("editor_salvar"):
 		_salvar()
 	elif event.is_action_pressed("editor_refazer"):
@@ -553,11 +713,18 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("editor_duplicar"):
 		_duplicar_selecionado()
 	elif event.is_action_pressed("editor_apagar"):
-		_apagar_selecionado()
+		if modo == Modo.TRECHO and tem_trecho:
+			_apagar_trecho()
+		else:
+			_apagar_selecionado()
 	elif event.is_action_pressed("liberar_mouse"):
 		# Esc: fecha a ajuda; senão vai para a ferramenta Selecionar; já nela, desmarca.
 		if ajuda.visible:
 			ajuda.hide()
+		elif modo == Modo.COLAR:
+			_escolher_trecho()
+		elif modo == Modo.TRECHO and tem_trecho:
+			_marcar_trecho(false)
 		elif modo == Modo.LIGAR and ligar_origem:
 			ligar_origem = null
 			_atualizar_status()
@@ -577,10 +744,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		var inicio := fase.primeiro(InicioCachorro)
 		camera_editor.foco = inicio.global_position if inicio else Vector3.ZERO
 	elif event.is_action_pressed("editor_camada_subir"):
-		camada += 1
+		if modo == Modo.COLAR:
+			_desnivel_colagem += 1
+		else:
+			camada += 1
 		_atualizar_status()
 	elif event.is_action_pressed("editor_camada_descer"):
-		camada -= 1
+		if modo == Modo.COLAR:
+			_desnivel_colagem -= 1
+		else:
+			camada -= 1
 		_atualizar_status()
 	elif event.is_action_pressed("editor_girar_esquerda"):
 		_girar(1)
@@ -614,7 +787,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(_delta: float) -> void:
 	# Botão solto em cima de um painel: o evento não chega aqui, então confere o estado.
-	if (_pincel != "" or _arrastando_objeto or _espalhando) \
+	if (_pincel != "" or _arrastando_objeto or _espalhando or _marcando_trecho) \
 			and not Input.is_action_pressed("editor_acao") and not Input.is_action_pressed("editor_remover"):
 		_terminar_arrastos()
 	_orbitando = _orbitando and Input.is_action_pressed("editor_orbitar")
@@ -626,6 +799,14 @@ func _process(_delta: float) -> void:
 		_continuar_arrasto_objeto()
 	if _espalhando and alvo_valido:
 		_continuar_espalhar()
+	if _marcando_trecho and alvo_valido:
+		trecho_fim = coluna_alvo()
+	if modo == Modo.COLAR and colagem and alvo_valido:
+		var coluna := coluna_alvo()
+		origem_colagem = Vector3i(coluna.x - colagem.largura / 2, _desnivel_colagem, coluna.y - colagem.profundidade / 2)
+		_previa.position = Vector3(origem_colagem)
+	if _previa:
+		_previa.visible = modo == Modo.COLAR and alvo_valido
 	if fantasma:
 		fantasma.visible = modo == Modo.OBJETO and alvo_valido
 		if fantasma.visible:
@@ -656,8 +837,17 @@ func _acao_principal() -> void:
 	if not alvo_valido:
 		return
 	match modo:
+		Modo.TRECHO:
+			_marcando_trecho = true
+			trecho_inicio = coluna_alvo()
+			trecho_fim = trecho_inicio
+			tem_trecho = true
+		Modo.COLAR:
+			_colar_aqui()
 		Modo.TERRENO:
-			if acao_do_cursor() == "pintar":
+			if Input.is_action_pressed("editor_mod_alt"):
+				_balde()
+			elif acao_do_cursor() == "pintar":
 				if atingiu_bloco:
 					_comecar_pincel("pintar", celula_atingida.y)
 			else:
@@ -678,7 +868,11 @@ func _acao_principal() -> void:
 
 
 func _acao_remover() -> void:
-	if modo == Modo.TERRENO:
+	if modo == Modo.TRECHO:
+		_marcar_trecho(false)
+	elif modo == Modo.COLAR:
+		_escolher_trecho()
+	elif modo == Modo.TERRENO:
 		if atingiu_bloco:
 			_comecar_pincel("apagar", celula_atingida.y)
 	elif modo == Modo.LIGAR:
@@ -689,6 +883,9 @@ func _acao_remover() -> void:
 
 
 func _terminar_arrastos() -> void:
+	if _marcando_trecho:
+		_marcando_trecho = false
+		_marcar_trecho(true)
 	if _pincel != "":
 		_terminar_pincel()
 	if _espalhando:
@@ -704,7 +901,10 @@ func _terminar_arrastos() -> void:
 
 func _girar(sentido: int) -> void:
 	var passo := 15.0 if Input.is_action_pressed("editor_mod_shift") else 45.0
-	if modo == Modo.TERRENO:
+	if modo == Modo.COLAR:
+		_giro_colagem = posmod(_giro_colagem + sentido, 4)
+		_preparar_colagem()
+	elif modo == Modo.TERRENO:
 		orientacao = posmod(orientacao + sentido, 4)
 	elif modo == Modo.OBJETO and fantasma:
 		fantasma.rotation.y += deg_to_rad(passo) * sentido
@@ -726,7 +926,7 @@ func _atualizar_alvo() -> void:
 	var origem := camera.project_ray_origin(mouse)
 	var direcao := camera.project_ray_normal(mouse)
 
-	if modo != Modo.TERRENO:
+	if modo in [Modo.SELECAO, Modo.OBJETO, Modo.LIGAR]:
 		objeto_sob_mouse = _objeto_no_raio(origem, direcao)
 		if modo == Modo.LIGAR and objeto_sob_mouse and objeto_sob_mouse.papel_no_canal() == "":
 			objeto_sob_mouse = null
@@ -1091,8 +1291,8 @@ func _alterar_propriedade(alvo: Object, propriedade: StringName, valor: Variant)
 	undo.commit_action()
 	if alvo == fase and propriedade == &"nome":
 		campo_nome.text = fase.nome
-	elif alvo == fase and propriedade == &"raca":
-		# A dica das habilidades nativas depende da raça: remonta o painel.
+	elif alvo == fase and propriedade in [&"raca", &"frio"]:
+		# A dica das habilidades nativas depende da raça (e o frio mostra mais campos): remonta.
 		inspetor.mostrar.call_deferred(fase)
 
 
@@ -1106,6 +1306,240 @@ func _selecionar(objeto: ObjetoFase) -> void:
 	if not is_node_ready():
 		return
 	inspetor.mostrar(objeto if objeto else fase)
+
+
+# --- Trecho, colar e módulos --------------------------------------------------------------
+
+## Coluna (X, Z) sob o mouse: a do bloco apontado ou a do plano da camada.
+func coluna_alvo() -> Vector2i:
+	if atingiu_bloco:
+		return Vector2i(celula_atingida.x, celula_atingida.z)
+	return Vector2i(celula_alvo.x, celula_alvo.z)
+
+
+## Cantos do trecho marcado: [mínimo, máximo] (inclusive).
+func cantos_do_trecho() -> Array[Vector2i]:
+	return [trecho_inicio.min(trecho_fim), trecho_inicio.max(trecho_fim)]
+
+
+## Terminou de marcar (ou desmarcou): as camadas ocupadas e o painel da direita.
+func _marcar_trecho(marcado: bool) -> void:
+	tem_trecho = marcado
+	if marcado:
+		var cantos := cantos_do_trecho()
+		camadas_trecho = Trecho.da_fase(fase, cantos[0], cantos[1]).camadas()
+	_mostrar_painel_do_trecho()
+	_atualizar_status()
+
+
+func _mostrar_painel_do_trecho() -> void:
+	if not tem_trecho:
+		inspetor.mostrar_trecho({})
+		return
+	var cantos := cantos_do_trecho()
+	var trecho := Trecho.da_fase(fase, cantos[0], cantos[1])
+	inspetor.mostrar_trecho({largura = trecho.largura, profundidade = trecho.profundidade,
+		blocos = trecho.celulas.size(), objetos = trecho.objetos.size()})
+
+
+## Ctrl+C: copia o trecho marcado (ferramenta Trecho) ou o objeto selecionado.
+func _copiar() -> bool:
+	var trecho: Trecho = null
+	if modo == Modo.TRECHO and tem_trecho:
+		var cantos := cantos_do_trecho()
+		trecho = Trecho.da_fase(fase, cantos[0], cantos[1])
+	elif selecionado and not selecionado.scene_file_path.is_empty():
+		trecho = Trecho.do_objeto(selecionado)
+	if trecho == null or trecho.vazio():
+		_avisar("Nada para copiar: marque um trecho (T) ou selecione um objeto")
+		return false
+	Fases.area_transferencia = trecho
+	_avisar("Copiado: %d × %d (%d blocos, %d objetos) — Ctrl+V cola, também em outra fase" % [
+		trecho.largura, trecho.profundidade, trecho.celulas.size(), trecho.objetos.size()], 3.5)
+	return true
+
+
+## Ctrl+X: copia e apaga.
+func _recortar() -> void:
+	if modo == Modo.TRECHO and tem_trecho:
+		if _copiar():
+			_apagar_trecho()
+	elif selecionado:
+		if _copiar():
+			_apagar_selecionado()
+
+
+## Apaga todos os blocos (todas as camadas) e objetos do trecho marcado, numa ação só.
+func _apagar_trecho() -> void:
+	if not tem_trecho:
+		return
+	var cantos := cantos_do_trecho()
+	var antes := []
+	var depois := []
+	for celula in terreno.get_used_cells():
+		if celula.x >= cantos[0].x and celula.x <= cantos[1].x and celula.z >= cantos[0].y and celula.z <= cantos[1].y:
+			antes.append([celula, terreno.get_cell_item(celula), terreno.get_cell_item_orientation(celula)])
+			depois.append([celula, GridMap.INVALID_CELL_ITEM, 0])
+	var removidos: Array[ObjetoFase] = []
+	for objeto in fase.lista_objetos():
+		var p := objeto.position
+		if p.x >= cantos[0].x and p.x < cantos[1].x + 1 and p.z >= cantos[0].y and p.z < cantos[1].y + 1:
+			removidos.append(objeto)
+	if antes.is_empty() and removidos.is_empty():
+		return
+	undo.create_action("Apagar trecho")
+	undo.add_do_method(_aplicar_celulas.bind(depois))
+	undo.add_undo_method(_aplicar_celulas.bind(antes))
+	for objeto in removidos:
+		undo.add_do_method(_retirar.bind(objeto))
+		undo.add_undo_method(_readicionar.bind(objeto))
+		undo.add_undo_reference(objeto)
+	undo.commit_action()
+	_mostrar_painel_do_trecho()
+
+
+## Começa a colar `trecho` (Ctrl+V ou um módulo): a prévia segue o mouse; clique cola.
+func _comecar_colagem(trecho: Trecho, modulo := "") -> void:
+	if trecho == null or trecho.vazio():
+		_avisar("Nada copiado ainda: marque um trecho (T) e Ctrl+C")
+		return
+	_sair_do_trecho(false)
+	_trocar_fantasma(null)
+	selecionado = null
+	modo = Modo.COLAR
+	_colagem_base = trecho
+	_modulo_colando = modulo
+	_giro_colagem = 0
+	_desnivel_colagem = 0
+	_preparar_colagem()
+	inspetor.mostrar_colagem({largura = trecho.largura, profundidade = trecho.profundidade,
+		blocos = trecho.celulas.size(), objetos = trecho.objetos.size(), modulo = Modulos.nome(modulo) if modulo else ""})
+	_marcar_botao_da_ferramenta()
+	_atualizar_status()
+
+
+func _colar_modulo(caminho: String) -> void:
+	var trecho := Modulos.carregar(caminho)
+	if trecho == null:
+		_avisar("Não consegui abrir o módulo %s" % caminho.get_file())
+		return
+	_comecar_colagem(trecho, caminho)
+
+
+## Gira o trecho e remonta a prévia: um GridMap com os blocos e fantasmas dos objetos.
+func _preparar_colagem() -> void:
+	colagem = _colagem_base.girado(_giro_colagem)
+	if _previa:
+		_previa.queue_free()
+	_previa = Node3D.new()
+	_previa.name = "PreviaColagem"
+	add_child(_previa)
+	var grade := GridMap.new()
+	grade.mesh_library = terreno.mesh_library
+	grade.cell_size = terreno.cell_size
+	grade.collision_layer = 0
+	grade.collision_mask = 0
+	_previa.add_child(grade)
+	for dados in colagem.celulas:
+		grade.set_cell_item(dados[0], dados[1], grade.get_orthogonal_index_from_basis(dados[2]))
+	for dados in colagem.objetos:
+		var cena := load(dados.cena) as PackedScene
+		if cena == null:
+			continue
+		var fantasma_objeto := cena.instantiate() as ObjetoFase
+		fantasma_objeto.process_mode = Node.PROCESS_MODE_DISABLED
+		_previa.add_child(fantasma_objeto)
+		fantasma_objeto.transform = dados.transform
+		for nome in dados.propriedades:
+			fantasma_objeto.set(nome, dados.propriedades[nome])
+	_previa.visible = false
+
+
+## Cola onde está a prévia (numa ação só, para desfazer).
+func _colar_aqui() -> void:
+	if colagem == null:
+		return
+	var mudancas := colagem.aplicar_em(fase, origem_colagem)
+	undo.create_action("Colar trecho")
+	undo.add_do_method(_aplicar_celulas.bind(mudancas.depois))
+	undo.add_undo_method(_aplicar_celulas.bind(mudancas.antes))
+	for objeto: ObjetoFase in mudancas.objetos:
+		undo.add_do_method(_readicionar.bind(objeto))
+		undo.add_undo_method(_retirar.bind(objeto))
+		undo.add_do_reference(objeto)
+	undo.commit_action(false)
+
+
+## Salva o trecho marcado como módulo (scenes/modulos/<nome>.tscn). Nome repetido: confirma.
+func _salvar_modulo(nome_modulo: String, confirmado := false) -> void:
+	if not tem_trecho:
+		return
+	var arquivo := _nome_de_arquivo(nome_modulo)
+	if arquivo.is_empty():
+		_avisar("Dê um nome ao módulo")
+		return
+	var destino := Modulos.pasta_para_salvar() + arquivo + ".tscn"
+	if not confirmado and FileAccess.file_exists(destino):
+		confirmar.dialog_text = "Já existe um módulo \"%s\". Substituir?" % arquivo
+		for conexao in confirmar.confirmed.get_connections():
+			confirmar.confirmed.disconnect(conexao.callable)
+		confirmar.confirmed.connect(_salvar_modulo.bind(nome_modulo, true), CONNECT_ONE_SHOT)
+		confirmar.popup_centered()
+		return
+	var cantos := cantos_do_trecho()
+	var trecho := Trecho.da_fase(fase, cantos[0], cantos[1])
+	var salvo := Modulos.salvar(trecho, nome_modulo.strip_edges(), arquivo, fase.bioma)
+	if salvo.is_empty():
+		_avisar("Não consegui salvar o módulo")
+		return
+	_montar_modulos()
+	_avisar("Módulo salvo: %s — está na paleta, em Módulos" % salvo, 3.5)
+
+
+## Balde (Alt + clique no terreno): troca pelo tile escolhido a mancha inteira de blocos iguais
+## ligados ao apontado, na mesma camada. Apontando para o vazio, preenche o vazio da camada
+## (limitado ao retângulo do terreno que já existe).
+func _balde() -> void:
+	var inicio := celula_atingida if atingiu_bloco else celula_alvo
+	var item_alvo := terreno.get_cell_item(inicio) if atingiu_bloco else GridMap.INVALID_CELL_ITEM
+	var orientacao_nova := terreno.get_orthogonal_index_from_basis(Basis(Vector3.UP, orientacao * PI * 0.5))
+	if item_alvo == tile_atual:
+		return
+	var limite_min := Vector2i(1 << 30, 1 << 30)
+	var limite_max := -limite_min
+	for celula in terreno.get_used_cells():
+		limite_min = limite_min.min(Vector2i(celula.x, celula.z))
+		limite_max = limite_max.max(Vector2i(celula.x, celula.z))
+	var visitadas := {inicio: true}
+	var fila: Array[Vector3i] = [inicio]
+	var mancha: Array[Vector3i] = []
+	while not fila.is_empty():
+		var celula: Vector3i = fila.pop_back()
+		if terreno.get_cell_item(celula) != item_alvo:
+			continue
+		if celula.x < limite_min.x or celula.x > limite_max.x or celula.z < limite_min.y or celula.z > limite_max.y:
+			continue
+		mancha.append(celula)
+		if mancha.size() > BALDE_MAXIMO:
+			_avisar("A mancha passa de %d blocos — use o retângulo (Ctrl + arrastar)" % BALDE_MAXIMO)
+			return
+		for passo in [Vector3i.LEFT, Vector3i.RIGHT, Vector3i.FORWARD, Vector3i.BACK]:
+			var vizinha: Vector3i = celula + passo
+			if not visitadas.has(vizinha):
+				visitadas[vizinha] = true
+				fila.append(vizinha)
+	if mancha.is_empty():
+		return
+	var antes := []
+	var depois := []
+	for celula in mancha:
+		antes.append([celula, item_alvo, terreno.get_cell_item_orientation(celula)])
+		depois.append([celula, tile_atual, orientacao_nova])
+	undo.create_action("Balde: %d bloco(s)" % mancha.size())
+	undo.add_do_method(_aplicar_celulas.bind(depois))
+	undo.add_undo_method(_aplicar_celulas.bind(antes))
+	undo.commit_action()
+	_avisar("Balde: %d bloco(s)" % mancha.size())
 
 
 # --- Mecanismos (ferramenta Ligar) --------------------------------------------------------
@@ -1214,6 +1648,8 @@ func _avisos_de_mecanismos() -> PackedStringArray:
 	var acionam := {}
 	var reagem := {}
 	for objeto in mecanismos():
+		if objeto.canal_opcional() and _grupo(objeto).is_empty():
+			continue
 		var canal: int = objeto.get(&"canal")
 		var lista: Dictionary = acionam if objeto.papel_no_canal() == "aciona" else reagem
 		if not lista.has(canal):
@@ -1261,8 +1697,27 @@ func _aplicar_visao() -> void:
 
 # --- Interface ---------------------------------------------------------------------------
 
+## Céu e luz do bioma da fase (muda junto com a propriedade Bioma, inclusive ao desfazer).
+func _aplicar_ambiente() -> void:
+	if fase and fase.bioma != _bioma_aplicado:
+		_bioma_aplicado = fase.bioma
+		Biomas.aplicar_ambiente($Ambiente, fase.bioma)
+		_atualizar_icones_dos_tiles()
+
+
+## Os ícones dos tiles na paleta com as texturas do bioma da fase (grama nevada na neve...).
+func _atualizar_icones_dos_tiles() -> void:
+	if fase == null or fase.bioma == _bioma_icones or _botoes_tile.is_empty():
+		return
+	_bioma_icones = fase.bioma
+	var biblioteca: MeshLibrary = load(Tiles.biblioteca_do_bioma(fase.bioma))
+	for id: int in _botoes_tile:
+		(_botoes_tile[id] as Button).icon = icones.icone_tile(biblioteca, id)
+
+
 func _on_versao_mudou() -> void:
 	modificado = true
+	_aplicar_ambiente()
 	_caixas.clear()
 	inspetor.atualizar_valores()
 	# Objeto recolocado (desfazer "Apagar") ou com a visibilidade trocada tem de seguir a
@@ -1280,6 +1735,17 @@ func _atualizar_status() -> void:
 			ferramenta = "Terreno: %s (giro %d°)" % [Tiles.definicao(tile_atual).nome, orientacao * 90]
 		Modo.OBJETO:
 			ferramenta = "Objeto: %s" % entrada_objeto.get("nome", "")
+		Modo.TRECHO:
+			if tem_trecho:
+				var cantos := cantos_do_trecho()
+				ferramenta = "Trecho %d × %d: Ctrl+C copiar, Ctrl+X recortar, Del apagar, direito desmarca" % [
+					cantos[1].x - cantos[0].x + 1, cantos[1].y - cantos[0].y + 1]
+			else:
+				ferramenta = "Trecho: arraste no mapa para marcar (Ctrl+V cola o que foi copiado)"
+		Modo.COLAR:
+			ferramenta = "Colar%s: clique cola, Q/E gira (%d°), PgUp/PgDn altura (%+d), Esc sai" % [
+				" " + Modulos.nome(_modulo_colando) if not _modulo_colando.is_empty() else "",
+				_giro_colagem * 90, _desnivel_colagem]
 		Modo.LIGAR:
 			if ligar_origem:
 				ferramenta = "Ligar: %s (%s) → clique no que ligar (Shift: continuar; Esc: cancelar)" % [

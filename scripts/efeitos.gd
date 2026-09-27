@@ -4,6 +4,7 @@ class_name Efeitos
 
 static var _material_terra: StandardMaterial3D
 static var _material_onda: StandardMaterial3D
+static var _material_vapor: StandardMaterial3D
 
 
 ## Torrões de terra saltando de `posicao` (cavar).
@@ -70,3 +71,35 @@ static func latido(pai: Node, posicao: Vector3) -> void:
 	tween_onda.tween_property(onda, "scale", Vector3.ONE * 9.0, 0.45)
 	tween_onda.tween_property(onda.material_override, "albedo_color:a", 0.0, 0.45)
 	tween_onda.chain().tween_callback(onda.queue_free)
+
+
+## Vapor branco subindo de `posicao` (a neve derretendo perto do fogo).
+static func vapor(pai: Node, posicao: Vector3) -> void:
+	if _material_vapor == null:
+		_material_vapor = StandardMaterial3D.new()
+		_material_vapor.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_material_vapor.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_material_vapor.albedo_color = Color(0.95, 0.97, 1.0, 0.7)
+	var particulas := CPUParticles3D.new()
+	var malha := BoxMesh.new()
+	malha.size = Vector3.ONE * 0.12
+	malha.material = _material_vapor
+	particulas.mesh = malha
+	particulas.one_shot = true
+	particulas.amount = 8
+	particulas.lifetime = 0.9
+	particulas.explosiveness = 0.8
+	particulas.direction = Vector3.UP
+	particulas.spread = 25.0
+	particulas.gravity = Vector3(0, 0.6, 0)
+	particulas.initial_velocity_min = 0.4
+	particulas.initial_velocity_max = 1.0
+	particulas.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	particulas.emission_box_extents = Vector3(0.4, 0.1, 0.4)
+	particulas.scale_amount_min = 0.6
+	particulas.scale_amount_max = 1.4
+	particulas.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pai.add_child(particulas)
+	particulas.global_position = posicao
+	particulas.emitting = true
+	particulas.finished.connect(particulas.queue_free)

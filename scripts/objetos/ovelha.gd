@@ -4,8 +4,10 @@ extends ObjetoFase
 ## Ovelha: pasta andando à toa e foge do cachorro que chega perto. Um latido espanta de vez
 ## (corre para longe do latido). As ovelhas andam juntas (se aproximam das vizinhas quando
 ## fogem) e não entram na água funda nem pulam de barrancos.
-## Dentro de um Cercado ela se acalma e não sai mais — nas fases de pastoreio, o objetivo
-## é levar todas para dentro.
+## Dentro de um abrigo (Cercado ou Celeiro) ela se acalma e não sai mais — nas fases de
+## pastoreio, o objetivo é levar todas para dentro.
+## De vez em quando ela bale ("Béé!", com som): longe do cachorro, é assim que se acha uma ovelha
+## perdida num mapa grande.
 
 ## Distância (m) em que a ovelha começa a fugir do cachorro.
 const RAIO_MEDO := 2.6
@@ -13,6 +15,8 @@ const VELOCIDADE_FUGA := 2.6
 const VELOCIDADE_ESPANTO := 3.8
 const VELOCIDADE_PASTAR := 0.45
 const DURACAO_ESPANTO := 0.9
+## Intervalo (s) entre balidos, sorteado nesta faixa.
+const INTERVALO_BALIDO := Vector2(7.0, 15.0)
 
 ## Aparência (a 7 é a ovelha negra).
 @export_range(0, 7) var variante := 0:
@@ -39,6 +43,7 @@ var _lado_desvio := 0.0
 ## Último lugar firme onde esteve (se mesmo assim cair, volta para ele).
 var _ponto_seguro := Vector3.ZERO
 var _gravidade: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+var _proximo_balido := 0.0
 
 
 func nome_no_editor() -> String:
@@ -71,6 +76,7 @@ func _ready() -> void:
 	_fase = no as Fase
 	_tempo_pastar = randf_range(0.5, 2.5)
 	_ponto_seguro = global_position
+	_proximo_balido = randf_range(2.0, INTERVALO_BALIDO.y)
 
 
 func _atualizar_modelo() -> void:
@@ -91,6 +97,28 @@ func ao_ouvir_latido(origem: Vector3) -> void:
 		longe = Vector3.RIGHT
 	_direcao_espanto = longe.normalized()
 	_espanto = DURACAO_ESPANTO
+	balir()
+
+
+## "Béé!": o som (tom pela variante: a ovelha negra é mais grave) e o balão subindo.
+func balir() -> void:
+	_proximo_balido = randf_range(INTERVALO_BALIDO.x, INTERVALO_BALIDO.y)
+	var tom := 0.85 if variante == 7 else 0.95 + variante * 0.03
+	Som.balido(get_parent(), global_position + Vector3.UP * 0.6, tom)
+	var texto := Label3D.new()
+	texto.text = "Béé!"
+	texto.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	texto.font_size = 44
+	texto.outline_size = 12
+	texto.pixel_size = 0.008
+	texto.modulate = Color(1.0, 1.0, 1.0)
+	texto.no_depth_test = true
+	get_parent().add_child(texto)
+	texto.global_position = global_position + Vector3.UP * 0.9
+	var tween := texto.create_tween().set_parallel()
+	tween.tween_property(texto, "global_position:y", texto.global_position.y + 0.6, 1.0)
+	tween.tween_property(texto, "modulate:a", 0.0, 0.6).set_delay(0.5)
+	tween.chain().tween_callback(texto.queue_free)
 
 
 func _physics_process(delta: float) -> void:
@@ -98,6 +126,14 @@ func _physics_process(delta: float) -> void:
 		return
 	if _cachorro == null:
 		_cachorro = get_tree().get_first_node_in_group(&"cachorro") as Node3D
+	# Longe do cachorro e ainda solta, bale de vez em quando (para ser achada).
+	if not guardada:
+		_proximo_balido -= delta
+		if _proximo_balido <= 0.0:
+			if _cachorro == null or _cachorro.global_position.distance_to(global_position) > 5.0:
+				balir()
+			else:
+				_proximo_balido = randf_range(INTERVALO_BALIDO.x, INTERVALO_BALIDO.y)
 
 	var desejo := Vector3.ZERO
 	var velocidade := 0.0
@@ -138,6 +174,9 @@ func _physics_process(delta: float) -> void:
 		elif fugindo and distancia < 3.5:
 			desejo += ate.normalized() * 0.2
 
+	# Neve fofa e água rasa atrasam as ovelhas também.
+	if _fase and corpo.is_on_floor():
+		velocidade *= Tiles.definicao(_fase.tile_em(corpo.global_position + Vector3.DOWN * 0.05)).get("lentidao", 1.0)
 	var horizontal := Vector3.ZERO
 	if desejo.length() > 0.05:
 		horizontal = _evitar_perigo(desejo.normalized() * velocidade)
@@ -206,8 +245,8 @@ func _seguro(velocidade: Vector3) -> bool:
 		return false
 	if guardada:
 		var dentro := false
-		for cercado in get_tree().get_nodes_in_group(&"cercados"):
-			if (cercado as Cercado).contem(frente):
+		for abrigo in get_tree().get_nodes_in_group(&"abrigos"):
+			if abrigo.contem(frente):
 				dentro = true
 		if not dentro:
 			return false

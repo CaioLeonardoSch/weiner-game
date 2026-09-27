@@ -259,7 +259,7 @@ func _atualizar_enterrado() -> void:
 	if enterrado and _montinho == null:
 		_montinho = MeshInstance3D.new()
 		_montinho.name = "Montinho"
-		_montinho.mesh = _malha_montinho(lendario)
+		_montinho.mesh = _malha_montinho(lendario, bioma_da_fase() == Biomas.NEVE)
 		add_child(_montinho)
 	elif not enterrado and _montinho:
 		_montinho.queue_free()
@@ -272,15 +272,21 @@ func _atualizar_enterrado() -> void:
 			remove_from_group(&"enterrados")
 
 
-## Montinho de terra com a pontinha do graveto de fora (dourada, no lendário).
-static func _malha_montinho(dourado: bool) -> ArrayMesh:
+func ao_mudar_bioma() -> void:
+	if _montinho:
+		_montinho.mesh = _malha_montinho(lendario, bioma_da_fase() == Biomas.NEVE)
+
+
+## Montinho de terra (ou de neve) com a pontinha do graveto de fora (dourada, no lendário).
+static func _malha_montinho(dourado: bool, de_neve := false) -> ArrayMesh:
 	var voxels := {}
 	for x in range(-5, 5):
 		for z in range(-5, 5):
 			var r := Vector2(x + 0.5, z + 0.5).length()
 			var altura := int(3.2 - r * 0.6)
 			for y in range(0, altura):
-				voxels[Vector3i(x, y, z)] = Color("7a5230").darkened(0.12 if (x * 3 + z + y) % 4 == 0 else 0.0)
+				var cor: Color = Biomas.CORES_NEVE[posmod(x * 3 + z + y, 3)] if de_neve else Color("7a5230")
+				voxels[Vector3i(x, y, z)] = cor.darkened(0.12 if (x * 3 + z + y) % 4 == 0 else 0.0)
 	var ponta := Color("e8b93c") if dourado else Color("8a6038")
 	for y in range(2, 6):
 		voxels[Vector3i(1 + y / 3, y, 0)] = ponta
@@ -300,6 +306,15 @@ func largar_do_bicho(posicao: Vector3, yaw: float) -> void:
 	com_bicho = null
 	global_transform = Transform3D(Basis(Vector3.UP, yaw + PI * 0.5), posicao + Vector3.UP * 0.08)
 	soltar()
+
+
+## Foi para a fogueira: some da fase (não pesa, não é pego, não é levado por bichos).
+func queimar() -> void:
+	ja_pego = true
+	for grupo in [&"pesos", &"com_acao", &"enterrados", &"passagens_estreitas"]:
+		remove_from_group(grupo)
+	hide()
+	queue_free()
 
 
 # --- Ponte ---------------------------------------------------------------------------------

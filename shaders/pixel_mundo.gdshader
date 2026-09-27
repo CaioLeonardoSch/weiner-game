@@ -21,6 +21,9 @@ uniform float texels_por_metro = 8.0;
 // Altura da franja (em texels); 0 desliga.
 uniform float franja_texels = 0.0;
 uniform bool usar_cor_vertice = false;
+// Cintilado (neve, gelo): uma fração pequena de texels bem claros, só no topo.
+uniform float fracao_brilho : hint_range(0.0, 0.3) = 0.0;
+uniform vec3 cor_brilho : source_color = vec3(1.0, 1.0, 1.0);
 
 varying vec3 pos_mundo;
 varying vec3 normal_mundo;
@@ -59,6 +62,9 @@ void fragment() {
 	nivel *= clamp(2.2 - tamanho_texel_na_tela, 0.0, 1.0);
 
 	vec3 cor = base * (1.0 + nivel * variacao);
+	if (topo && fracao_brilho > 0.0 && hash(texel + vec3(11.3, 5.1, 2.7)) < fracao_brilho) {
+		cor = mix(cor, cor_brilho, clamp(2.2 - tamanho_texel_na_tela, 0.0, 1.0));
+	}
 	if (usar_cor_vertice) {
 		cor *= COLOR.rgb;
 	}

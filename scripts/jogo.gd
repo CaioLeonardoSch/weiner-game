@@ -36,6 +36,10 @@ var rotulo_acao := Label.new()
 var _mirante: Mirante
 ## Fundo semitransparente do aviso (o rótulo `aviso` fica dentro dele).
 var aviso_painel := PanelContainer.new()
+## Flocos caindo em volta do cachorro (biomas com neve).
+var _neve_caindo: CPUParticles3D
+## Termômetro (fases com frio), no canto de baixo à direita.
+var indicador_calor := IndicadorCalor.new()
 
 ## Avisos: largura máxima e tamanhos de letra (curto e de uma linha = grande; senão, menor).
 const AVISO_LARGURA_MAXIMA := 720.0
@@ -70,6 +74,11 @@ func _ready() -> void:
 	rotulo_acao.add_theme_color_override("font_outline_color", Color.BLACK)
 	rotulo_acao.add_theme_constant_override("outline_size", 8)
 	$HUD/Area.add_child(rotulo_acao)
+	indicador_calor.cachorro = cachorro
+	indicador_calor.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 24)
+	indicador_calor.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	indicador_calor.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	$HUD/Area.add_child(indicador_calor)
 	_atualizar_dica()
 
 	var cena := Fases.cena_atual()
@@ -82,6 +91,10 @@ func _ready() -> void:
 		return
 	add_child(fase)
 	move_child(fase, 0)
+	Biomas.aplicar_ambiente($Ambiente, fase.bioma)
+	if Biomas.dados(fase.bioma).nevando:
+		_neve_caindo = Biomas.criar_neve_caindo()
+		add_child(_neve_caindo)
 	# Chão e floresta em volta, para monitores largos nunca mostrarem o fim do mundo.
 	var entorno := Entorno.new()
 	entorno.name = "Entorno"
@@ -95,6 +108,8 @@ func _ready() -> void:
 	cachorro.pode_pular = habilidades & Fase.HABILIDADE_PULAR != 0
 	cachorro.pode_cavar = habilidades & Fase.HABILIDADE_CAVAR != 0
 	cachorro.pode_latir = habilidades & Fase.HABILIDADE_LATIR != 0
+	cachorro.sente_frio = fase.frio
+	cachorro.tempo_de_frio = fase.tempo_de_frio
 	_atualizar_dica()
 	fase.preparar_isometrica()
 
@@ -109,6 +124,7 @@ func _ready() -> void:
 	camera_controller.configurar(cachorro)
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
 	cachorro.puxar_falhou.connect(_on_puxar_falhou)
+	cachorro.gelou.connect(func() -> void: mostrar_aviso("Brrr! Frio demais — de volta para perto do fogo", 3.0))
 	for bloco in fase.todos(Empurravel):
 		(bloco as Empurravel).voltou_ao_inicio.connect(
 			mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
@@ -127,6 +143,12 @@ func _preparar_objetivo() -> void:
 			("  %s: latir" % Teclas.nome(&"latir") if cachorro.pode_latir else "")))
 		um_graveto.boca_cheia.connect(func() -> void:
 			mostrar_aviso("Boca cheia! %s larga este graveto para pegar outro" % Teclas.nome(&"largar_graveto")))
+	for objeto in fase.todos(Fogueira):
+		var fogueira := objeto as Fogueira
+		fogueira.acendeu.connect(mostrar_aviso.bind("A fogueira acendeu! Perto do fogo é quentinho", 3.0))
+		fogueira.cresceu.connect(mostrar_aviso.bind("O fogo cresceu!"))
+		fogueira.recebeu.connect(func(_gravetos: int, faltam: int) -> void:
+			mostrar_aviso("Mais %d graveto%s para acender a fogueira" % [faltam, "" if faltam == 1 else "s"]))
 	objetivo.preparar(self)
 
 
@@ -165,6 +187,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
+	if _neve_caindo:
+		_neve_caindo.global_position = Vector3(cachorro.global_position.x, cachorro.global_position.y + 12.0,
+			cachorro.global_position.z)
 	if objetivo and not concluida:
 		objetivo.processar(delta)
 	_atualizar_rotulo_acao()
@@ -248,6 +273,31 @@ func _tentar_largar_graveto() -> void:
 		graveto.global_transform = Transform3D(Basis(Vector3.UP, yaw), ponto + Vector3.UP * 0.08)
 		graveto.soltar()
 
+	# Largado junto de uma fogueira, um graveto comum vai para o fogo.
+	if ponte == null:
+		for objeto in fase.todos(Fogueira):
+			var fogueira := objeto as Fogueira
+			if fogueira.aceita(graveto) and _plano(fogueira.global_position - graveto.global_position).length() < 1.3:
+				fogueira.receber_graveto(graveto)
+				break
+	_voltar_para_isometrica()
+
+
+## Entrega o graveto da boca a um objeto (F perto da fogueira): o objeto recebe o graveto
+## (`receber_graveto`) e a câmera volta para a isométrica, como ao largar.
+func entregar_graveto(destino: ObjetoFase) -> void:
+	if concluida or not cachorro.tem_graveto or camera_controller.estado != CameraController.Estado.TERCEIRA_PESSOA:
+		return
+	cachorro.entrada_bloqueada = true
+	var entregue := graveto
+	cachorro.largar_graveto()
+	entregue.reparent(fase.objetos)
+	destino.receber_graveto(entregue)
+	_voltar_para_isometrica()
+
+
+## Sem o graveto na boca: a câmera volta para a isométrica e as passagens da ida voltam.
+func _voltar_para_isometrica() -> void:
 	fase.ativar(ObjetoFase.Visibilidade.SO_3D, false)
 	camera_controller.transicionar_para_iso()
 	# Fecha as passagens de novo no meio do movimento da câmera.
@@ -257,6 +307,10 @@ func _tentar_largar_graveto() -> void:
 	await camera_controller.transicao_concluida
 	cachorro.entrada_bloqueada = false
 	_atualizar_dica()
+
+
+static func _plano(v: Vector3) -> Vector3:
+	return Vector3(v.x, 0.0, v.z)
 
 
 ## Largado ao comprido com o meio sobre um vão de uma célula (água funda, buraco) e as duas

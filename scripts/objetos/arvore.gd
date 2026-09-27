@@ -35,10 +35,14 @@ func _ready() -> void:
 	_atualizar()
 
 
+func ao_mudar_bioma() -> void:
+	_atualizar()
+
+
 func _atualizar() -> void:
 	if not is_node_ready():
 		return
-	($Visual as MeshInstance3D).mesh = Voxel.arvore(tipo, variante)
+	($Visual as MeshInstance3D).mesh = Voxel.arvore(tipo, variante, bioma_da_fase() == Biomas.NEVE)
 	if not Engine.is_editor_hint():
 		($Corpo/Colisao as CollisionShape3D).shape = _forma(tipo)
 		# Arbusto: colisão da moita inteira; árvores: só o tronco.

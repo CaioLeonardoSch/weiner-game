@@ -8,6 +8,14 @@ class_name Tiles
 ## dos materiais em assets/materiais/ — mudar as cores lá não exige gerar de novo.
 
 const CAMINHO_BIBLIOTECA := "res://assets/tiles/tiles.tres"
+## Uma biblioteca por bioma (mesmos IDs e colisões, materiais trocados — ver MATERIAIS_POR_BIOMA).
+## Índice = bioma (ver Biomas): 0 floresta, 1 neve.
+const BIBLIOTECAS := ["res://assets/tiles/tiles.tres", "res://assets/tiles/tiles_neve.tres"]
+## Materiais que cada bioma troca: na neve, a grama vira grama coberta de neve, a pedra ganha
+## neve em cima etc. O resto (água, madeira, terra fofa, tiles de neve) fica igual.
+const MATERIAIS_POR_BIOMA := {
+	1: {"grama": "neve", "mato": "mato_nevado", "terra": "terra_gelada", "pedra": "pedra_nevada"},
+}
 
 const GRAMA := 0
 const TERRA := 1
@@ -32,6 +40,9 @@ const BURACO := 19
 const RAMPA_LISA_BAIXA := 20
 const RAMPA_LISA_ALTA := 21
 const DEGRAU_ALTO := 22
+const NEVE_FOFA := 23
+const MONTE_DE_NEVE := 24
+const GELO := 25
 
 ## Altura (no espaço do tile, de -0.5 a 0.5) da superfície da água.
 const SUPERFICIE_AGUA := 0.35
@@ -71,6 +82,8 @@ const _TABUA := [Vector2(-0.5, -0.58), Vector2(0.5, -0.58), Vector2(0.5, -0.5), 
 ## `escorregadia`: com graveto pesado na boca o cachorro escorrega e não sobe (rampa lisa).
 ## `rasa`: água rasa, dá para atravessar a pé; `lentidao` multiplica a velocidade e
 ## `correnteza` (m/s) arrasta o cachorro no sentido +X do tile (gire no editor com Q/E).
+## `aderencia` (0 a 1, padrão 1): com menos, o cachorro demora a arrancar e a parar (neve fofa)
+## ou desliza (gelo). `derrete_em`: o fogo aceso por perto troca o tile por este (-1 = some).
 ## Colisão: "perfil" (o formato), "bloco" (cubo cheio) ou "nenhuma"; `colisao_perfil` usa
 ## outro perfil para a colisão (escadas colidem como rampa).
 ## Cantos de rampa (`forma` "canto_externo"/"canto_interno", `base` = altura de onde a rampa
@@ -100,6 +113,9 @@ static func definicoes() -> Array[Dictionary]:
 		{id = RAMPA_LISA_BAIXA, nome = "Rampa lisa baixa", perfil = _RAMPA_BAIXA, material = "pedra_lisa", escorregadia = true, cor = Color("9fb3c0")},
 		{id = RAMPA_LISA_ALTA, nome = "Rampa lisa alta", perfil = _RAMPA_ALTA, material = "pedra_lisa", escorregadia = true, cor = Color("8aa0ae")},
 		{id = DEGRAU_ALTO, nome = "Degrau alto", perfil = _DEGRAU, material = "pedra", cor = Color("a0a4ac")},
+		{id = NEVE_FOFA, nome = "Neve fofa", perfil = _BLOCO, material = "neve_fofa", lentidao = 0.7, aderencia = 0.25, derrete_em = TERRA, cor = Color("f2f5fb")},
+		{id = MONTE_DE_NEVE, nome = "Monte de neve", perfil = _BLOCO, material = "monte_neve", cavavel = true, derrete_em = -1, cor = Color("dde6f2")},
+		{id = GELO, nome = "Gelo", perfil = _BLOCO, material = "gelo", aderencia = 0.06, cor = Color("a6d4f0")},
 	]
 
 
@@ -130,13 +146,24 @@ static func eh_escorregadia(id: int) -> bool:
 	return definicao(id).get("escorregadia", false)
 
 
+## O fogo derrete este tile?
+static func derrete(id: int) -> bool:
+	return definicao(id).has("derrete_em")
+
+
 ## Meia largura (m) da passagem estreita, no eixo Z do tile.
 static func meia_largura(id: int) -> float:
 	return definicao(id).get("z", 0.5)
 
 
-## Monta a MeshLibrary a partir das definições.
-static func construir_biblioteca() -> MeshLibrary:
+## Caminho da biblioteca de um bioma (a da floresta, se não houver).
+static func biblioteca_do_bioma(bioma: int) -> String:
+	return BIBLIOTECAS[bioma] if bioma >= 0 and bioma < BIBLIOTECAS.size() else CAMINHO_BIBLIOTECA
+
+
+## Monta a MeshLibrary a partir das definições, com os materiais do bioma.
+static func construir_biblioteca(bioma := 0) -> MeshLibrary:
+	var trocas: Dictionary = MATERIAIS_POR_BIOMA.get(bioma, {})
 	var biblioteca := MeshLibrary.new()
 	for d in definicoes():
 		var malha: ArrayMesh
@@ -156,7 +183,7 @@ static func construir_biblioteca() -> MeshLibrary:
 						var caixa := BoxShape3D.new()
 						caixa.size = Vector3.ONE
 						formas = [caixa, Transform3D.IDENTITY]
-		malha.surface_set_material(0, load("res://assets/materiais/%s.tres" % d.material))
+		malha.surface_set_material(0, load("res://assets/materiais/%s.tres" % trocas.get(d.material, d.material)))
 		biblioteca.create_item(d.id)
 		biblioteca.set_item_name(d.id, d.nome)
 		biblioteca.set_item_mesh(d.id, malha)

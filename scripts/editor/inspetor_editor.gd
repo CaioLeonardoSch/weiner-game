@@ -9,6 +9,10 @@ extends VBoxContainer
 signal propriedade_alterada(alvo: Object, propriedade: StringName, valor: Variant)
 signal pedido_apagar
 signal pedido_duplicar
+signal pedido_copiar
+signal pedido_recortar
+signal pedido_apagar_trecho
+signal pedido_salvar_modulo(nome: String)
 
 const ROTULOS := {
 	&"nome": "Nome",
@@ -21,6 +25,10 @@ const ROTULOS := {
 	&"raca": "Raça do cachorro",
 	&"objetivo": "Objetivo",
 	&"peso": "Peso (1 = normal)",
+	&"regiao": "Região",
+	&"bioma": "Bioma (texturas, céu, entorno)",
+	&"frio": "Frio (o cachorro precisa se esquentar)",
+	&"tempo_de_frio": "Segundos até gelar",
 }
 const NOMES_VISIBILIDADE := ["Sempre", "Só isométrico", "Só 3D"]
 
@@ -62,12 +70,60 @@ func mostrar(alvo: Object) -> void:
 	elif alvo is Fase:
 		_titulo("Fase")
 		_campo(&"nome")
+		_campo(&"regiao")
+		_campo(&"bioma")
 		_campo(&"objetivo")
 		_campo(&"raca")
 		_campo(&"habilidades")
 		_dica_habilidades_da_raca(alvo as Fase)
 		_campo(&"desvio_camera_3d")
+		_campo(&"frio")
+		if (alvo as Fase).frio:
+			_campo(&"tempo_de_frio")
+			_dica("Esquentam: Fogueira acesa (perto do fogo) e Celeiro (dentro).")
 		_dica("Selecione um objeto (ferramenta Selecionar) para editar as propriedades dele.")
+
+
+## Painel da ferramenta Trecho: tamanho do retângulo marcado e o que dá para fazer com ele.
+## `info` vazio: nada marcado ainda.
+func mostrar_trecho(info: Dictionary) -> void:
+	mostrar(null)
+	_titulo("Trecho")
+	if info.is_empty():
+		_dica("Arraste no mapa para marcar um retângulo. Entram os blocos de todas as camadas e os objetos de dentro.")
+		_dica("Depois: Ctrl+C copia, Ctrl+X recorta, Del apaga, e aqui dá para salvar como módulo.")
+		_dica("Ctrl+V cola o que foi copiado (também em outra fase); os módulos ficam no fim da paleta.")
+		return
+	_dica("%d × %d colunas — %d blocos, %d objetos" % [info.largura, info.profundidade, info.blocos, info.objetos])
+	var linha := HBoxContainer.new()
+	for acao in [["Copiar", pedido_copiar], ["Recortar", pedido_recortar], ["Apagar", pedido_apagar_trecho]]:
+		var botao := Button.new()
+		botao.text = acao[0]
+		botao.pressed.connect((acao[1] as Signal).emit)
+		linha.add_child(botao)
+	add_child(linha)
+	add_child(HSeparator.new())
+	var rotulo := Label.new()
+	rotulo.text = "Salvar como módulo"
+	add_child(rotulo)
+	var nome := LineEdit.new()
+	nome.placeholder_text = "Nome do módulo (ex.: Ponte de troncos)"
+	add_child(nome)
+	var salvar := Button.new()
+	salvar.text = "Salvar módulo"
+	salvar.pressed.connect(func() -> void: pedido_salvar_modulo.emit(nome.text))
+	nome.text_submitted.connect(func(texto: String) -> void: pedido_salvar_modulo.emit(texto))
+	add_child(salvar)
+	_dica("O módulo vai para scenes/modulos/ e aparece na paleta (Módulos): clique para colar, em qualquer fase.")
+
+
+## Painel enquanto cola (Ctrl+V ou um módulo).
+func mostrar_colagem(info: Dictionary) -> void:
+	mostrar(null)
+	_titulo("Colar" + (": " + info.modulo if not info.modulo.is_empty() else ""))
+	_dica("%d × %d colunas — %d blocos, %d objetos" % [info.largura, info.profundidade, info.blocos, info.objetos])
+	_dica("Clique cola (e continua colando). Q / E gira 90°. PgUp / PgDn sobe ou desce. Esc ou clique direito sai.")
+	_dica("Blocos colados substituem os que estiverem no lugar; onde o trecho não tem bloco, nada muda. Mecanismos colados mantêm a cor (ficam ligados aos da mesma cor).")
 
 
 ## Atualiza os valores mostrados (depois de desfazer, arrastar etc.).
@@ -211,6 +267,9 @@ func _dica_habilidades_da_raca(fase: Fase) -> void:
 
 
 func _nome_de_opcao(propriedade: StringName, texto: String) -> String:
+	if propriedade == &"regiao":
+		var regiao := Regioes.por_id(StringName(texto))
+		return regiao.nome if regiao else texto
 	if propriedade == &"raca":
 		var raca := Racas.por_id(StringName(texto))
 		if raca and raca.id == StringName(texto):

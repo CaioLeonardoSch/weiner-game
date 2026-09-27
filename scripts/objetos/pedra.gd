@@ -27,10 +27,14 @@ func _ready() -> void:
 	_atualizar()
 
 
+func ao_mudar_bioma() -> void:
+	_atualizar()
+
+
 func _atualizar() -> void:
 	if not is_node_ready():
 		return
-	var malha := Voxel.pedra(variante)
+	var malha := Voxel.pedra(variante, bioma_da_fase() == Biomas.NEVE)
 	($Visual as MeshInstance3D).mesh = malha
 	if not Engine.is_editor_hint():
 		var caixa := malha.get_aabb()

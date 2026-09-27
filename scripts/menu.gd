@@ -63,6 +63,7 @@ func _montar_fundo() -> void:
 	add_child(fase)
 	fase.process_mode = Node.PROCESS_MODE_DISABLED
 	fase.preparar_isometrica()
+	Biomas.aplicar_ambiente(get_node_or_null(^"Ambiente"), fase.bioma)
 	var entorno := Entorno.new()
 	add_child(entorno)
 	entorno.montar(fase)
@@ -258,24 +259,51 @@ func _mostrar_cachorro(raca: Raca, indice := -1) -> void:
 	_cachorro.montar(raca, Racas.pelagem_escolhida(raca) if indice < 0 else indice)
 
 
+## As fases agrupadas por região (nome, história curta e as fases, na ordem).
 func _tela_fases() -> void:
 	_limpar("Fases")
-	for caminho in Fases.listar():
-		var linha := HBoxContainer.new()
-		linha.add_theme_constant_override("separation", 6)
-		_tela.add_child(linha)
-		var marca := Label.new()
-		marca.text = "✓" if Fases.concluida(caminho) else "·"
-		marca.custom_minimum_size.x = 22
-		marca.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		marca.add_theme_color_override("font_color", Color(0.5, 0.9, 0.45) if Fases.concluida(caminho) else Color(0.5, 0.5, 0.5))
-		linha.add_child(marca)
-		_botao(_nome(caminho), Fases.jogar.bind(caminho), linha)
-		var editar := _botao("Editar", Fases.editar.bind(caminho), linha)
-		editar.size_flags_horizontal = Control.SIZE_SHRINK_END
-		editar.tooltip_text = "Abrir esta fase no editor"
+	for regiao in Regioes.todas():
+		_cabecalho_regiao(regiao)
+		var fases := Fases.fases_da_regiao(regiao.id)
+		if fases.is_empty():
+			_rotulo("Nenhuma fase ainda — crie no editor (painel da fase → Região: %s)." % regiao.nome)
+		for caminho in fases:
+			_linha_fase(caminho)
+	# Fases de uma região que não existe (arquivo apagado, id trocado) não somem do menu.
+	var avulsas := Array(Fases.listar()).filter(func(c: String) -> bool:
+		return Regioes.por_id(Fases.regiao_da_fase(c)) == null)
+	if not avulsas.is_empty():
+		_cabecalho_regiao(null)
+		for caminho: String in avulsas:
+			_linha_fase(caminho)
 	_botao("← Voltar", _tela_principal)
 	_focar_primeiro()
+
+
+func _cabecalho_regiao(regiao: Regiao) -> void:
+	var titulo := Label.new()
+	titulo.text = regiao.nome if regiao else "Outras"
+	titulo.add_theme_font_size_override("font_size", 22)
+	titulo.add_theme_color_override("font_color", COR_TITULO)
+	_tela.add_child(titulo)
+	if regiao and not regiao.descricao.is_empty():
+		_rotulo(regiao.descricao).add_theme_font_size_override("font_size", 15)
+
+
+func _linha_fase(caminho: String) -> void:
+	var linha := HBoxContainer.new()
+	linha.add_theme_constant_override("separation", 6)
+	_tela.add_child(linha)
+	var marca := Label.new()
+	marca.text = "✓" if Fases.concluida(caminho) else "·"
+	marca.custom_minimum_size.x = 22
+	marca.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	marca.add_theme_color_override("font_color", Color(0.5, 0.9, 0.45) if Fases.concluida(caminho) else Color(0.5, 0.5, 0.5))
+	linha.add_child(marca)
+	_botao(_nome(caminho), Fases.jogar.bind(caminho), linha)
+	var editar := _botao("Editar", Fases.editar.bind(caminho), linha)
+	editar.size_flags_horizontal = Control.SIZE_SHRINK_END
+	editar.tooltip_text = "Abrir esta fase no editor"
 
 
 func _tela_editor() -> void:
@@ -284,7 +312,12 @@ func _tela_editor() -> void:
 	var lista := Fases.listar()
 	if not lista.is_empty():
 		_rotulo("Editar uma fase existente:")
+		var regiao_atual := &""
 		for caminho in lista:
+			var regiao := Fases.regiao_da_fase(caminho)
+			if regiao != regiao_atual:
+				regiao_atual = regiao
+				_cabecalho_regiao(Regioes.por_id(regiao))
 			_botao(_nome(caminho), Fases.editar.bind(caminho))
 	_rotulo("No editor: H mostra os atalhos, F1 testa a fase e o botão ◀ Menu volta para cá.")
 	_botao("← Voltar", _tela_principal)

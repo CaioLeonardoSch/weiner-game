@@ -39,7 +39,26 @@ func _desenhar_grade() -> void:
 		_linha(Vector3(centro.x - raio, y, z), Vector3(centro.x + raio + 1, y, z), COR_GRADE, 1.0)
 
 
+## Retângulo do trecho marcado (ou sendo marcado) e a caixa do que vai ser colado.
+func _desenhar_trecho() -> void:
+	if editor.modo == EditorFase.Modo.TRECHO and editor.tem_trecho:
+		var cantos: Array[Vector2i] = editor.cantos_do_trecho()
+		var camadas: Vector2i = editor.camadas_trecho
+		var caixa := AABB(Vector3(cantos[0].x, camadas.x, cantos[0].y),
+			Vector3(cantos[1].x - cantos[0].x + 1, camadas.y - camadas.x + 1, cantos[1].y - cantos[0].y + 1))
+		_caixa(caixa, Transform3D.IDENTITY, COR_SELECAO, 2.0)
+		_texto(caixa.get_center() + Vector3.UP * (caixa.size.y * 0.5 + 0.5), "%d × %d" % [caixa.size.x, caixa.size.z], COR_SELECAO)
+	elif editor.modo == EditorFase.Modo.COLAR and editor.colagem and editor.alvo_valido:
+		var colagem: Trecho = editor.colagem
+		var camadas := colagem.camadas()
+		var origem: Vector3i = editor.origem_colagem
+		var caixa := AABB(Vector3(origem.x, origem.y + camadas.x, origem.z),
+			Vector3(colagem.largura, camadas.y - camadas.x + 1, colagem.profundidade))
+		_caixa(caixa, Transform3D.IDENTITY, COR_COLOCAR, 2.0)
+
+
 func _desenhar_cursor() -> void:
+	_desenhar_trecho()
 	if not editor.alvo_valido:
 		return
 	match editor.modo:
