@@ -5,6 +5,7 @@ fase res://scenes/fases/fase_08.tscn
 checar not jogo.indicador_equilibrio.visible
 esperar 20
 # Mirante: F morde; um Esc só já sai.
+chamar res://ferramentas/testes/teste_hud.gd colocar_mirante
 teleportar 3.5 0.05 -4.4
 esperar 5
 apertar mover_frente 6

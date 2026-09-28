@@ -5,6 +5,7 @@ class_name Efeitos
 static var _material_terra: StandardMaterial3D
 static var _material_onda: StandardMaterial3D
 static var _material_vapor: StandardMaterial3D
+static var _material_agua: StandardMaterial3D
 
 
 ## Torrões de terra saltando de `posicao` (cavar).
@@ -98,6 +99,34 @@ static func vapor(pai: Node, posicao: Vector3) -> void:
 	particulas.emission_box_extents = Vector3(0.4, 0.1, 0.4)
 	particulas.scale_amount_min = 0.6
 	particulas.scale_amount_max = 1.4
+	particulas.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pai.add_child(particulas)
+	particulas.global_position = posicao
+	particulas.emitting = true
+	particulas.finished.connect(particulas.queue_free)
+
+
+## Respingos de água saltando de `posicao` (algo caiu na água).
+static func respingo(pai: Node, posicao: Vector3) -> void:
+	if _material_agua == null:
+		_material_agua = StandardMaterial3D.new()
+		_material_agua.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_material_agua.albedo_color = Color("b8e2f8")
+	var particulas := CPUParticles3D.new()
+	var malha := BoxMesh.new()
+	malha.size = Vector3.ONE * 0.07
+	malha.material = _material_agua
+	particulas.mesh = malha
+	particulas.one_shot = true
+	particulas.amount = 10
+	particulas.lifetime = 0.5
+	particulas.explosiveness = 0.9
+	particulas.direction = Vector3.UP
+	particulas.spread = 40.0
+	particulas.initial_velocity_min = 1.2
+	particulas.initial_velocity_max = 2.4
+	particulas.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	particulas.emission_sphere_radius = 0.2
 	particulas.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	pai.add_child(particulas)
 	particulas.global_position = posicao

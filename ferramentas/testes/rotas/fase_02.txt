@@ -1,28 +1,34 @@
-# Fase 02 — A Pinguela: passa pelo vão do muro, pula no degrau; volta virando o graveto (Q) e pela pinguela.
+# Fase 02 — O Precipício: sobe a escada, atravessa o tronco devagar (correndo cai), desce e pula
+# no degrau do graveto; volta com o graveto ao comprido (Q), devagar pelo tronco.
 fase res://scenes/fases/fase_02.tscn
 esperar 20
-apertar mover_direita 214
-esperar 218
-apertar mover_direita 77
-esperar 80
+checar jogo.fase.get_node("Objetos").get_node("Pinguela").estado == 2
 apertar mover_frente 17
 esperar 20
-apertar mover_direita 70
-esperar 10
+apertar mover_direita 105
+esperar 108
+apertar andar_devagar 200
+apertar mover_direita 200
+esperar 205
+checar jogo.cachorro.global_position.x > 8.0 and jogo.cachorro.global_position.y > 1.9
+apertar mover_direita 200
+esperar 120
 apertar pular 3
-esperar 75
-esperar 80
-apertar mover_esquerda 23
-esperar 26
-apertar mover_frente 150
-esperar 155
+esperar 85
+checar jogo.cachorro.tem_graveto
+esperar 30
+apertar mover_frente 200
+esperar 205
 apertar virar_graveto 2
 esperar 20
-apertar mover_frente 70
-esperar 75
+checar jogo.cachorro.graveto_ao_comprido
 apertar mover_direita 6
-esperar 10
-apertar mover_frente 330
+esperar 20
+apertar andar_devagar 500
+apertar mover_frente 500
+esperar 505
+checar jogo.cachorro.global_position.x < 3.0
+apertar mover_frente 300
 esperar 120
 esperar 215
 checar jogo.concluida

@@ -1,27 +1,54 @@
-# Fase 08 — A Ponte de Graveto: atravessa pela ponte (só da ida), pega o graveto comprido,
-# larga ao comprido sobre o riacho (vira ponte), pega o lendário e volta pela ponte de graveto.
+# Fase 08 — A Ponte Velha: atravessa a ponte, que cai atrás do cachorro (gatilho ao passar);
+# morde a ponta do tronco e anda de lado (o tronco gira 90°); empurra o tronco ao comprido até
+# ele encaixar entre as margens (pinguela); pega o graveto e volta devagar pelo tronco.
 fase res://scenes/fases/fase_08.tscn
 esperar 20
-apertar mover_direita 240
-esperar 245
-apertar mover_frente 46
-esperar 130
-apertar mover_esquerda 5
-esperar 10
-apertar mover_frente 3
+apertar mover_direita 210
+esperar 212
+checar jogo.fase.get_node("Objetos").get_node("Ponte").quebrada
+apertar mover_tras 17
+esperar 19
+apertar mover_direita 25
+esperar 27
+apertar mover_frente 5
+esperar 8
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").ponta_perto(jogo.cachorro.global_position) == 2
+apertar acao 90
+esperar 5
+apertar mover_esquerda 10
+esperar 62
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").celulas() == [Vector3i(12, 0, -5), Vector3i(11, 0, -5), Vector3i(10, 0, -5)]
+esperar 30
+apertar mover_tras 17
+esperar 19
+apertar mover_direita 68
+esperar 70
+apertar mover_frente 18
 esperar 20
-apertar virar_graveto 2
-esperar 20
-apertar mover_frente 30
-esperar 35
-apertar largar_graveto 2
+apertar mover_esquerda 110
+esperar 150
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").estado == 2
+apertar mover_tras 17
+esperar 19
+apertar mover_direita 120
+esperar 122
+checar jogo.cachorro.tem_graveto
+# Na volta a câmera é 3D: fixa o giro dela olhando para -X (frente = -X, direita = -Z).
+esperar 80
+eval jogo.camera_controller.set("_yaw", PI / 2)
+apertar mover_direita 17
+esperar 19
+apertar mover_frente 75
+esperar 77
+apertar andar_devagar 300
+apertar mover_frente 300
+esperar 302
+checar jogo.cachorro.global_position.x < 6.5
+apertar mover_frente 150
+esperar 152
+apertar mover_esquerda 20
+esperar 22
+apertar mover_frente 100
 esperar 100
-apertar mover_direita 80
-esperar 84
-apertar mover_tras 14
-esperar 130
-apertar mover_direita 11
-esperar 15
-apertar mover_frente 450
-esperar 460
+esperar 120
 checar jogo.concluida

@@ -1,34 +1,37 @@
-# Etapas 6 e 7: o tronco rola de lado (não ao comprido), cai na correnteza, desce o rio e
-# encaixa na água funda como ponte; o graveto ao comprido empurra de longe (atravessado não);
-# o tronco caído como pinguela é passagem estreita.
-fase res://scenes/fases/fase_04.tscn
+# O tronco: empurrado de lado rola, ao comprido desliza; mordendo a ponta e andando para trás, é
+# puxado; na correnteza boia, desce e, encalhado na margem, volta para o lugar. O graveto ao
+# comprido empurra de longe; o tronco caído como pinguela é passagem estreita; a ponte velha
+# cede com alguém parado em cima.
+fase res://scenes/fases/fase_11.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_tronco.gd preparar_tronco
-# Ao comprido: não rola.
-chamar res://ferramentas/testes/teste_tronco.gd cachorro_na_ponta
 esperar 5
-apertar mover_tras 40
-esperar 45
-checar absf(jogo.get_meta("tronco").global_position.x - 2.5) < 0.05
-checar absf(jogo.get_meta("tronco").global_position.z + 5.5) < 0.05
-# De lado: rola para dentro da correnteza e boia.
-chamar res://ferramentas/testes/teste_tronco.gd cachorro_atras
+# De lado (-Z): rola uma fileira.
+apertar mover_frente 30
+esperar 50
+checar jogo.get_meta("tronco").celulas() == [Vector3i(1, 0, -4), Vector3i(2, 0, -4)]
+# Ao comprido (+X): desliza uma célula.
+chamar res://ferramentas/testes/teste_tronco.gd cachorro_na_ponta_oeste
 esperar 5
-apertar mover_direita 40
-esperar 60
-checar absf(jogo.get_meta("tronco").global_position.x - 3.5) < 0.05
-checar jogo.get_meta("tronco").boiando
-# Em cima do tronco, o cachorro desce o rio junto.
-teleportar 3.5 0.7 -5.0
-esperar 20
-eval jogo.set_meta("z", jogo.cachorro.global_position.z)
-esperar 100
-checar jogo.cachorro.global_position.z > jogo.get_meta("z") + 0.8
-checar jogo.cachorro.global_position.y > 0.3
-# Desce o rio até a água funda e vira ponte.
-esperar 400
-checar jogo.get_meta("tronco").afundado
-checar jogo.get_meta("tronco").global_position.z > -2.0
+apertar mover_direita 30
+esperar 50
+checar jogo.get_meta("tronco").celulas() == [Vector3i(2, 0, -4), Vector3i(3, 0, -4)]
+# Mordendo a ponta oeste (F de frente para ela) e andando para trás (-X): vem junto.
+chamar res://ferramentas/testes/teste_tronco.gd cachorro_na_ponta_oeste
+esperar 5
+checar jogo.get_meta("tronco").ponta_perto(jogo.cachorro.global_position) == 0
+apertar acao 40
+esperar 3
+apertar mover_esquerda 12
+esperar 40
+checar jogo.get_meta("tronco").celulas() == [Vector3i(1, 0, -4), Vector3i(2, 0, -4)]
+checar jogo.cachorro.global_position.x < 1.0
+# Na correnteza: boia, desce o rio e encalha na margem (onde o rio estreita) — volta ao lugar.
+chamar res://ferramentas/testes/teste_tronco.gd preparar_encalhe
+esperar 5
+checar jogo.get_meta("encalhe").estado == 1
+esperar 360
+checar jogo.get_meta("voltas") >= 1
 # Graveto comprido ao comprido: a ponta empurra o bloco de longe (o cachorro fica a mais de
 # 1 m dele).
 fase res://scenes/fases/fase_06.tscn
@@ -48,3 +51,19 @@ chamar res://ferramentas/testes/teste_tronco.gd preparar_pinguela
 esperar 5
 checar not jogo.fase.passagem_estreita_em(Vector3(11.5, 0.1, -4.5)).is_empty()
 checar jogo.fase.passagem_estreita_em(Vector3(11.5, 0.1, -5.5)).is_empty()
+# Ponte que cede: passar correndo não quebra; parado em cima, quebra e o cachorro cai na água e
+# volta para a margem.
+fase res://scenes/fases/fase_08.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_tronco.gd preparar_ponte_que_cede
+esperar 5
+apertar mover_direita 50
+esperar 60
+checar jogo.cachorro.global_position.x > 9.5
+checar not jogo.get_meta("ponte").quebrada
+apertar mover_esquerda 22
+esperar 90
+checar jogo.get_meta("ponte").quebrada
+esperar 60
+checar jogo.cachorro.global_position.y > -0.1
+checar absf(jogo.cachorro.global_position.x - 8.5) > 0.6

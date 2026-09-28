@@ -6,15 +6,15 @@
 [ext_resource type="PackedScene" path="res://scenes/objetos/inicio_cachorro.tscn" id="4_hmljb"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/dono.tscn" id="5_f51qi"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/ponte.tscn" id="6_0shvc"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/mirante.tscn" id="7_ragv3"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/placa.tscn" id="8_iixbm"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/bloco_empurravel.tscn" id="9_ptwv2"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/portao.tscn" id="10_ctkci"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/graveto_comum.tscn" id="11_6ewfd"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/graveto.tscn" id="12_vqcbu"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/zona_dica.tscn" id="13_54xte"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/pedra.tscn" id="14_mlgoo"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/gatilho.tscn" id="15_oxkwo"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/flores.tscn" id="15_vuqov"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/tronco_rolante.tscn" id="16_st6rc"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/arvore.tscn" id="16_tklmh"]
 
 [node name="Fase09" type="Node3D" unique_id=202551966]
@@ -44,16 +44,15 @@ transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49
 
 [node name="Ponte" parent="Objetos" unique_id=1357781596 instance=ExtResource("6_0shvc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 0, -1.5)
-tamanho = Vector3(1.6, 0.12, 1.4)
-visibilidade = 1
-
-[node name="Mirante" parent="Objetos" unique_id=1770160363 instance=ExtResource("7_ragv3")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.5, 0, -5.3)
+tamanho = Vector3(1, 0.12, 1.4)
+tipo = 2
+canal = 4
+aviso_ao_quebrar = "A ponte caiu! O tronco pode virar pinguela"
 
 [node name="Placa" parent="Objetos" unique_id=1068605094 instance=ExtResource("8_iixbm")]
-tipo = 1
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -5.5)
 canal = 2
+tipo = 1
 
 [node name="BlocoEmpurravel" parent="Objetos" unique_id=17058926 instance=ExtResource("9_ptwv2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -3.5)
@@ -62,11 +61,6 @@ variante = 6
 [node name="Portao" parent="Objetos" unique_id=327614013 instance=ExtResource("10_ctkci")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 13.5, 0, -2.5)
 canal = 2
-
-[node name="GravetoComum" parent="Objetos" unique_id=216095856 instance=ExtResource("11_6ewfd")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 11.8, 0.08, -1.2)
-comprimento = 2.0
-peso = 2.0
 
 [node name="Graveto" parent="Objetos" unique_id=588766927 instance=ExtResource("12_vqcbu")]
 transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.9396926, 19.5, 0.08, -3.5)
@@ -797,3 +791,12 @@ variante = 1
 [node name="Flores19" parent="Objetos" unique_id=1615254210 instance=ExtResource("15_vuqov")]
 transform = Transform3D(0.7591466, 0, -0.65091974, 0, 1, 0, 0.65091974, 0, 0.7591466, 23.56306, 0, 2.7823648)
 variante = 2
+
+[node name="Gatilho" parent="Objetos" unique_id=214831615 instance=ExtResource("15_oxkwo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 0, -3.5)
+tamanho = Vector3(1.6, 1.5, 1.6)
+quando = 2
+canal = 4
+
+[node name="TroncoRolante" parent="Objetos" unique_id=671501081 instance=ExtResource("16_st6rc")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 8.5, 0, -4.5)

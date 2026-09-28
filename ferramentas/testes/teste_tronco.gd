@@ -1,29 +1,45 @@
 extends RefCounted
-## Ajudantes da rota ferramentas/testes/rotas/tronco.txt (Etapas 6 e 7: tronco que rola e boia,
-## empurrar com o graveto ao comprido, tronco caído como pinguela).
+## Ajudantes da rota ferramentas/testes/rotas/tronco.txt (o tronco que rola, desliza, é puxado
+## pela ponta e volta para o lugar quando encalha; empurrar com o graveto ao comprido; tronco
+## caído como pinguela; a ponte que cede).
 
 
 static func _colocar(jogo: Node, nome: String, posicao: Vector3, yaw := 0.0) -> ObjetoFase:
 	return jogo.fase.adicionar_objeto(load("res://scenes/objetos/%s.tscn" % nome), posicao, yaw)
 
 
-## Fase 04: tronco na margem oeste do rio (x = 2), deitado ao longo de Z (células z -6 e -5);
-## o cachorro atrás dele, olhando para o rio (+X).
+static func _tronco(jogo: Node, posicao: Vector3, yaw: float, comprimento: int) -> TroncoRolante:
+	var tronco := _colocar(jogo, "tronco_rolante", posicao, yaw) as TroncoRolante
+	tronco.comprimento = comprimento
+	return tronco
+
+
+## Fase 11 (margem oeste até x = 4, correnteza em x 5-7): tira o tronco da fase e põe um de 2
+## células ao longo de X (x 1 e 2, z = -3); o cachorro atrás dele (+Z), olhando para ele (-Z).
 static func preparar_tronco(jogo: Node) -> String:
-	var tronco := _colocar(jogo, "tronco_rolante", Vector3(2.5, 0, -5.5), -PI * 0.5) as TroncoRolante
+	var da_fase: Node = jogo.fase.get_node("Objetos").get_node("TroncoRolante")
+	da_fase.get_parent().remove_child(da_fase)
+	da_fase.queue_free()
+	var tronco := _tronco(jogo, Vector3(1.5, 0, -2.5), 0.0, 2)
 	jogo.set_meta(&"tronco", tronco)
-	jogo.cachorro.posicionar(Vector3(1.35, 0.05, -5.0), 0.0)
+	jogo.cachorro.posicionar(Vector3(2.0, 0.05, -1.3), PI * 0.5)
 	return "tronco em %s" % [tronco.celulas()]
 
 
-## Cachorro na ponta do tronco, olhando ao longo dele (+Z): empurrar ao comprido não rola.
-static func cachorro_na_ponta(jogo: Node) -> String:
-	jogo.cachorro.posicionar(Vector3(2.5, 0.05, -6.75), -PI * 0.5)
+## Na frente da ponta oeste do tronco (fileira z = -4), olhando ao longo dele (+X).
+static func cachorro_na_ponta_oeste(jogo: Node) -> String:
+	var ponta: Vector3 = (jogo.get_meta(&"tronco") as TroncoRolante).ponto_da_ponta(0)
+	jogo.cachorro.posicionar(Vector3(ponta.x - 1.0, 0.05, -3.5), 0.0)
 	return "ok"
 
 
-static func cachorro_atras(jogo: Node) -> String:
-	jogo.cachorro.posicionar(Vector3(1.35, 0.05, -5.0), 0.0)
+## Um tronco de 2 células ao longo de Z já na correnteza (x = 5, z -6 e -5): boia, desce e encalha
+## na margem onde o rio estreita — e volta para o lugar. Conta as voltas em "voltas".
+static func preparar_encalhe(jogo: Node) -> String:
+	var tronco := _tronco(jogo, Vector3(5.5, 0, -5.5), -PI * 0.5, 2)
+	jogo.set_meta(&"encalhe", tronco)
+	jogo.set_meta(&"voltas", 0)
+	tronco.voltou_ao_inicio.connect(func() -> void: jogo.set_meta(&"voltas", int(jogo.get_meta(&"voltas")) + 1))
 	return "ok"
 
 
@@ -62,3 +78,19 @@ static func recuar_do_bloco(jogo: Node) -> String:
 	var bloco: Node3D = jogo.get_meta(&"bloco")
 	jogo.cachorro.posicionar(bloco.global_position - Vector3(2.6, -0.05, 0), 0.0)
 	return "x = %.2f" % jogo.cachorro.global_position.x
+
+
+## Fase 08 (riacho fundo em x = 8): troca a ponte por uma que cede com o tempo e põe o cachorro
+## parado em cima dela.
+static func preparar_ponte_que_cede(jogo: Node) -> String:
+	var velha: Node = jogo.fase.get_node("Objetos").get_node("Ponte")
+	velha.get_parent().remove_child(velha)
+	velha.queue_free()
+	var ponte := _colocar(jogo, "ponte", Vector3(8.5, 0, -2.5)) as Ponte
+	ponte.tamanho = Vector3(1.0, 0.12, 1.4)
+	ponte.tipo = Ponte.Tipo.CEDE
+	ponte.tempo_para_ceder = 1.0
+	jogo.set_meta(&"ponte", ponte)
+	jogo.cachorro.posicionar(Vector3(7.0, 0.05, -2.5), 0.0)
+	return "ok"
+

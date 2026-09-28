@@ -1,6 +1,7 @@
-# Fase 09 — O Passeio Completo: atravessa o riacho pela ponte (só da ida), empurra o bloco
-# para a placa vermelha (peso 3) e o portão abre; pega o graveto comprido, vira ao comprido e
-# larga sobre o riacho (vira ponte); passa o portão, pega o lendário e volta pela ponte de graveto.
+# Fase 09 — O Passeio Completo: atravessa o riacho pela ponte, empurra o bloco para a placa de
+# pedra e o portão abre; morde a ponta do tronco e anda de lado (gira 90°), empurra o tronco ao
+# comprido até virar pinguela sobre o riacho; passa o portão e pega o lendário — a ponte cai
+# (gatilho); volta devagar pelo tronco.
 fase res://scenes/fases/fase_09.tscn
 esperar 20
 apertar mover_direita 103
@@ -16,43 +17,49 @@ esperar 41
 apertar mover_frente 100
 esperar 110
 checar jogo.fase.canal_ativo(2)
-apertar mover_tras 60
-esperar 64
-apertar mover_direita 22
-esperar 25
-apertar mover_tras 12
-esperar 130
-checar jogo.cachorro.tem_graveto
-# Com o graveto na boca (3D): para oeste, ao norte até a linha z = -4,5, vira ao comprido.
-apertar mover_frente 25
+apertar mover_tras 50
+esperar 52
+apertar mover_esquerda 34
+esperar 36
+apertar mover_frente 5
+esperar 8
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").ponta_perto(jogo.cachorro.global_position) == 2
+apertar acao 90
+esperar 5
+apertar mover_direita 10
+esperar 62
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").celulas() == [Vector3i(8, 0, -5), Vector3i(9, 0, -5), Vector3i(10, 0, -5)]
 esperar 30
-apertar mover_direita 65
-esperar 69
-apertar mover_frente 16
-esperar 40
-apertar virar_graveto 2
-esperar 20
-checar jogo.cachorro.graveto_ao_comprido
-apertar mover_frente 25
-esperar 35
-apertar largar_graveto 2
-esperar 100
-checar not jogo.cachorro.tem_graveto
-# Isométrico: pelo vão do portão (z = -2,5) até o lendário.
-apertar mover_tras 34
-esperar 38
-apertar mover_direita 195
-esperar 199
+apertar mover_esquerda 110
+esperar 150
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").estado == 2
+checar not jogo.fase.get_node("Objetos").get_node("Ponte").quebrada
+apertar mover_tras 33
+esperar 36
+apertar mover_direita 190
+esperar 193
 apertar mover_frente 12
 esperar 130
 checar jogo.cachorro.tem_graveto and jogo.cachorro.graveto.lendario
-# Volta (3D): passa o portão, alinha com a ponte de graveto e segue até o dono.
+checar jogo.fase.get_node("Objetos").get_node("Ponte").quebrada
+# Na volta a câmera é 3D: fixa o giro dela olhando para -X (frente = -X, esquerda = +Z).
+esperar 80
+eval jogo.camera_controller.set("_yaw", PI / 2)
 apertar mover_esquerda 8
-esperar 20
+esperar 12
+apertar mover_frente 180
+esperar 182
+apertar mover_direita 36
+esperar 38
+apertar andar_devagar 300
+apertar mover_frente 300
+esperar 302
+checar jogo.cachorro.global_position.x < 5.0
 apertar mover_frente 150
-esperar 154
-apertar mover_direita 38
-esperar 42
-apertar mover_frente 340
-esperar 360
+esperar 152
+apertar mover_esquerda 20
+esperar 22
+apertar mover_frente 100
+esperar 100
+esperar 120
 checar jogo.concluida

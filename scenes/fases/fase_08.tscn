@@ -6,17 +6,17 @@
 [ext_resource type="PackedScene" path="res://scenes/objetos/inicio_cachorro.tscn" id="4_i3754"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/dono.tscn" id="5_234bk"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/ponte.tscn" id="6_pq6md"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/mirante.tscn" id="7_iniag"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/graveto_comum.tscn" id="8_x8c74"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/graveto.tscn" id="9_fn3jb"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/zona_dica.tscn" id="10_o16xg"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/gatilho.tscn" id="10_vn6vq"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/flores.tscn" id="11_0oni2"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/tronco_rolante.tscn" id="11_5nchk"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/arvore.tscn" id="12_lt8mi"]
 
 [node name="Fase08" type="Node3D" unique_id=803314596]
 script = ExtResource("1_vn6vq")
 id = "fase_08"
-nome = "Fase 08 — A Ponte de Graveto"
+nome = "Fase 08 — A Ponte Velha"
 
 [node name="Terreno" type="GridMap" parent="." unique_id=1351603397]
 mesh_library = ExtResource("2_5nchk")
@@ -40,34 +40,13 @@ transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49
 
 [node name="Ponte" parent="Objetos" unique_id=244165787 instance=ExtResource("6_pq6md")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 0, -2.5)
-tamanho = Vector3(1.6, 0.12, 1.4)
-visibilidade = 1
-
-[node name="Mirante" parent="Objetos" unique_id=356932619 instance=ExtResource("7_iniag")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0, -5.3)
-
-[node name="GravetoComum" parent="Objetos" unique_id=325100575 instance=ExtResource("8_x8c74")]
-transform = Transform3D(0.17364822, 0, 0.9848077, 0, 1, 0, -0.9848077, 0, 0.17364822, 12.5, 0.08, -5.2)
-comprimento = 2.0
+tamanho = Vector3(1, 0.12, 1.4)
+tipo = 2
+canal = 4
+aviso_ao_quebrar = "A ponte velha caiu! Procure outro jeito de voltar"
 
 [node name="Graveto" parent="Objetos" unique_id=785540629 instance=ExtResource("9_fn3jb")]
 transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.9396926, 15.5, 0.08, -3.5)
-
-[node name="ZonaDica" parent="Objetos" unique_id=1225325665 instance=ExtResource("10_o16xg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.5, 0, -4.4)
-texto = "Um mirante: {acao} morde e mostra como a fase fica na volta."
-tamanho = Vector3(2.2, 1.5, 1.8)
-
-[node name="ZonaDica2" parent="Objetos" unique_id=1514195922 instance=ExtResource("10_o16xg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, -4.8)
-texto = "Um graveto comprido. Largado ao comprido ({virar_graveto}) sobre o riacho, vira ponte."
-tamanho = Vector3(2, 1.5, 2.2)
-
-[node name="ZonaDica3" parent="Objetos" unique_id=521524082 instance=ExtResource("10_o16xg")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0, -3)
-texto = "A ponte sumiu! Largue um graveto comprido ao comprido sobre o riacho."
-tamanho = Vector3(2, 1.5, 5.6)
-visibilidade = 2
 
 [node name="Flores" parent="Objetos" unique_id=255269994 instance=ExtResource("11_0oni2")]
 transform = Transform3D(0.8095044, 0, -0.5871138, 0, 1, 0, 0.5871138, 0, 0.8095044, -3.2, 0, -5.6)
@@ -830,3 +809,16 @@ transform = Transform3D(0.70017236, 0, -0.7139738, 0, 1, 0, 0.7139738, 0, 0.7001
 [node name="Flores19" parent="Objetos" unique_id=459211471 instance=ExtResource("11_0oni2")]
 transform = Transform3D(0.015035138, 0, 0.999887, 0, 1, 0, -0.999887, 0, 0.015035138, 14.461683, 0, 2.5120978)
 variante = 3
+
+[node name="Gatilho" parent="Objetos" unique_id=2097857507 instance=ExtResource("10_vn6vq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 0, -3.5)
+tamanho = Vector3(1, 1.5, 6)
+canal = 4
+
+[node name="TroncoRolante" parent="Objetos" unique_id=423688461 instance=ExtResource("11_5nchk")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 12.5, 0, -4.5)
+
+[node name="ZonaDica" parent="Objetos" unique_id=9205505 instance=ExtResource("10_o16xg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 0, -1.5)
+texto = "Segure {acao} de frente para a ponta do tronco e ande de lado: ele gira. Depois, empurre ao comprido"
+tamanho = Vector3(2, 1.5, 1.6)

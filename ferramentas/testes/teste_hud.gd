@@ -13,3 +13,9 @@ static func puxar_contra_o_portao(jogo: Node) -> String:
 	bloco.global_position = Vector3(5.5, 0, -2.5)
 	jogo.cachorro.posicionar(Vector3(6.55, 0.05, -2.5), PI * 0.5)
 	return "bloco em %s, cachorro em %s" % [bloco.global_position, jogo.cachorro.global_position]
+
+
+## Um mirante na Fase 08 (nenhuma fase tem mirante agora), onde ele ficava antes.
+static func colocar_mirante(jogo: Node) -> String:
+	jogo.fase.adicionar_objeto(load("res://scenes/objetos/mirante.tscn"), Vector3(3.5, 0, -5.3))
+	return "ok"

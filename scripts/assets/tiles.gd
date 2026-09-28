@@ -109,7 +109,7 @@ static func definicoes() -> Array[Dictionary]:
 		{id = TABUA, nome = "Tábua", perfil = _TABUA, material = "madeira", z = 0.18, estreita = true, cor = Color("a8773f")},
 		{id = TERRA_FOFA, nome = "Terra fofa", perfil = _BLOCO, material = "terra_fofa", cavavel = true, cor = Color("a87b4f")},
 		{id = AGUA_RASA, nome = "Água rasa", perfil = _AGUA_RASA, material = "agua_rasa", colisao = "bloco", rasa = true, lentidao = 0.6, cor = Color("6fb6e0")},
-		{id = CORRENTEZA, nome = "Correnteza", perfil = _AGUA_RASA, material = "agua_correnteza", colisao = "bloco", rasa = true, lentidao = 0.7, correnteza = 2.2, cor = Color("4f9fd6")},
+		{id = CORRENTEZA, nome = "Correnteza", perfil = _AGUA_RASA, material = "agua_correnteza", colisao = "bloco", rasa = true, lentidao = 0.5, correnteza = 3.2, cor = Color("4f9fd6")},
 		{id = ESCADA_BAIXA, nome = "Escada baixa", perfil = _ESCADA_BAIXA, colisao_perfil = _RAMPA_BAIXA, material = "pedra", cor = Color("9aa0a8")},
 		{id = ESCADA_ALTA, nome = "Escada alta", perfil = _ESCADA_ALTA, colisao_perfil = _RAMPA_ALTA, material = "pedra", cor = Color("8a9098")},
 		{id = CANTO_RAMPA_BAIXA, nome = "Canto de rampa baixa", forma = "canto_externo", base = -0.5, material = "grama", cor = Color("86c460")},

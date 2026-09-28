@@ -13,7 +13,7 @@
 [ext_resource type="PackedScene" path="res://scenes/objetos/pedra.tscn" id="11_qv837"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/tronco_caido.tscn" id="12_8usok"]
 [ext_resource type="PackedScene" path="res://scenes/objetos/arvore.tscn" id="13_v581u"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/zona_dica.tscn" id="14_cidqb"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/gatilho.tscn" id="14_cidqb"]
 
 [node name="Fase03" type="Node3D" unique_id=2132535282]
 script = ExtResource("1_vm1pl")
@@ -51,8 +51,10 @@ transform = Transform3D(-0.64278764, 0, 0.76604444, 0, 1, 0, -0.76604444, 0, -0.
 
 [node name="Ponte" parent="Objetos" unique_id=1943887027 instance=ExtResource("7_726p5")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0, -4.8)
-tamanho = Vector3(1.6, 0.12, 1.4)
-visibilidade = 1
+tamanho = Vector3(1, 0.12, 1.4)
+tipo = 2
+canal = 4
+aviso_ao_quebrar = "A ponte caiu! Empurre a pedra para dentro do riacho e passe por cima dela"
 
 [node name="BlocoEmpurravel" parent="Objetos" unique_id=997137350 instance=ExtResource("8_61c2r")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 0, -2.5)
@@ -844,8 +846,8 @@ variante = 4
 transform = Transform3D(-0.9962171, 0, 0.0868996, 0, 1, 0, -0.0868996, 0, -0.9962171, 3.6298046, 0, 2.9583051)
 variante = 1
 
-[node name="ZonaDica" parent="Objetos" unique_id=821726408 instance=ExtResource("14_cidqb")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 0, -3.5)
-texto = "A ponte sumiu! Empurre a pedra para dentro do riacho e passe por cima dela"
-tamanho = Vector3(2, 1.5, 6)
-visibilidade = 2
+[node name="Gatilho" parent="Objetos" unique_id=2071496875 instance=ExtResource("14_cidqb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.5, 0, -3.5)
+tamanho = Vector3(1.6, 1.5, 1.6)
+quando = 2
+canal = 4

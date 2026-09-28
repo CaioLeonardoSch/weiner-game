@@ -1,32 +1,54 @@
-# Fase 04 — A Correnteza: monte, correnteza, puxa o bloco do nicho e afunda no canal, escada; volta pela correnteza.
+# Fase 04 — A Correnteza: empurra a pedra para dentro do rio; empurra o tronco ao comprido até ele
+# boiar (4 vezes); a correnteza leva o tronco até a pedra, que segura; atravessa por cima dele,
+# devagar; cruza a ponte do canal, sobe a escada e pega o graveto; volta pelo mesmo caminho.
 fase res://scenes/fases/fase_04.tscn
 esperar 20
-apertar mover_frente 69
-esperar 72
-apertar mover_direita 205
-esperar 60
-esperar 150
-apertar mover_direita 27
-esperar 30
-apertar mover_frente 60
-esperar 64
-apertar acao 45
-apertar mover_tras 25
-esperar 50
-apertar mover_esquerda 17
+apertar mover_frente 17
 esperar 20
-apertar mover_frente 12
-esperar 15
-apertar mover_direita 220
-esperar 100
-esperar 125
+apertar mover_direita 125
+esperar 150
+checar jogo.fase.get_node("Objetos").get_node("BlocoEmpurravel").position.x == 3.5
+apertar mover_esquerda 85
+esperar 87
+apertar mover_frente 55
+esperar 57
+apertar mover_direita 140
+esperar 200
+checar jogo.fase.get_node("Objetos").get_node("TroncoRolante").estado == 1
+esperar 130
+# A correnteza trouxe o tronco até a pedra (fileira z = -4) e ele parou ali.
+checar is_equal_approx(jogo.fase.get_node("Objetos").get_node("TroncoRolante").position.z, -3.5)
+apertar mover_tras 38
+esperar 40
+apertar andar_devagar 260
+apertar mover_direita 260
+esperar 262
+checar jogo.cachorro.global_position.x > 7.0
+apertar mover_tras 26
+esperar 28
+apertar mover_direita 70
+esperar 72
+apertar mover_frente 40
+esperar 42
+apertar mover_direita 100
+esperar 102
+checar jogo.cachorro.tem_graveto
+# Na volta a câmera é 3D: fixa o giro dela olhando para -X (frente = -X, esquerda = +Z).
 esperar 80
-apertar mover_direita 8
-esperar 12
-apertar mover_frente 150
-esperar 155
-apertar mover_frente 300
-esperar 305
-apertar mover_direita 25
-esperar 45
+eval jogo.camera_controller.set("_yaw", PI / 2)
+apertar mover_frente 60
+esperar 62
+apertar mover_esquerda 30
+esperar 32
+apertar mover_frente 90
+esperar 92
+apertar mover_direita 22
+esperar 20
+apertar andar_devagar 400
+apertar mover_frente 400
+esperar 402
+checar jogo.cachorro.global_position.x < 2.5
+apertar mover_frente 200
+esperar 200
+esperar 120
 checar jogo.concluida
