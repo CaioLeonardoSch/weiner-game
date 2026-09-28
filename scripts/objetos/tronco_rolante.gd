@@ -40,7 +40,7 @@ const MEIA_LARGURA := 0.2
 const ALTURA_NA_AGUA := -0.14
 ## Boiando na água rasa (cuja superfície fica um pouco acima do chão) ele sobe um pouco, para
 ## aparecer; o topo da colisão fica em ALTURA_TOPO_BOIANDO.
-const ALTURA_BOIANDO := -0.06
+const ALTURA_BOIANDO := -0.03
 const ALTURA_TOPO_BOIANDO := 0.08
 
 var estado := Estado.TERRA
