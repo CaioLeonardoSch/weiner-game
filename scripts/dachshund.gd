@@ -106,6 +106,8 @@ var _sentido_puxar := Vector3.ZERO
 var _tronco_girando: TroncoRolante
 var _ponta_girando := -1
 var _tempo_empurrando := 0.0
+## Atravessando uma passagem (toca, portinhola): quem conduz é `atravessar`; a física fica parada.
+var atravessando := false
 
 @onready var modelo: Node3D = $Modelo
 @onready var boca: Marker3D = $Modelo/Boca
@@ -149,6 +151,9 @@ func posicionar(posicao: Vector3, yaw: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if atravessando:
+		velocity = Vector3.ZERO
+		return
 	if not is_on_floor():
 		velocity.y -= _gravidade * delta
 	elif pode_pular and not entrada_bloqueada and Input.is_action_just_pressed("pular"):
@@ -252,6 +257,76 @@ func virar_graveto() -> bool:
 	_tween_graveto.tween_property(graveto, "transform", _transform_visual_graveto(graveto_ao_comprido), 0.2) \
 		.set_trans(Tween.TRANS_SINE)
 	return true
+
+
+# --- Passagens ---------------------------------------------------------------------------
+
+## Atravessa uma passagem (portinhola, toca) sozinho: segue os `pontos` em `duracao` segundos,
+## sem colisão e sem o jogador controlar, olhando para `yaw` (radianos; 0 = +X). Com
+## `esconder`, some no começo (entrou na toca). Aguarde com `await`.
+func atravessar(pontos: PackedVector3Array, duracao: float, yaw: float, esconder := false) -> void:
+	atravessando = true
+	velocity = Vector3.ZERO
+	_embalo = Vector3.ZERO
+	($Colisao as CollisionShape3D).set_deferred("disabled", true)
+	colisao_graveto.set_deferred("disabled", true)
+	_yaw_alvo = yaw
+	modelo.rotation.y = yaw
+	var total := 0.0
+	var anterior := global_position
+	for ponto in pontos:
+		total += anterior.distance_to(ponto)
+		anterior = ponto
+	voxel.velocidade = total / maxf(duracao, 0.01)
+	voxel.no_chao = true
+	var tween := create_tween()
+	anterior = global_position
+	for ponto in pontos:
+		var parte := anterior.distance_to(ponto) / total if total > 0.001 else 1.0 / pontos.size()
+		tween.tween_property(self, "global_position", ponto, duracao * parte)
+		anterior = ponto
+	if esconder:
+		tween.parallel().tween_callback(hide).set_delay(duracao * 0.6)
+	await tween.finished
+	voxel.velocidade = 0.0
+
+
+## Fim da travessia: colisão de volta e o novo lugar vira o ponto seguro.
+func terminar_travessia() -> void:
+	show()
+	($Colisao as CollisionShape3D).disabled = false
+	colisao_graveto.disabled = not tem_graveto
+	if tem_graveto:
+		_atualizar_colisao_graveto()
+	velocity = Vector3.ZERO
+	_embalo = Vector3.ZERO
+	_pontos_seguros.clear()
+	_guardar_ponto_seguro()
+	atravessando = false
+
+
+## Direção (no chão, normalizada) para onde o jogador está mandando andar, ou zero.
+func direcao_desejada() -> Vector3:
+	if entrada_bloqueada or atravessando or camera_referencia == null:
+		return Vector3.ZERO
+	var entrada := Input.get_vector("mover_esquerda", "mover_direita", "mover_frente", "mover_tras")
+	if entrada == Vector2.ZERO:
+		return Vector3.ZERO
+	var frente := -camera_referencia.global_basis.z
+	frente.y = 0.0
+	var direita := camera_referencia.global_basis.x
+	direita.y = 0.0
+	return (direita.normalized() * entrada.x - frente.normalized() * entrada.y).normalized()
+
+
+## O graveto da boca cabe numa passagem? `so_ao_comprido`: atravessado não entra;
+## `comprimento_maximo` (m, 0 = qualquer). Sem graveto, cabe sempre.
+func graveto_passa(so_ao_comprido: bool, comprimento_maximo: float) -> bool:
+	if not tem_graveto or graveto == null:
+		return true
+	if so_ao_comprido and not graveto_ao_comprido:
+		return false
+	return comprimento_maximo <= 0.0 or graveto.comprimento <= comprimento_maximo + 0.001
 
 
 # --- Cavar, latir, empurrar ---------------------------------------------------------------
@@ -378,7 +453,7 @@ func latir() -> String:
 ## Objeto com ação do botão F (`ObjetoFase.acao_da_boca`) à frente do focinho: o mais perto
 ## até 1,2 m, dentro de ~60° da direção em que o cachorro olha. Null se não houver.
 func objeto_da_acao() -> ObjetoFase:
-	if fase == null or entrada_bloqueada:
+	if fase == null or entrada_bloqueada or atravessando:
 		return null
 	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
 	var melhor: ObjetoFase = null

@@ -43,6 +43,8 @@ var indicador_calor := IndicadorCalor.new()
 ## Fogueira → rótulo 2D em cima dela com os gravetos que faltam ("0 / 2"). Em 2D, no HUD: um
 ## texto 3D passaria pelo pixelado e ficaria ilegível (ainda mais sobre a neve).
 var marcas_fogueira := {}
+## Tela preta por cima de tudo (entrar numa toca), ver `escurecer`.
+var _escuro := ColorRect.new()
 
 ## Avisos: largura máxima e tamanhos de letra (curto e de uma linha = grande; senão, menor).
 const AVISO_LARGURA_MAXIMA := 720.0
@@ -82,6 +84,11 @@ func _ready() -> void:
 	indicador_calor.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	indicador_calor.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	$HUD/Area.add_child(indicador_calor)
+	_escuro.color = Color(0.02, 0.015, 0.01, 0.0)
+	_escuro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_escuro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_escuro.hide()
+	$HUD.add_child(_escuro)
 	_atualizar_dica()
 
 	var cena := Fases.cena_atual()
@@ -598,6 +605,21 @@ func _atualizar_rotulo_acao() -> void:
 		return
 	rotulo_acao.text = "%s: %s" % [Teclas.nome(&"acao"), alvo.acao_da_boca(cachorro)]
 	rotulo_acao.show()
+
+
+## Escurece (ou clareia) a tela em `duracao` segundos. Aguarde com `await`.
+func escurecer(ligar: bool, duracao: float) -> void:
+	_escuro.show()
+	var tween := create_tween()
+	tween.tween_property(_escuro, "color:a", 1.0 if ligar else 0.0, duracao)
+	if not ligar:
+		tween.tween_callback(_escuro.hide)
+	await tween.finished
+
+
+## O cachorro foi de um lugar para outro de uma vez (saiu pela outra toca): a câmera vai junto.
+func cachorro_mudou_de_lugar() -> void:
+	camera_controller.recentralizar()
 
 
 # --- Mirante -------------------------------------------------------------------------------

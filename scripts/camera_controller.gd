@@ -75,6 +75,12 @@ func configurar(novo_alvo: CharacterBody3D) -> void:
 	camera.global_transform = _alinhar_ao_pixel(_transform_iso())
 
 
+## O alvo mudou de lugar de uma vez (saiu pela outra toca): a isométrica vai junto, sem deslizar.
+func recentralizar() -> void:
+	if alvo:
+		_foco_iso = alvo.global_position
+
+
 func transicionar_para_3d() -> void:
 	if estado != Estado.ISOMETRICO:
 		return

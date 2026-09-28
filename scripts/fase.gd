@@ -31,10 +31,9 @@ const OBJETIVO_PASTOREIO := 1
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
 @export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)") var objetivo := OBJETIVO_GRAVETO
-## Raça do cachorro nesta fase (id de assets/racas/*.tres). A raça soma habilidades próprias
-## às da fase (ex.: o Border Collie sempre late). Jogando pelo menu, vale a raça que o jogador
-## escolheu para a região (Regiao.racas); esta é a do teste no editor — e a de sempre, com
-## `raca_fixa`.
+## Raça do cachorro nesta fase (id de assets/racas/*.tres): só muda o tamanho. Jogando pelo
+## menu, vale a raça que o jogador escolheu para a região (Regiao.racas); esta é a do teste no
+## editor — e a de sempre, com `raca_fixa`.
 @export var raca := &"salsicha"
 ## A fase é sempre jogada com a `raca` acima, qualquer que seja a escolhida para a região (ex.:
 ## o pastoreio da Fase 05 é do Border Collie).
@@ -129,6 +128,14 @@ func canal_ativo(canal: int) -> bool:
 func canal_completo(canal: int) -> bool:
 	return _fontes.has(canal) and not (_fontes[canal] as Dictionary).is_empty() \
 		and not (_fontes[canal] as Dictionary).values().has(false)
+
+
+## Quantas fontes do canal estão acionadas (x) de quantas existem (y).
+func fontes_do_canal(canal: int) -> Vector2i:
+	if not _fontes.has(canal):
+		return Vector2i.ZERO
+	var estados: Array = (_fontes[canal] as Dictionary).values()
+	return Vector2i(estados.count(true), estados.size())
 
 
 ## O canal liga quem reage? `todas`: regra E; senão, regra OU.

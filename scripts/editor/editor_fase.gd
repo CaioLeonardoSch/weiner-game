@@ -2237,6 +2237,15 @@ func _avisos_de_mecanismos() -> PackedStringArray:
 					avisos.append("%s (%s) pede todas as placas (E), mas só há uma." % [
 						objeto.nome_no_editor(), Canais.nome(canal).to_lower()])
 					break
+	var tocas := {}
+	for toca: ObjetoFase in fase.todos(Toca):
+		var canal: int = (toca as Toca).canal
+		tocas[canal] = tocas.get(canal, 0) + 1
+	for canal: int in tocas:
+		if tocas[canal] == 1:
+			avisos.append("Toca de texugo (%s) sem par: ponha outra da mesma cor para ser a saída." % Canais.nome(canal).to_lower())
+		elif tocas[canal] > 2:
+			avisos.append("%d tocas de texugo (%s): cada cor liga só duas." % [tocas[canal], Canais.nome(canal).to_lower()])
 	return avisos
 
 
