@@ -78,7 +78,6 @@ func mostrar(alvo: Object) -> void:
 		_campo(&"raca_fixa")
 		_dica_raca_no_menu(alvo as Fase)
 		_campo(&"habilidades")
-		_dica_habilidades_da_raca(alvo as Fase)
 		_campo(&"desvio_camera_3d")
 		_campo(&"frio")
 		if (alvo as Fase).frio:
@@ -266,16 +265,6 @@ func _dica_raca_no_menu(fase: Fase) -> void:
 	var nomes := regiao.racas_compativeis().map(func(r: Raca) -> String: return r.nome)
 	_dica("No menu, o jogador escolhe: %s (raças da região). Teste com cada uma." % ", ".join(nomes))
 
-
-func _dica_habilidades_da_raca(fase: Fase) -> void:
-	var raca := Racas.por_id(fase.raca)
-	if raca == null or raca.habilidades_nativas == 0:
-		return
-	var nomes: PackedStringArray = []
-	for i in 3:
-		if raca.habilidades_nativas & (1 << i):
-			nomes.append(["Pular", "Cavar", "Latir"][i])
-	_dica("%s já sabe: %s (vale sempre)." % [raca.nome, ", ".join(nomes)])
 
 
 func _nome_de_opcao(propriedade: StringName, texto: String) -> String:

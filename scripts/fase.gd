@@ -146,10 +146,9 @@ func espalhar_latido(origem: Vector3, quem: Node) -> void:
 			objeto.ao_ouvir_latido(origem)
 
 
-## Habilidades da fase somadas às nativas da raça.
+## Habilidades que o cachorro tem nesta fase (iguais para todas as raças).
 func habilidades_efetivas() -> int:
-	var dados_raca := Racas.por_id(raca)
-	return habilidades | (dados_raca.habilidades_nativas if dados_raca else 0)
+	return habilidades
 
 
 func lista_objetos() -> Array[ObjetoFase]:
