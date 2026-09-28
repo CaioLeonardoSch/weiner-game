@@ -119,7 +119,7 @@ O plano para a primeira versão jogável por outras pessoas: **dois biomas**, ca
 
 ## Visão
 
-O Weiner Game começa com um salsicha atrás de gravetos, mas quer ir além: mostrar as muitas
+O *The Weiner and the Legendary Sticks* começa com um salsicha atrás de gravetos, mas quer ir além: mostrar as muitas
 vidas que os cães levam ao nosso lado, pelo mundo afora — cães de família, de rua, de fazenda,
 de trabalho, de gente rica. No dia a dia pensamos na vida que temos e na que damos ao nosso
 cachorro, e está tudo bem; o jogo só quer lembrar que, ao mesmo tempo, outros cães estão
@@ -161,9 +161,10 @@ Como isso vira jogo:
   ✓ verde = com a raça escolhida, apagado = com outra). `Fase.raca_fixa` (Fase 05) ignora a
   escolha; `Fase.raca` é a do teste no editor. A **pelagem** é só aparência, no menu principal
   (Pelagens).
-- Falta: **conferir cada fase da Floresta jogando com o pug** (as rotas passam com o corpo e o
-  peso dele, na velocidade do salsicha; de verdade ele é 10% mais lento); textos ou cenas de abertura e de final de região (hoje a descrição da região aparece na
-  tela antes de jogar); fases que só abrem com certa raça (rotas alternativas: toca, portinhola,
+- Todas as raças andam e pulam igual (sem velocidade ou pulo por raça); o que muda é o corpo
+  (colisão), o peso e as habilidades nativas. As rotas da Floresta passam com o pug.
+- Falta: **conferir jogando cada fase da Floresta com o pug**; textos ou cenas de abertura e de
+  final de região (a descrição da região e das raças saiu do menu); fases que só abrem com certa raça (rotas alternativas: toca, portinhola,
   peso). Toda fase precisa ter solução com cada raça compatível da região.
 
 ## Etapa 3 — Graveto de verdade ✅ (feito, com ideias para depois)
@@ -424,13 +425,12 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
   salsicha). Ideias por raça (a definir):
   - *Salsicha*: tocas de texugo, cavar, túneis baixos, frestas.
   - *Border Collie*: pastoreio e latido (feito).
-  - *Pastor Alemão e Malinois*: faro, morder e guardar a casa (ver missões); o Malinois pula
-    alto.
+  - *Pastor Alemão e Malinois*: faro, morder e guardar a casa (ver missões).
   - *Pug*: pesado — segura uma placa sozinho, empurra melhor.
   - *Corgi*: túneis bem baixos.
   - *Vira-lata caramelo*: se vira na cidade — acha comida pelo faro, passa por frestas de muros
     e grades, conhece os atalhos.
-  - *Galgo*: esguio e rápido — frestas.
+  - *Galgo*: esguio — frestas.
 
   *Onde encaixa:* o level design ganha rotas que só certas raças usam (toca, portinhola,
   fresta, pulo alto, peso). Depende da colisão por raça e de um "peso" na `Raca`.
@@ -443,7 +443,7 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
     guardam a casa à noite (ver missões).
   - *Vira-lata caramelo*: o cachorro brasileiro por excelência, com pelagens de vira-lata
     (caramelo e outras); fases na cidade grande, em favelas e no interior do Brasil.
-  - *Galgo*: esguio e rápido; passa por frestas.
+  - *Galgo*: esguio; passa por frestas.
   - *Corgi*: tema britânico (patas curtíssimas: passa em túneis bem baixos).
   - *Akita*: homenagem ao Hachiko (esperar o dono na estação?).
   - *Jack Russell*: buscar uma máscara mágica do dono, com homenagens a filmes na visão 3D.

@@ -132,15 +132,18 @@ func _montar_interface() -> void:
 	margem.add_child(coluna)
 
 	var titulo := Label.new()
-	titulo.text = "Weiner Game"
-	titulo.add_theme_font_size_override("font_size", 54)
+	# Quebra fixa: o painel muda de largura entre as telas e o título não deve pular.
+	titulo.text = "The Weiner and the\nLegendary Sticks"
+	titulo.add_theme_font_size_override("font_size", 36)
+	titulo.add_theme_constant_override("line_spacing", -8)
 	titulo.add_theme_color_override("font_color", COR_TITULO)
 	titulo.add_theme_color_override("font_outline_color", Color.BLACK)
 	titulo.add_theme_constant_override("outline_size", 12)
 	coluna.add_child(titulo)
 
 	var subtitulo := Label.new()
-	subtitulo.text = "o salsicha e os gravetos lendários"
+	subtitulo.text = "and other dog stories"
+	subtitulo.add_theme_font_size_override("font_size", 20)
 	subtitulo.add_theme_color_override("font_color", Color(0.8, 0.84, 0.8))
 	coluna.add_child(subtitulo)
 
@@ -164,7 +167,7 @@ func _montar_interface() -> void:
 	rolagem.add_child(_tela)
 
 	var rodape := Label.new()
-	rodape.text = "Setas/Enter ou mouse  ·  Esc: voltar  ·  %s: pixelado" % Teclas.nome(&"alternar_pixel")
+	rodape.text = "Setas/Enter ou mouse  ·  Esc: voltar"
 	rodape.add_theme_font_size_override("font_size", 15)
 	rodape.add_theme_color_override("font_color", Color(0.7, 0.72, 0.7))
 	coluna.add_child(rodape)
@@ -255,8 +258,8 @@ func _abrir_opcoes() -> void:
 	ui.add_child(tela)
 
 
-## Antes de jogar uma fase (Continuar, região nova, "Trocar de raça" na pausa): a história da
-## região, a raça (entre as compatíveis) e Jogar.
+## Antes de jogar uma fase (Continuar, região nova, "Trocar de raça" na pausa): a raça (entre as
+## compatíveis) e Jogar.
 func _tela_antes_de_jogar(caminho: String) -> void:
 	var regiao := Regioes.por_id(Fases.regiao_da_fase(caminho))
 	_limpar(regiao.nome if regiao else "Jogar", true, _tela_principal)
@@ -266,8 +269,6 @@ func _tela_antes_de_jogar(caminho: String) -> void:
 	nome.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	nome.add_theme_font_size_override("font_size", 20)
 	_tela.add_child(nome)
-	if regiao and not regiao.descricao.is_empty():
-		_rotulo(regiao.descricao).add_theme_font_size_override("font_size", 15)
 	_escolha_da_raca(caminho, regiao, _tela_antes_de_jogar.bind(caminho))
 	var jogar := _botao("▶  Jogar", Fases.jogar.bind(caminho))
 	jogar.name = "Jogar"
@@ -300,7 +301,7 @@ func _tela_regioes() -> void:
 	_focar_primeiro()
 
 
-## Uma região: a história, a raça e as fases (✓ = feita com a raça escolhida; ✓ apagado = feita
+## Uma região: a raça e as fases (✓ = feita com a raça escolhida; ✓ apagado = feita
 ## com outra raça).
 func _tela_regiao(regiao: Regiao) -> void:
 	_limpar(regiao.nome if regiao else "Outras", true, _tela_regioes)
@@ -313,8 +314,6 @@ func _tela_regiao(regiao: Regiao) -> void:
 	if proxima.is_empty() and not fases.is_empty():
 		proxima = fases[0]
 	_montar_fundo(proxima)
-	if regiao and not regiao.descricao.is_empty():
-		_rotulo(regiao.descricao).add_theme_font_size_override("font_size", 15)
 	if regiao:
 		_escolha_da_raca("", regiao, _tela_regiao.bind(regiao))
 	_secao("Fases")
@@ -332,12 +331,12 @@ func _tela_regiao(regiao: Regiao) -> void:
 
 
 ## "Raça": um botão por raça compatível (✓ na escolhida; passar o mouse ou o foco mostra o
-## cachorro), a descrição e a pelagem. Numa fase de raça fixa, só diz qual é.
+## cachorro). Numa fase de raça fixa, só diz qual é.
 func _escolha_da_raca(caminho: String, regiao: Regiao, remontar: Callable) -> void:
 	_secao("Raça")
 	if not caminho.is_empty() and Fases.raca_fixa(caminho):
 		var fixa := Fases.raca_para_jogar(caminho)
-		_rotulo("Nesta fase você é o %s. %s" % [fixa.nome, fixa.descricao])
+		_rotulo("Nesta fase você é o %s." % fixa.nome)
 		_mostrar_cachorro(fixa)
 		return
 	if regiao == null:
@@ -357,13 +356,6 @@ func _escolha_da_raca(caminho: String, regiao: Regiao, remontar: Callable) -> vo
 		botao.mouse_entered.connect(_mostrar_cachorro.bind(raca))
 		botao.focus_entered.connect(_mostrar_cachorro.bind(raca))
 		botao.mouse_exited.connect(_mostrar_cachorro.bind(escolhida))
-	var sobre := escolhida.descricao
-	var nativas := _habilidades_nativas(escolhida)
-	if not nativas.is_empty():
-		sobre += " Já sabe %s." % nativas
-	sobre += "\nPelagem: %s (troque em Pelagens, no menu principal)." % \
-		escolhida.pelagem(Racas.pelagem_escolhida(escolhida)).nome
-	_rotulo(sobre).add_theme_font_size_override("font_size", 15)
 	_mostrar_cachorro(escolhida)
 
 
@@ -374,14 +366,6 @@ func _escolher_raca(regiao: Regiao, raca: Raca, remontar: Callable) -> void:
 	var botao := _tela.find_child("Raca_" + raca.id, true, false) as Button
 	if botao:
 		botao.grab_focus.call_deferred()
-
-
-func _habilidades_nativas(raca: Raca) -> String:
-	var nomes: PackedStringArray = []
-	for i in 3:
-		if raca.habilidades_nativas & (1 << i):
-			nomes.append(["pular", "cavar", "latir"][i])
-	return ", ".join(nomes)
 
 
 ## A pelagem de cada raça: só aparência.

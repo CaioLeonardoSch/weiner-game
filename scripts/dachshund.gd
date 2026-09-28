@@ -547,8 +547,6 @@ func _velocidade_entrada() -> Vector3:
 	var direcao := direita * entrada.x - frente * entrada.y
 	_yaw_alvo = atan2(-direcao.z, direcao.x)
 	var fator := graveto.fator_velocidade() if tem_graveto and graveto else 1.0
-	if raca:
-		fator *= raca.fator_velocidade
 	if Input.is_action_pressed("andar_devagar"):
 		fator *= fator_devagar
 	return direcao * velocidade * fator

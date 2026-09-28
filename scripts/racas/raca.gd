@@ -38,8 +38,6 @@ enum Rabo { RETO, ENROLADO, CURTO }
 @export_range(-60, 80) var angulo_rabo := 35.0
 
 @export_group("Jogo")
-## Multiplica a velocidade do cachorro.
-@export_range(0.5, 2.0) var fator_velocidade := 1.0
 ## Peso numa placa de pressão (salsicha = 1). Raças gordinhas seguram placas mais pesadas.
 @export_range(0.5, 3.0, 0.1) var peso := 1.0
 ## Cápsula de colisão do corpo (m): a altura decide por onde a raça passa (túneis, frestas).

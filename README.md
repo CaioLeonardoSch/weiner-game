@@ -1,4 +1,6 @@
-# Weiner Game
+# The Weiner and the Legendary Sticks
+
+*and other dog stories*
 
 Jogo de puzzle 3D: um cachorro salsicha busca gravetos lendários e precisa voltar carregando
 o graveto na boca — a colisão do graveto pelo cenário é o núcleo do puzzle.
@@ -296,8 +298,8 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
 ## Regiões e biomas
 
 - **Regiões** (`assets/regioes/*.tres`, recurso `Regiao`: nome, descrição, ordem, bioma
-  sugerido e **raças compatíveis**) agrupam as fases no menu (**Regiões**, com a história curta
-  de cada uma). Cada fase diz a sua na propriedade *Região*. Hoje: **Floresta** (as Fases 01 a
+  sugerido e **raças compatíveis**) agrupam as fases no menu
+  (**Regiões**). Cada fase diz a sua na propriedade *Região*. Hoje: **Floresta** (as Fases 01 a
   12; salsicha ou pug) e **Neve** (vazia, esperando as fases; salsicha ou border collie).
 - **Raça antes de jogar**: na tela da região (e na tela *antes de jogar*, que abre no
   *Continuar*, ao chegar numa região nova e em *Trocar de raça* na pausa) o jogador escolhe a
@@ -318,8 +320,8 @@ O cachorro é um modelo **voxel gerado por código** (`scripts/racas/cachorro_vo
 de dois dados:
 
 - **Raça** (`assets/racas/*.tres`, recurso `Raca`): proporções (corpo, patas, cabeça, focinho),
-  tipo de orelha (caída, em pé, dobrada) e de rabo (reto, enrolado, curto), fator de velocidade
-  e **habilidades nativas** (somadas às da fase). Hoje: salsicha, pug e border collie.
+  tipo de orelha (caída, em pé, dobrada) e de rabo (reto, enrolado, curto), colisão, peso e
+  **habilidades nativas** (somadas às da fase). Hoje: salsicha, pug e border collie.
 - **Pelagem** (recurso `Pelagem`, dentro da raça): cores do pelo, cabeça, orelhas, marcas
   (barriga/patas/focinho/sobrancelhas), máscara, manchas (malhado/merle) e pelo longo.
 
@@ -562,7 +564,7 @@ por elas), 3 `objetos`, 4 `cachorro`.
 | Força da correnteza, lentidão da água rasa | `correnteza` / `lentidao` em `Tiles.definicoes()` |
 | Tempo segurando para puxar | `DURACAO_PUXAR` em `scripts/dachshund.gd` |
 | Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |
-| Medidas, velocidade e cores de uma raça | `assets/racas/*.tres` (inspetor do Godot) |
+| Medidas, peso e cores de uma raça | `assets/racas/*.tres` (inspetor do Godot) |
 | Medo e velocidade das ovelhas | constantes no topo de `scripts/objetos/ovelha.gd` |
 | Frio (tempo até gelar) | "Segundos até gelar" nas propriedades da fase |
 | Raio e gravetos da fogueira | propriedades da Fogueira no editor |
