@@ -32,8 +32,13 @@ const OBJETIVO_PASTOREIO := 1
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
 @export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)") var objetivo := OBJETIVO_GRAVETO
 ## Raça do cachorro nesta fase (id de assets/racas/*.tres). A raça soma habilidades próprias
-## às da fase (ex.: o Border Collie sempre late).
+## às da fase (ex.: o Border Collie sempre late). Jogando pelo menu, vale a raça que o jogador
+## escolheu para a região (Regiao.racas); esta é a do teste no editor — e a de sempre, com
+## `raca_fixa`.
 @export var raca := &"salsicha"
+## A fase é sempre jogada com a `raca` acima, qualquer que seja a escolhida para a região (ex.:
+## o pastoreio da Fase 05 é do Border Collie).
+@export var raca_fixa := false
 ## Região a que a fase pertence (id de assets/regioes/*.tres): o menu agrupa as fases por
 ## região, na ordem das regiões e, dentro de cada uma, pelo nome do arquivo.
 @export var regiao := &"floresta"

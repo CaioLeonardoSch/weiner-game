@@ -56,6 +56,8 @@ func _ready() -> void:
 		_botao("Voltar ao editor (%s)" % Teclas.nome(&"alternar_editor"), Fases.abrir_editor)
 	else:
 		_botao("Editar esta fase (%s)" % Teclas.nome(&"alternar_editor"), Fases.editar.bind(Fases.caminho_atual))
+	if not Fases.testando and Fases.pode_escolher_raca(Fases.caminho_atual):
+		_botao("Trocar de raça", Fases.antes_de_jogar.bind(Fases.caminho_atual))
 	_botao("Menu principal", Fases.abrir_menu)
 	hide()
 

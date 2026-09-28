@@ -9,10 +9,12 @@ próximas etapas (túneis, pulo, cavar, empurrar, riachos, latir, truques, peso 
 ## Rodando
 
 Abrir a pasta no **Godot 4.7** e rodar (F5). O jogo abre no **menu principal**
-(`scenes/menu.tscn`): continuar de onde parou, escolher uma fase (✓ nas concluídas), escolher a
-pelagem do cachorro (com prévia ao fundo) ou abrir o **editor de fases** — numa fase existente ou
-numa nova, do zero. Para jogar uma fase direto, abra a cena dela e use F6 (rodar cena atual).
-O progresso (fases concluídas, pelagens escolhidas) fica em `user://progresso.cfg`.
+(`scenes/menu.tscn`): continuar de onde parou, escolher **região → raça → fase** (✓ nas
+concluídas), escolher a pelagem de cada raça (só aparência, com prévia ao fundo) ou abrir o
+**editor de fases** — numa fase existente ou numa nova, do zero. Antes de jogar, a raça se
+escolhe entre as compatíveis com a região (ver *Regiões e biomas*). Para jogar uma fase direto,
+abra a cena dela e use F6 (rodar cena atual). O progresso (fases concluídas e com que raça,
+raça escolhida por região, pelagens) fica em `user://progresso.cfg`.
 
 A dica no topo da tela mostra só os controles que valem no momento; reiniciar (R) e o editor
 (F1) aparecem na pausa, com as teclas.
@@ -111,7 +113,9 @@ A rota `save` testa a pasta do save, os ids das fases e a migração de saves an
 `mecanismos` testa a regra OU / E dos portões e a ferramenta Ligar do editor
 (`ferramentas/testes/teste_mecanismos.gd`); `editor` testa trechos, colar girado, módulos,
 balde e bioma (`teste_editor.gd`); `neve` e `celeiro` montam fases de neve por código
-(`teste_neve.gd`) e testam frio, fogueira, gelo e o celeiro.
+(`teste_neve.gd`) e testam frio, fogueira, gelo e o celeiro; `menu` escolhe a raça da região
+no menu e confere que ela vale no jogo, a raça fixa da Fase 05 e a tela *antes de jogar*
+(`teste_menu.gd`).
 Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
 Os testes não mexem nos arquivos do jogador: usam as opções de fábrica e guardam o progresso
 só na memória (se o `progresso.cfg` real mudar durante um teste, o teste falha).
@@ -292,9 +296,16 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
 ## Regiões e biomas
 
 - **Regiões** (`assets/regioes/*.tres`, recurso `Regiao`: nome, descrição, ordem, bioma
-  sugerido) agrupam as fases no menu (**Fases**, com a história curta de cada região). Cada fase
-  diz a sua na propriedade *Região*. Hoje: **Floresta** (as Fases 01 a 12) e **Neve** (vazia,
-  esperando as fases). A ordem do jogo (continuar, próxima fase) é a das regiões e, dentro de
+  sugerido e **raças compatíveis**) agrupam as fases no menu (**Regiões**, com a história curta
+  de cada uma). Cada fase diz a sua na propriedade *Região*. Hoje: **Floresta** (as Fases 01 a
+  12; salsicha ou pug) e **Neve** (vazia, esperando as fases; salsicha ou border collie).
+- **Raça antes de jogar**: na tela da região (e na tela *antes de jogar*, que abre no
+  *Continuar*, ao chegar numa região nova e em *Trocar de raça* na pausa) o jogador escolhe a
+  raça entre as `racas` da região; a escolha fica guardada por região e vale em todas as fases
+  dela. A lista de fases marca ✓ verde as feitas com a raça escolhida e ✓ apagado as feitas com
+  outra. Uma fase com **Sempre com esta raça** (`Fase.raca_fixa`, ex.: a Fase 05 do Border
+  Collie) ignora a escolha. Testando no editor, vale a raça da fase. Toda fase da região precisa
+  ter solução com cada raça compatível. A ordem do jogo (continuar, próxima fase) é a das regiões e, dentro de
   cada uma, a do nome do arquivo. Para uma região nova, duplique um `.tres` e mude `id`, `nome`
   e `ordem`.
 - **Biomas** (`scripts/biomas.gd`): Floresta e Neve. O bioma troca a biblioteca de tiles
@@ -313,7 +324,8 @@ de dois dados:
   (barriga/patas/focinho/sobrancelhas), máscara, manchas (malhado/merle) e pelo longo.
 
 Para criar uma raça: duplique um `.tres` em `assets/racas/`, mude `id`, `nome` e as medidas no
-inspetor do Godot — ela aparece sozinha no menu (tela Cachorro) e nas propriedades da fase.
+inspetor do Godot — ela aparece sozinha no menu (Pelagens) e nas propriedades da fase; para
+jogar com ela, acrescente o id em `racas` das regiões em que ela tem solução.
 Para uma pelagem nova, acrescente um item em `pelagens`. O modelo sai em partes com pivôs
 (corpo, cabeça, orelhas, rabo, patas) animadas por código em `ModeloCachorro` (andar, abanar
 o rabo, balançar as orelhas).
@@ -397,7 +409,8 @@ confirmação se houver problema grave; ao salvar, mostra os avisos (placa de pe
 na fase, frio sem fogueira...).
 
 Nas propriedades da fase (nada selecionado) ficam a **região**, o **bioma**, o **objetivo**, a
-**raça** do cachorro, as **habilidades** que a fase libera (pular, cavar, latir; a raça pode
+**raça** do cachorro (a do teste no editor; pelo menu vale a escolhida entre as da região, a
+não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir; a raça pode
 somar as dela) — a Fase 01 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
 objetivo pede alguns objetos:
 

@@ -23,6 +23,7 @@ const ROTULOS := {
 	&"position": "Posição",
 	&"habilidades": "Habilidades do cachorro",
 	&"raca": "Raça do cachorro",
+	&"raca_fixa": "Sempre com esta raça",
 	&"objetivo": "Objetivo",
 	&"peso": "Peso (1 = normal)",
 	&"regiao": "Região",
@@ -74,6 +75,8 @@ func mostrar(alvo: Object) -> void:
 		_campo(&"bioma")
 		_campo(&"objetivo")
 		_campo(&"raca")
+		_campo(&"raca_fixa")
+		_dica_raca_no_menu(alvo as Fase)
 		_campo(&"habilidades")
 		_dica_habilidades_da_raca(alvo as Fase)
 		_campo(&"desvio_camera_3d")
@@ -253,6 +256,15 @@ func _campo(propriedade: StringName) -> void:
 				caixas[eixo].set_value_no_signal(vetor[eixo])
 		add_child(linha)
 	_atualizadores[propriedade].call()
+
+
+## Jogando pelo menu, a raça é a que o jogador escolheu entre as da região (se não for fixa).
+func _dica_raca_no_menu(fase: Fase) -> void:
+	var regiao := Regioes.por_id(fase.regiao)
+	if fase.raca_fixa or regiao == null:
+		return
+	var nomes := regiao.racas_compativeis().map(func(r: Raca) -> String: return r.nome)
+	_dica("No menu, o jogador escolhe: %s (raças da região). Teste com cada uma." % ", ".join(nomes))
 
 
 func _dica_habilidades_da_raca(fase: Fase) -> void:

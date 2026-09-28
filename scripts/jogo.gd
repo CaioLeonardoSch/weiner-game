@@ -104,6 +104,9 @@ func _ready() -> void:
 	add_child(entorno)
 	entorno.montar(fase)
 	cachorro.fase = fase
+	# Pelo menu, a raça é a que o jogador escolheu para a região; testando no editor, a da fase.
+	if not Fases.testando and not Fases.caminho_atual.is_empty():
+		fase.raca = Fases.raca_para_jogar(Fases.caminho_atual).id
 	var raca := Racas.por_id(fase.raca)
 	if raca:
 		cachorro.aplicar_raca(raca, Racas.pelagem_escolhida(raca))
@@ -199,6 +202,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif concluida and fase and not Fases.testando and event.is_action_pressed("ui_accept"):
 		if _proxima_fase.is_empty():
 			Fases.abrir_menu()
+		elif _muda_de_regiao():
+			# Região nova: antes, a história dela e a escolha da raça.
+			Fases.antes_de_jogar(_proxima_fase)
 		else:
 			Fases.jogar(_proxima_fase)
 
@@ -425,7 +431,7 @@ func _on_puxar_falhou(motivo: String) -> void:
 
 func _on_cachorro_voltou(motivo: String) -> void:
 	if motivo == "agua":
-		mostrar_aviso("Splash! Salsicha não nada...")
+		mostrar_aviso("Splash! %s não nada..." % (cachorro.raca.nome if cachorro.raca else "Salsicha"))
 	elif motivo == "queda":
 		mostrar_aviso("Opa! Caiu...")
 
@@ -443,14 +449,22 @@ func concluir() -> void:
 	if Fases.testando:
 		texto += "%s: voltar ao editor    %s: jogar de novo" % [Teclas.nome(&"alternar_editor"), Teclas.nome(&"reiniciar")]
 	else:
-		Fases.marcar_concluida(Fases.caminho_atual)
+		Fases.marcar_concluida(Fases.caminho_atual, fase.raca)
 		_proxima_fase = Fases.proxima()
 		if _proxima_fase.is_empty():
 			texto += "Última fase! Enter: menu    %s: jogar de novo" % Teclas.nome(&"reiniciar")
+		elif _muda_de_regiao():
+			var regiao := Regioes.por_id(Fases.regiao_da_fase(_proxima_fase))
+			texto += "Enter: próxima região (%s)    %s: jogar de novo    Esc: pausa" % [
+				regiao.nome if regiao else "?", Teclas.nome(&"reiniciar")]
 		else:
 			texto += "Enter: próxima fase    %s: jogar de novo    Esc: pausa" % Teclas.nome(&"reiniciar")
 	mensagem.text = texto
 	mensagem.show()
+
+
+func _muda_de_regiao() -> bool:
+	return Fases.regiao_da_fase(_proxima_fase) != Fases.regiao_da_fase(Fases.caminho_atual)
 
 
 func _mostrar_erro(texto: String) -> void:

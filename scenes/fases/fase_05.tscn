@@ -17,6 +17,7 @@ id = "fase_05"
 nome = "Fase 05 — O Pastor"
 objetivo = 1
 raca = &"border_collie"
+raca_fixa = true
 
 [node name="Terreno" type="GridMap" parent="." unique_id=477094252]
 mesh_library = ExtResource("2_wwueu")

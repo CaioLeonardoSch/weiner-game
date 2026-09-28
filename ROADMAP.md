@@ -154,10 +154,17 @@ Como isso vira jogo:
   ordem, bioma sugerido); cada fase diz a sua (`Fase.regiao`) e o menu (Fases) agrupa por região,
   com a descrição. A ordem do jogo é a das regiões, depois o nome do arquivo. Hoje: Floresta e
   Neve.
-- Falta: raças compatíveis por região e o menu Regiões → raça → pelagem → fases (o progresso
-  guardaria (fase, raça)); textos ou cenas de abertura e de final. Hoje a pelagem se escolhe na
-  tela Cachorro e a raça vem de `Fase.raca` — que continua útil como raça padrão para testar no
-  editor. Toda fase precisa ter solução com cada raça compatível da região.
+- ✅ **Raça por região**: `Regiao.racas` (compatíveis; Floresta: salsicha e pug; Neve: salsicha
+  e border collie). Menu **Regiões → região (história, raça, fases)**; a tela *antes de jogar*
+  (Continuar, região nova, *Trocar de raça* na pausa) mostra a história e a escolha da raça. A
+  escolha fica por região no progresso (`[racas]`), e o ✓ guarda com que raça (`[racas_concluidas]`;
+  ✓ verde = com a raça escolhida, apagado = com outra). `Fase.raca_fixa` (Fase 05) ignora a
+  escolha; `Fase.raca` é a do teste no editor. A **pelagem** é só aparência, no menu principal
+  (Pelagens).
+- Falta: **conferir cada fase da Floresta jogando com o pug** (as rotas passam com o corpo e o
+  peso dele, na velocidade do salsicha; de verdade ele é 10% mais lento); textos ou cenas de abertura e de final de região (hoje a descrição da região aparece na
+  tela antes de jogar); fases que só abrem com certa raça (rotas alternativas: toca, portinhola,
+  peso). Toda fase precisa ter solução com cada raça compatível da região.
 
 ## Etapa 3 — Graveto de verdade ✅ (feito, com ideias para depois)
 
@@ -166,7 +173,7 @@ comprido (Q), peso (velocidade e pulo) e equilíbrio em passagens estreitas (til
 com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso.
 
 - ✅ **Mais passagens estreitas**: o *Tronco caído* com `pinguela` (atravessado sobre um vão) e o
-  graveto que vira ponte (Etapa 10) são passagens estreitas feitas por objetos (grupo
+  *Tronco* que boia de pinguela são passagens estreitas feitas por objetos (grupo
   `passagens_estreitas`, método `passagem_em`).
 - Ideias para depois (mudam o controle do graveto; melhor desenhar junto com fases para elas):
   - **Formatos T/Y**: gravetos com galhos exigindo ângulo. A base já existe (forma de colisão do
@@ -284,12 +291,8 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   acendem uma por placa; **atraso ao fechar** (fica aberto N segundos: corrida contra o tempo);
   **alavanca** (F liga e desliga, sem precisar de peso); e outros que reagem ao canal (ponte
   levadiça, comporta, plataforma), todos via `ObjetoFase.papel_no_canal()`.
-- **O graveto vira ponte. ✅** Largado ao comprido sobre um vão de uma célula (buraco, riacho
-  estreito), um graveto longo vira pinguela, com o equilíbrio da Tábua. Como largar volta para a
-  isométrica (e as tampas voltam!), **onde** fazer a ponte importa. O cachorro atravessa e pega
-  o graveto de volta pela outra ponta; um graveto curto não alcança os dois lados.
-  *Onde encaixa:* ao largar ao comprido com as duas pontas apoiadas, o graveto ganha uma colisão
-  fina e passa a responder a `Fase.passagem_estreita_em`.
+- ~~**O graveto vira ponte.**~~ Feito e depois **retirado** (ver *Pontes, gatilho e tronco*): o
+  papel de pinguela ficou com o tronco que se morde, gira e boia.
 - **Troncos: gravetos gigantes.** Praticamente troncos, pesados demais para carregar: o cachorro
   morde perto da ponta e arrasta o resto pelo chão. Anda devagar, não pula, faz curvas abertas
   (o tronco vem atrás, como um reboque) e enrosca em quinas. Largados sobre água ou vãos de 2 a
