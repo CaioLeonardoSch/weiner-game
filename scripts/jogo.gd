@@ -149,6 +149,13 @@ func _preparar_objetivo() -> void:
 			("  %s: latir" % Teclas.nome(&"latir") if cachorro.pode_latir else "")))
 		um_graveto.boca_cheia.connect(func() -> void:
 			mostrar_aviso("Boca cheia! %s larga este graveto para pegar outro" % Teclas.nome(&"largar_graveto")))
+	for ponte in fase.todos(Ponte):
+		var aviso := (ponte as Ponte).aviso_ao_quebrar
+		(ponte as Ponte).quebrou.connect(mostrar_aviso.bind(
+			_com_teclas(aviso) if not aviso.is_empty() else "A ponte caiu! A água levou as tábuas", 4.5))
+	for tronco in fase.todos(TroncoRolante):
+		(tronco as TroncoRolante).voltou_ao_inicio.connect(
+			mostrar_aviso.bind("O tronco encalhou longe — ele voltou para o lugar", 3.0))
 	for placa in fase.todos(Placa):
 		(placa as Placa).pisada_sem_peso.connect(
 			mostrar_aviso.bind("Placa de pedra: só algo pesado aciona — uma pedra, um tronco", 3.0))
@@ -239,7 +246,7 @@ func _on_graveto_pego(quem: Dachshund, pego: Graveto) -> void:
 	elif grande:
 		texto += "\nGraveto grande (%.1f m) — %s vira ao comprido" % [graveto.comprimento, Teclas.nome(&"virar_graveto")]
 	elif pesado:
-		texto += "\nGraveto pesado — mais devagar, mas firme na correnteza"
+		texto += "\nGraveto pesado — mais devagar"
 	mostrar_aviso(texto)
 	objetivo.ao_pegar_graveto(pego)
 
@@ -269,28 +276,21 @@ func _tentar_largar_graveto() -> void:
 	cachorro.entrada_bloqueada = true
 	# Cai onde estava na boca, na mesma direção (atravessado ou ao comprido). Sem chão
 	# embaixo (beira de barranco, água), cai num ponto alcançável (ver _ponto_para_largar).
-	var ponte: Variant = _encaixe_de_ponte() if cachorro.graveto_ao_comprido else null
 	var yaw := graveto.global_basis.get_euler().y
 	var ponto: Variant = _chao_embaixo(graveto.global_position)
 	if ponto == null:
 		ponto = _ponto_para_largar()
 	cachorro.largar_graveto()
 	graveto.reparent(fase.objetos)
-	if ponte != null:
-		graveto.global_transform = ponte
-		graveto.virar_ponte()
-		mostrar_aviso("O graveto virou ponte!")
-	else:
-		graveto.global_transform = Transform3D(Basis(Vector3.UP, yaw), ponto + Vector3.UP * 0.08)
-		graveto.soltar()
+	graveto.global_transform = Transform3D(Basis(Vector3.UP, yaw), ponto + Vector3.UP * 0.08)
+	graveto.soltar()
 
 	# Largado junto de uma fogueira, um graveto comum vai para o fogo.
-	if ponte == null:
-		for objeto in fase.todos(Fogueira):
-			var fogueira := objeto as Fogueira
-			if fogueira.aceita(graveto) and _plano(fogueira.global_position - graveto.global_position).length() < 1.3:
-				fogueira.receber_graveto(graveto)
-				break
+	for objeto in fase.todos(Fogueira):
+		var fogueira := objeto as Fogueira
+		if fogueira.aceita(graveto) and _plano(fogueira.global_position - graveto.global_position).length() < 1.3:
+			fogueira.receber_graveto(graveto)
+			break
 	_voltar_para_isometrica()
 
 
@@ -322,31 +322,6 @@ func _voltar_para_isometrica() -> void:
 
 static func _plano(v: Vector3) -> Vector3:
 	return Vector3(v.x, 0.0, v.z)
-
-
-## Largado ao comprido com o meio sobre um vão de uma célula (água funda, buraco) e as duas
-## pontas apoiadas em chão da mesma altura, o graveto vira ponte. O encaixe alinha à grade
-## (eixo X ou Z, centro no meio do vão e da fileira) para não exigir mira. Devolve o transform
-## da ponte, ou null se ali não dá.
-func _encaixe_de_ponte() -> Variant:
-	var eixo := graveto.global_basis.z
-	eixo.y = 0.0
-	eixo = Vector3(signf(eixo.x), 0, 0) if absf(eixo.x) >= absf(eixo.z) else Vector3(0, 0, signf(eixo.z))
-	var centro := graveto.global_position
-	if _chao_embaixo(centro) != null:
-		return null
-	# Centro no meio da célula do vão, nos dois sentidos.
-	var celula := Vector3(floorf(centro.x) + 0.5, centro.y, floorf(centro.z) + 0.5)
-	centro = Vector3(celula.x, centro.y, celula.z)
-	var meio := graveto.comprimento * 0.5
-	if meio < 0.8:
-		return null
-	var ponta_a: Variant = _chao_embaixo(centro - eixo * (meio - 0.15))
-	var ponta_b: Variant = _chao_embaixo(centro + eixo * (meio - 0.15))
-	if ponta_a == null or ponta_b == null or absf((ponta_a as Vector3).y - (ponta_b as Vector3).y) > 0.15:
-		return null
-	var altura := maxf((ponta_a as Vector3).y, (ponta_b as Vector3).y) + 0.06
-	return Transform3D(Basis(Vector3.UP, atan2(eixo.x, eixo.z)), Vector3(centro.x, altura, centro.z))
 
 
 func _tentar_virar_graveto() -> void:
@@ -385,6 +360,8 @@ func _atualizar_dica() -> void:
 		partes.append("%s: latir" % t.call(&"latir"))
 	if not cachorro.tem_graveto and fase and not fase.todos(Empurravel).is_empty():
 		partes.append("%s + trás: puxar bloco" % t.call(&"acao"))
+	if not cachorro.tem_graveto and fase and not fase.todos(TroncoRolante).is_empty():
+		partes.append("%s na ponta do tronco + lado: girar" % t.call(&"acao"))
 	if em_3d:
 		partes.append_array(["%s: virar graveto" % t.call(&"virar_graveto"),
 			"%s: devagar" % t.call(&"andar_devagar"), "%s: largar" % t.call(&"largar_graveto")])
@@ -441,7 +418,9 @@ func _on_puxar_falhou(motivo: String) -> void:
 		"boca_cheia":
 			mostrar_aviso("Com o graveto na boca não dá para puxar")
 		"sem_espaco":
-			mostrar_aviso("Sem espaço atrás para puxar o bloco")
+			mostrar_aviso("Sem espaço atrás para puxar")
+		"sem_espaco_girar":
+			mostrar_aviso("Sem espaço para girar o tronco")
 
 
 func _on_cachorro_voltou(motivo: String) -> void:

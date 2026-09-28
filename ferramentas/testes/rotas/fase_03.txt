@@ -1,4 +1,5 @@
-# Fase 03 — O Monte e o Passarinho: cava o túnel, late para o passarinho; volta empurrando a pedra no riacho.
+# Fase 03 — O Monte e o Passarinho: cava o túnel, cruza a ponte, late para o passarinho; pegar o
+# graveto derruba a ponte (gatilho); volta empurrando a pedra no riacho.
 fase res://scenes/fases/fase_03.tscn
 esperar 20
 apertar mover_direita 100
@@ -19,8 +20,10 @@ apertar mover_tras 22
 esperar 26
 apertar mover_direita 30
 esperar 40
+checar not jogo.fase.get_node("Objetos").get_node("Ponte").quebrada
 apertar latir 2
 esperar 160
+checar jogo.cachorro.tem_graveto and jogo.fase.get_node("Objetos").get_node("Ponte").quebrada
 apertar mover_esquerda 17
 esperar 20
 apertar mover_frente 90

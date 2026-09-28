@@ -26,8 +26,9 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
 | Espaço | pular (se a fase liberar) | segurando + botão esquerdo: girar a vista |
 | C | cavar terra fofa (se a fase liberar) | — |
 | B | latir (se a fase liberar) | — |
-| F | ação do que está à frente (morder o mirante, pegar a ponte de graveto...) | — |
-| F (segurando) + trás | puxar o bloco de pedra (sem graveto): segurando F perto do bloco, o cachorro vira de frente e agarra | — |
+| F | ação do que está à frente (morder o mirante, a ponta de um tronco...) | — |
+| F (segurando) + trás | puxar o bloco de pedra ou o tronco pela ponta (sem graveto): segurando F perto, o cachorro vira de frente e agarra | — |
+| F (segurando) + lado | mordendo a ponta de um tronco: gira o tronco 90° em volta da outra ponta | — |
 | 1 a 5 | — | ferramentas do terreno: Pincel, Trocar, Linha, Retângulo, Balde |
 | Ctrl + roda, [ e ] | — | tamanho do pincel (1×1, 2×2, 3×3...) |
 | Shift + clique, clique | — | linha com prévia (tiles ou objetos): o 2º clique confirma |
@@ -122,33 +123,33 @@ caminho, então o salsicha sobe a rampa, anda pelo barranco e pula lá de cima p
 Ao pegar o graveto a câmera vira 3D e revela o túnel no mato (as bocas ficam tampadas por
 folhagem "só isométrica") — o único caminho de volta, porque o barranco é de mão única.
 
-## Fase 02 — "A Pinguela"
+## Fase 02 — "O Precipício"
 
-O graveto agora é grande e pesado (1,4 m, peso 2). Na ida o salsicha cruza o riacho por uma
-ponte larga, segue o caminho de terra por um vão estreito no muro de pedra (a parte da frente é
-uma cerca de madeira, para o vão aparecer na câmera de cima) e **pula** para o degrau onde está o
-graveto. Na volta, em 3D, a ponte larga não existe (era "só isométrica"): sobra a **pinguela**.
-Atravessado na boca, o graveto não passa no vão — **Q** vira o graveto ao comprido. Na
-pinguela, graveto grande desequilibra: atravessado e correndo, o cachorro cai na água; ao
-comprido ou andando devagar (Shift), passa.
+O graveto agora é grande e pesado (1,4 m, peso 2). Uma escada de pedra sobe a um **platô** de
+2 m; lá embaixo corre o rio, e a única passagem até o outro platô é um **tronco** redondo — uma
+pinguela que **balança** mesmo sem graveto. Correndo, o cachorro cai; andando devagar (Shift),
+passa. Do outro lado, desce a escada e **pula** para o degrau do graveto. Na volta, com o graveto
+na boca, balança ainda mais: **Q** vira o graveto ao comprido (no alto do platô — na escada ao
+comprido ele bate nos degraus) e devagar pelo tronco.
 
 ## Fase 03 — "O Monte e o Passarinho"
 
 Um monte de **terra fofa** fecha a trilha: o salsicha **cava** (C) um túnel através dele. Do
-outro lado do riacho, um **passarinho** está pousado no graveto e não deixa pegar — um **latido**
-(B) e ele voa. Na volta, em 3D, a ponte (só isométrica) sumiu: **empurre o bloco de pedra**
-para dentro do riacho; ele afunda e vira passagem (se o bloco ficar encurralado num canto,
-volta sozinho para o lugar). Com o graveto na boca não dá para cavar
-nem latir.
+outro lado do riacho (pela ponte velha), um **passarinho** está pousado no graveto e não deixa
+pegar — um **latido** (B) e ele voa. **Pegar o graveto derruba a ponte** (um *Gatilho* ligado a
+ela): as tábuas caem e a água leva. Para voltar, **empurre o bloco de pedra** para dentro do
+riacho; ele afunda e vira passagem (se o bloco ficar encurralado num canto, volta sozinho para o
+lugar). Com o graveto na boca não dá para cavar nem latir.
 
 ## Fase 04 — "A Correnteza"
 
-Primeira fase sem habilidades extras. Um **monte** de rampas e cantos logo no começo; depois
-um rio de **correnteza** (água rasa que arrasta o cachorro rio abaixo — se ele for levado até a
-água funda, "Splash!"). Um bloco de pedra está **encaixado num nicho**: empurrar não resolve,
-é preciso **puxar** (segurar F e andar para trás) para tirá-lo e depois empurrá-lo para dentro
-do canal. Uma **escada** sobe ao platô do graveto, que é pesado — e graveto pesado deixa o
-cachorro mais firme na correnteza na volta.
+Primeira fase sem habilidades extras. Um rio largo de **correnteza** corta a trilha: ela é mais
+forte que o passo do cachorro e leva quem entra para fora da trilha (e para a água funda). Na
+margem há um **bloco de pedra** e um **tronco** comprido. Empurrada para dentro do rio, a pedra
+fica de pé no leito; empurrado **ao comprido** (4 vezes), o tronco entra no rio, **boia** e a
+correnteza o leva rio abaixo — até **parar na pedra**. Aí é atravessar por cima dele, devagar
+(ele é redondo e balança). Depois, a ponte do canal, a escada e o graveto; a volta é pelo mesmo
+tronco. Sem a pedra, o tronco desce o rio e volta para o lugar.
 
 ## Fase 05 — "O Pastor"
 
@@ -171,18 +172,20 @@ o portão fecha — com o cachorro do lado de dentro. Qualquer placa da mesma co
 antes, é preciso levar um **graveto comum** para a outra placa azul (de madeira: qualquer coisa
 aciona), lá fora — o cachorro não pode ficar em cima dela e passar pelo portão ao mesmo tempo.
 
-## Fase 08 — "A Ponte de Graveto"
+## Fase 08 — "A Ponte Velha"
 
-A ponte da ida é "só isométrica": na volta, em 3D, ela some. Antes de atravessar, o **mirante**
-(um graveto fincado num toco, com fita vermelha) mostra isso: **F** morde e a câmera mostra a
-fase como ela fica na volta; F (ou Esc) solta. Do outro lado há um **graveto comum comprido**:
-virado ao comprido (**Q**) e largado sobre o riacho, ele **vira ponte**. Aí é buscar o lendário
-e voltar pela ponte de graveto.
+A ponte velha aguenta a ida — e **cai atrás do cachorro** logo depois (um *Gatilho* na margem de
+lá): as tábuas caem no riacho e a água leva. Para voltar, um **tronco** deitado ao lado do rio:
+**mordendo a ponta** (segure F de frente para ela) e andando **de lado**, o tronco **gira 90°**
+em volta da outra ponta; depois, empurrado **ao comprido**, ele avança até encaixar entre as duas
+margens — vira uma **pinguela** (redonda, balança). Aí é buscar o lendário e voltar devagar.
 
 ## Fase 09 — "O Passeio Completo"
 
-Junta tudo: mirante, ponte só da ida, uma **placa vermelha de pedra** (só o bloco de pedra aciona)
-segurando o portão vermelho, e o graveto comprido que vira a ponte da volta.
+Junta tudo: a **placa vermelha de pedra** (só algo pesado aciona — o bloco ou o tronco) segurando
+o portão vermelho; a ponte que **cai quando o graveto lendário é pego**; e o tronco que, girado
+e empurrado, vira a pinguela da volta. (Também dá para usar o tronco na placa e afundar o bloco
+no riacho.)
 
 ## Fase 10 — "Debaixo da Cerca"
 
@@ -193,9 +196,12 @@ está enterrado, é só cavar. Ele é comprido: na volta, pelo vão da cerca, s�
 
 ## Fase 11 — "O Tronco no Rio"
 
-Não há ponte: o jeito é empurrar o **tronco** de lado para dentro da correnteza. Ele desce o rio
-(dá para ir em cima) e encaixa no poço fundo, virando ponte. Do outro lado, a **placa verde** (de
-madeira) abre o portão verde — e ele trava aberto.
+Não há ponte, e a correnteza larga leva quem entra. O **tronco** está deitado ao longo do rio:
+mordendo a ponta e andando de lado, ele **gira** e fica atravessado; empurrado ao comprido, entra
+na correnteza, **boia** e desce o rio (dá para ir em cima) até onde o rio **estreita** — ali ele
+encaixa entre as margens e vira pinguela. Se ele encalhar de outro jeito (entrou no rio ao
+comprido, por exemplo), volta para o lugar. Do outro lado, a **placa verde** (de madeira) abre o
+portão verde — e ele trava aberto.
 
 ## Fase 12 — "O Vizinho"
 
@@ -218,16 +224,21 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
   qualquer coisa — o cachorro, um graveto largado, uma ovelha, um passarinho, o bloco, o tronco;
   a de **pedra** (laje cinza) só por algo pesado — o **bloco de pedra** e o **tronco**. Pisando
   numa de pedra, o jogo avisa que ela precisa de algo pesado.
-- **Graveto-ponte:** um graveto de 1,6 m ou mais, largado **ao comprido** sobre um vão de uma
-  célula (riacho, buraco) com chão dos dois lados, encaixa na grade e vira uma pinguela (com o
-  equilíbrio da Tábua). Para pegar de volta, chegue por uma das pontas e aperte F.
+- **Pontes de madeira:** as tábuas ficam dentro do bloco (do tamanho do vão, rente ao chão). Há
+  três tipos (propriedade *Tipo* no painel): **Firme**; **Cede com o tempo** (ponte velha, mais
+  escura: quem fica parado em cima mais que *tempo para ceder* segundos faz ela ranger, tremer e
+  quebrar); **Quebra num gatilho** (cai quando o canal dela liga). Quebrada, as tábuas caem na
+  água e a correnteza leva. *Aviso ao quebrar* é o texto que aparece na hora.
+- **Gatilho:** uma área invisível (roxa no editor) que liga o canal uma vez, de vez: quando o
+  cachorro **entra**, **entra com um graveto** ou quando **um graveto de dentro dela é pego**.
+  Ligue com a ferramenta Ligar (ex.: à ponte que cai).
 - **Mirante:** F morde e mostra a fase como fica na volta (sem ligar nem desligar nada); o
   cachorro fica parado até soltar (F ou Esc).
 - **Botão de ação (F):** objetos que respondem ao F mostram a ação embaixo da tela
   ("F: ..."). Segurar F + andar para trás continua puxando o bloco.
 - **Regra OU / E:** com várias placas da mesma cor, o portão abre com **qualquer uma** acionada
   (OU, o padrão) ou só com **todas** ao mesmo tempo (E) — propriedade *Regra* do portão.
-- **No editor:** Placa, Portão e Mirante ficam em *Mecanismos*; linhas tracejadas na cor do canal
+- **No editor:** Placa, Portão, Gatilho e Mirante ficam em *Mecanismos*; linhas tracejadas na cor do canal
   ligam as placas aos portões, e o portão que reage a mais de uma placa mostra a regra ("OU" /
   "E"). A validação avisa placa sem portão (e vice-versa) e regra E com uma placa só. Ver
   *Ligando mecanismos* em "Criando fases".
@@ -238,8 +249,14 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
   com terra fofa** (abre um vão baixo naquele metro: salsicha e pug passam, border collie não);
   um bloco de **terra fofa** (some); a **terra fofa do chão** (vira um *Buraco* de meio metro — o
   cachorro sai escalando, e um bloco empurrado para dentro tapa o buraco).
-- **Tronco que rola**: ocupa duas células; empurrado de lado rola uma célula. Na água funda vira
-  ponte; na correnteza desce o rio (com o cachorro em cima) até encalhar ou encaixar na funda.
+- **Tronco** (*comprimento* de 2 a 5 células): empurrado **de lado** rola uma célula; **ao
+  comprido**, desliza. **Mordendo a ponta** (segurar F de frente para ela, sem graveto): andando
+  para trás, puxa; andando **de lado**, gira 90° em volta da outra ponta (precisa de espaço livre
+  no caminho do giro). Com as duas pontas apoiadas em margens e o meio sobre água ou um vão, vira
+  **pinguela** — passagem estreita e redonda, que **balança mesmo sem graveto**. Inteiro na água
+  rasa ou na correnteza, **boia** (dá para andar em cima) e a correnteza leva, uma célula por
+  vez, até parar num objeto (uma pedra), encaixar entre margens ou afundar na água funda; se
+  encalhar na margem ou sair do mapa, volta para o lugar. Só pesa em placa quando está em terra.
 - **Tronco caído** com *pinguela*: atravessado sobre um vão, é passagem estreita (equilíbrio).
 - **Esquilo** (e a toca): leva gravetos largados por perto (até `raio` m) para a porta da toca e
   guarda; um latido assusta — larga o que levava e se esconde por `tempo_escondido` s.

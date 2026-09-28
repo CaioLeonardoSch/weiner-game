@@ -97,9 +97,14 @@ var _tremor := 0.0
 ## Puxando um bloco: o cachorro recua uma célula junto com ele.
 const DURACAO_PUXAR := 0.35
 var _tempo_puxando := 0.0
+## Quanto dura o movimento puxando (ou girando o tronco): o cachorro anda `_sentido_puxar` nesse tempo.
+var _duracao_puxando := DURACAO_PUXAR
 ## Motivo já avisado neste aperto de F (para não repetir o aviso a cada quadro).
 var _motivo_puxar_avisado := ""
 var _sentido_puxar := Vector3.ZERO
+## Girando um tronco pela ponta: o cachorro acompanha a ponta pelo arco (em vez de `_sentido_puxar`).
+var _tronco_girando: TroncoRolante
+var _ponta_girando := -1
 var _tempo_empurrando := 0.0
 
 @onready var modelo: Node3D = $Modelo
@@ -153,7 +158,13 @@ func _physics_process(delta: float) -> void:
 	var horizontal := Vector3.ZERO if entrada_bloqueada or _cavando else _velocidade_entrada()
 	if _tempo_puxando > 0.0:
 		_tempo_puxando -= delta
-		horizontal = _sentido_puxar / DURACAO_PUXAR
+		horizontal = _sentido_puxar / _duracao_puxando
+		if _tronco_girando:
+			var ate := _tronco_girando.onde_segurar(_ponta_girando) - global_position
+			ate.y = 0.0
+			horizontal = (ate / delta).limit_length(velocidade * 2.0)
+			if _tempo_puxando <= 0.0:
+				_tronco_girando = null
 	elif not entrada_bloqueada and Input.is_action_pressed("acao"):
 		var motivo := _tentar_puxar(horizontal)
 		if not motivo.is_empty() and motivo != _motivo_puxar_avisado:
@@ -396,11 +407,74 @@ func _bloco_na_frente() -> Empurravel:
 	return (achado.collider as Node).get_parent() as Empurravel
 
 
+## Tronco com uma ponta ao alcance da boca: [tronco, índice da ponta] ou [].
+func _ponta_de_tronco_na_frente() -> Array:
+	if fase == null:
+		return []
+	for tronco in fase.todos(TroncoRolante):
+		var ponta := (tronco as TroncoRolante).ponta_perto(global_position)
+		if ponta < 0:
+			continue
+		var ate := (tronco as TroncoRolante).ponto_da_ponta(ponta) - global_position
+		ate.y = 0.0
+		var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+		if ate.length() < 1.25 and ate.normalized().dot(frente) > 0.6:
+			return [tronco, ponta]
+	return []
+
+
+## Mordendo a ponta de um tronco (segurando F de frente para ela): andar para o lado gira o
+## tronco 90° em volta da outra ponta (o cachorro vai junto, segurando a ponta); andar para trás
+## puxa o tronco ao comprido. Devolve o motivo se não deu ("" = deu ou nada a fazer).
+func _morder_tronco(horizontal: Vector3, mordido: Array) -> String:
+	var tronco: TroncoRolante = mordido[0]
+	if tronco.em_movimento:
+		return ""
+	if tem_graveto:
+		return "boca_cheia"
+	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
+	var direcao := horizontal.normalized()
+	var para_o_tronco := _na_grade(frente)
+	if direcao.dot(frente) < -0.7:
+		var recuo := -para_o_tronco
+		if test_move(global_transform, Vector3(recuo)):
+			return "sem_espaco"
+		var chao := fase.tile_em(global_position + Vector3(recuo) + Vector3.DOWN * 0.3)
+		if chao == GridMap.INVALID_CELL_ITEM or Tiles.eh_agua(chao):
+			return "sem_espaco"
+		if not tronco.pode_puxar(recuo):
+			return "sem_espaco"
+		tronco.puxar(recuo)
+		_sentido_puxar = Vector3(recuo)
+		_tempo_puxando = DURACAO_PUXAR
+		_duracao_puxando = DURACAO_PUXAR
+		return ""
+	if absf(direcao.dot(frente)) < 0.5:
+		var destino: Variant = tronco.girar(mordido[1], _na_grade(direcao))
+		if destino == null:
+			return "sem_espaco_girar"
+		_tronco_girando = tronco
+		_ponta_girando = mordido[1]
+		_tempo_puxando = TroncoRolante.DURACAO * 1.3 + 0.1
+		_duracao_puxando = _tempo_puxando
+		return ""
+	return ""
+
+
+## A direção da grade (±X ou ±Z) mais próxima de `v`.
+static func _na_grade(v: Vector3) -> Vector3i:
+	return Vector3i(int(signf(v.x)), 0, 0) if absf(v.x) >= absf(v.z) else Vector3i(0, 0, int(signf(v.z)))
+
+
 ## Segurando `puxar` de frente para um bloco e andando para trás: o bloco vem uma célula e
 ## o cachorro recua junto. Sem graveto (a boca é que segura). Devolve o motivo se não deu.
+## De frente para a ponta de um tronco, morde o tronco (ver _morder_tronco).
 func _tentar_puxar(horizontal: Vector3) -> String:
 	if horizontal.length_squared() < 0.1:
 		return ""
+	var mordido := _ponta_de_tronco_na_frente()
+	if not mordido.is_empty():
+		return _morder_tronco(horizontal, mordido)
 	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
 	if horizontal.normalized().dot(frente) > -0.7:
 		return ""
@@ -424,6 +498,7 @@ func _tentar_puxar(horizontal: Vector3) -> String:
 	bloco.puxar(passo)
 	_sentido_puxar = recuo
 	_tempo_puxando = DURACAO_PUXAR
+	_duracao_puxando = DURACAO_PUXAR
 	return ""
 
 
@@ -480,6 +555,11 @@ func _velocidade_entrada() -> Vector3:
 
 
 func _girar_modelo(delta: float) -> void:
+	# Girando um tronco: continua de frente para a ponta que segura.
+	if _tronco_girando:
+		var para_a_ponta := _tronco_girando.ponto_da_ponta_agora(_ponta_girando) - global_position
+		modelo.rotation.y = atan2(-para_a_ponta.z, para_a_ponta.x)
+		return
 	# Puxando, o cachorro não vira: fica de frente para o bloco e anda de ré.
 	if _tempo_puxando > 0.0:
 		return
@@ -488,7 +568,11 @@ func _girar_modelo(delta: float) -> void:
 	# para chegar meio de lado), e fica assim enquanto segurar, andando de ré para puxar.
 	if Input.is_action_pressed("acao") and not tem_graveto:
 		var bloco := _bloco_na_frente()
-		if bloco:
+		var mordido := _ponta_de_tronco_na_frente()
+		if not mordido.is_empty():
+			var para_a_ponta: Vector3 = (mordido[0] as TroncoRolante).ponto_da_ponta(mordido[1]) - global_position
+			alvo = snappedf(atan2(-para_a_ponta.z, para_a_ponta.x), PI * 0.5)
+		elif bloco:
 			var para_o_bloco := bloco.global_position - global_position
 			alvo = snappedf(atan2(-para_o_bloco.z, para_o_bloco.x), PI * 0.5)
 	# O modelo olha para +X quando rotation.y == 0.
@@ -609,7 +693,8 @@ func _empurrao_do_balanco(delta: float, horizontal: Vector3) -> Vector3:
 		return Vector3.ZERO
 
 	var carga := graveto.peso * graveto.comprimento if tem_graveto and graveto else 0.0
-	var excesso := maxf(carga - carga_sem_balanco, 0.0)
+	# Passagens redondas (troncos) balançam até sem graveto.
+	var excesso := maxf(carga - carga_sem_balanco, 0.0) + float(passagem.get("instabilidade", 0.0))
 	if excesso <= 0.0 or not is_on_floor():
 		balanco = move_toward(balanco, 0.0, delta * 2.0)
 		modelo.rotation.x = balanco * 0.4
@@ -684,13 +769,13 @@ func _rampa_lisa(horizontal: Vector3) -> Vector3:
 # --- Chão: água rasa, correnteza, neve e gelo ---
 
 ## O chão embaixo muda o passo: água rasa e neve fofa deixam o cachorro mais lento (`lentidao`),
-## neve fofa e gelo tiram a aderência; a correnteza arrasta no sentido do tile. Graveto pesado
-## na boca deixa o cachorro mais firme contra a correnteza. Devolve o arrasto (m/s).
+## neve fofa e gelo tiram a aderência; a correnteza arrasta no sentido do tile (mais forte que o
+## passo do cachorro: atravessar a correnteza a pé leva rio abaixo). Devolve o arrasto (m/s).
 func _efeito_do_piso() -> Vector3:
 	_lentidao_piso = 1.0
 	em_correnteza = false
 	_na_agua_rasa = false
-	if fase == null or not is_on_floor():
+	if fase == null or not is_on_floor() or not _pisando_no_terreno():
 		return Vector3.ZERO
 	var terreno := fase.terreno
 	var celula := terreno.local_to_map(terreno.to_local(global_position + Vector3.DOWN * 0.05))
@@ -706,8 +791,15 @@ func _efeito_do_piso() -> Vector3:
 	em_correnteza = true
 	var sentido := terreno.global_basis * terreno.get_cell_item_basis(celula).x
 	sentido.y = 0.0
-	var firmeza := maxf(graveto.peso, 1.0) if tem_graveto and graveto else 1.0
-	return sentido.normalized() * forca / firmeza
+	return sentido.normalized() * forca
+
+
+## Apoiado no terreno (e não só em cima de um objeto — um tronco boiando, uma ponte)?
+## (O leito da água rasa fica na mesma altura do topo de um tronco boiando: conta o objeto.)
+func _pisando_no_terreno() -> bool:
+	var consulta := PhysicsRayQueryParameters3D.create(global_position + Vector3.UP * 0.2,
+		global_position + Vector3.DOWN * 0.15, 4, [get_rid()])
+	return get_world_3d().direct_space_state.intersect_ray(consulta).is_empty()
 
 
 ## Aderência: com o chão firme o cachorro faz o que o jogador manda na hora; na neve fofa demora
@@ -773,7 +865,7 @@ func _checar_queda(delta: float) -> void:
 		_voltar_ao_ponto_seguro("agua")
 	elif global_position.y < (fase.limite_de_queda if fase else -10.0):
 		_voltar_ao_ponto_seguro("queda")
-	elif is_on_floor() and not em_passagem_estreita and not em_correnteza:
+	elif is_on_floor() and not em_passagem_estreita and not em_correnteza and _pisando_no_terreno():
 		_tempo_ponto_seguro += delta
 		if _tempo_ponto_seguro >= 0.25:
 			_guardar_ponto_seguro()

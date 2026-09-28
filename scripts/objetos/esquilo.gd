@@ -129,7 +129,7 @@ func _procurar_graveto() -> void:
 
 
 func _livre(graveto: Graveto) -> bool:
-	return graveto.visible and not graveto.ja_pego and not graveto.em_ponte \
+	return graveto.visible and not graveto.ja_pego \
 		and not graveto.enterrado and graveto.com_bicho == null
 
 

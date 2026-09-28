@@ -14,7 +14,7 @@ texturas, céu, entorno, neve caindo), as regiões no menu, o frio e a fogueira 
 gravetos, o celeiro para o rebanho e o editor modular (trechos, copiar/colar entre fases, módulos,
 balde) — ver *Versão de teste*. Do Pacote 1
 (Etapa 10) já existem o botão de ação (F), gravetos lendário e comuns, placas de pressão e
-portões por canal de cor, o graveto-ponte e o mirante. Também o menu de opções (tela, gráficos,
+portões por canal de cor e o mirante (o graveto-ponte saiu: quem vira pinguela agora é o tronco). Também o menu de opções (tela, gráficos,
 áudio, teclas), a tela para monitores largos e a exportação para Windows, Linux e macOS (ver
 `docs/ANALISE_PACOTE_1.md`).
 
@@ -26,6 +26,33 @@ cachorro tem (pular, cavar, latir...). Isso deixa as fases antigas corretas quan
 nova entra — a Fase 01, por exemplo, depende de o cachorro *não* pular o barranco de 2 m.
 Já é assim: `Fase.habilidades` (flags no painel da fase no editor), somadas às habilidades
 nativas da raça; o `jogo.gd` liga só essas.
+
+## Pontes, gatilho e tronco ✅ (feito)
+
+Pedido depois de testar: a ponte "passava" do bloco e sumia na troca de perspectiva sem explicação;
+a correnteza quase não fazia efeito; o equilíbrio mal aparecia em pontes curtas; e o graveto fino
+como ponte não fazia sentido.
+
+1. ✅ **Ponte dentro do bloco**: tábuas soltas (com frestas) e vigas, tudo dentro do `tamanho`,
+   rente ao chão das margens.
+2. ✅ **Ponte fraca**: tipo *Cede com o tempo* (range, treme e quebra com alguém parado em cima) e
+   *Quebra num gatilho* (cai quando o canal liga). As tábuas caem e a água leva, com respingos,
+   rangido e estalo gerados por código. Novo objeto **Gatilho** (área que liga o canal quando o
+   cachorro entra, entra com graveto, ou quando um graveto de dentro dela é pego).
+3. ✅ **Sem peso na água**: o tronco só pesa em placa em terra; o graveto-ponte saiu.
+4. ✅ **Equilíbrio no precipício**: a Fase 02 virou "O Precipício" — dois platôs de 2 m e um tronco
+   redondo entre eles, que balança mesmo sem graveto.
+5. ✅ **Tronco novo**: comprimento de 2 a 5; rola de lado, desliza ao comprido; mordendo a ponta,
+   puxa (para trás) e **gira 90°** (de lado); vira pinguela entre margens; boia e desce a
+   correnteza (mais forte agora) até parar numa pedra ou encaixar onde o rio estreita; encalhado,
+   volta para o lugar.
+6. ✅ **Fases refeitas**: 02 (precipício), 03 (a ponte cai ao pegar o graveto; volta pela pedra),
+   04 (pedra + tronco na correnteza), 08 (a ponte velha cai atrás; volta girando o tronco), 09
+   (placa de pedra + ponte que cai + tronco), 11 (girar o tronco e deixar a correnteza levar).
+   Nenhuma fase depende mais de "a ponte some na troca de perspectiva".
+
+Ideias que ficaram: usar a ponte que **cede com o tempo** numa fase (sem prender o jogador do lado
+errado se ela quebrar); troncos empurrados na água rasa parada; um tronco que role morro abaixo.
 
 ## Editor de fases 2 ✅ (feito)
 
