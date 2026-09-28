@@ -1,6 +1,6 @@
 # Etapas 6 e 7: o tronco rola de lado (não ao comprido), cai na correnteza, desce o rio e
 # encaixa na água funda como ponte; o graveto ao comprido empurra de longe (atravessado não);
-# o graveto molhado pesa mais; o tronco caído como pinguela é passagem estreita.
+# o tronco caído como pinguela é passagem estreita.
 fase res://scenes/fases/fase_04.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_tronco.gd preparar_tronco
@@ -43,18 +43,6 @@ apertar mover_direita 40
 esperar 60
 checar jogo.get_meta("bloco").global_position.x > 5.0
 checar jogo.cachorro.global_position.x < jogo.get_meta("bloco").global_position.x - 1.0
-# Graveto molhado (Fase 04): na água rasa encharca e pesa mais; seca depois.
-fase res://scenes/fases/fase_04.tscn
-esperar 10
-chamar res://ferramentas/testes/teste_tronco.gd dar_graveto
-checar jogo.get_meta("graveto").peso_atual() < 1.1
-teleportar 4.5 0.3 -3.5
-esperar 30
-checar jogo.get_meta("graveto").molhado > 0.0
-checar absf(jogo.get_meta("graveto").peso_atual() - 1.5) < 0.01
-teleportar -1.5 0.3 -2.5
-esperar 520
-checar jogo.get_meta("graveto").peso_atual() < 1.1
 # Tronco caído como pinguela sobre o canal fundo: passagem estreita.
 chamar res://ferramentas/testes/teste_tronco.gd preparar_pinguela
 esperar 5

@@ -46,12 +46,10 @@ canal = 1
 [node name="Placa" parent="Objetos" unique_id=1559085533 instance=ExtResource("7_elnor")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 0, -2.5)
 canal = 1
-peso_minimo = 2.0
 
 [node name="Placa2" parent="Objetos" unique_id=166775568 instance=ExtResource("7_elnor")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, -5.5)
 canal = 1
-peso_minimo = 2.0
 
 [node name="Graveto" parent="Objetos" unique_id=1342548150 instance=ExtResource("8_l1p63")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 13.5, 0.2, -2.5)

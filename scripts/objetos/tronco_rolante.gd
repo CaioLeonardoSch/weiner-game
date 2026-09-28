@@ -40,6 +40,11 @@ func _ready() -> void:
 		add_to_group(&"pesos")
 
 
+## Pesado: aciona até a placa de pedra (enquanto não afundou na água).
+func pesado_para_placa() -> bool:
+	return peso_na_placa() > 0.0
+
+
 ## Um tronco pesa numa placa quase como um bloco.
 func peso_na_placa() -> float:
 	return 0.0 if afundado else 2.5

@@ -3,6 +3,8 @@ extends Control
 ## Desenho 2D por cima da vista 3D do editor: grade da camada, cursor, seleção e os
 ## objetos que não aparecem no jogo (início do cachorro, zonas, paredes invisíveis).
 ## Desenhado em 2D, na resolução da janela, fica nítido por cima do 3D pixelado.
+## Sem textos em cima dos objetos (atrapalham a vista): o nome do que está sob o mouse vai para
+## a barra de status. Só medidas passageiras (retângulo, linha, trecho) aparecem escritas.
 
 const COR_GRADE := Color(1, 1, 1, 0.13)
 const COR_COLOCAR := Color(0.45, 1.0, 0.45)
@@ -64,7 +66,12 @@ func _desenhar_cursor() -> void:
 	match editor.modo:
 		EditorFase.Modo.TERRENO:
 			var retangulo = editor.retangulo_em_andamento()
-			if retangulo != null:
+			if editor.linha_ativa:
+				var celulas: Array[Vector3i] = editor.celulas_da_linha()
+				var cor := COR_APAGAR if editor.acao_do_cursor() == "apagar" else COR_COLOCAR
+				var fim := Vector3(celulas[-1]) + Vector3(0.5, 1.2, 0.5)
+				_texto(fim, "%d" % celulas.size(), cor)
+			elif retangulo != null:
 				var cor := COR_APAGAR if editor.acao_do_cursor() == "apagar" else \
 					(COR_PINTAR if editor.acao_do_cursor() == "pintar" else COR_COLOCAR)
 				_caixa(retangulo, Transform3D.IDENTITY, cor, 2.0)
@@ -72,18 +79,17 @@ func _desenhar_cursor() -> void:
 				_texto(retangulo.get_center() + Vector3.UP, "%d × %d" % [tamanho.x, tamanho.z], cor)
 			elif editor.acao_do_cursor() == "apagar":
 				if editor.atingiu_bloco:
-					_caixa(AABB(Vector3(editor.celula_atingida), Vector3.ONE), Transform3D.IDENTITY, COR_APAGAR, 2.0)
+					_caixa(_area_do_pincel(editor.celula_atingida), Transform3D.IDENTITY, COR_APAGAR, 2.0)
 			elif editor.acao_do_cursor() == "pintar":
 				if editor.atingiu_bloco:
-					_caixa(AABB(Vector3(editor.celula_atingida), Vector3.ONE), Transform3D.IDENTITY, COR_PINTAR, 2.0)
+					_caixa(_area_do_pincel(editor.celula_atingida), Transform3D.IDENTITY, COR_PINTAR, 2.0)
 			else:
-				_caixa(AABB(Vector3(editor.celula_alvo), Vector3.ONE), Transform3D.IDENTITY, COR_COLOCAR, 2.0)
+				_caixa(_area_do_pincel(editor.celula_alvo), Transform3D.IDENTITY, COR_COLOCAR, 2.0)
 				_seta_orientacao(Vector3(editor.celula_alvo) + Vector3(0.5, 0.02, 0.5), editor.orientacao * PI * 0.5, COR_COLOCAR)
 	var sob: ObjetoFase = editor.objeto_sob_mouse
 	if sob and sob != editor.selecionado and editor.modo != EditorFase.Modo.TERRENO:
 		var cor := COR_APAGAR if editor.acao_do_cursor() == "apagar" else COR_SOB_MOUSE
 		_caixa(editor.caixa_local(sob), sob.global_transform, cor, 1.5)
-		_texto(sob.global_position + Vector3.UP * (editor.caixa_local(sob).end.y + 0.2) * sob.scale.y, sob.nome_no_editor(), cor)
 	var selecionado: ObjetoFase = editor.selecionado
 	if selecionado and is_instance_valid(selecionado):
 		_caixa(editor.caixa_local(selecionado), selecionado.global_transform, COR_SELECAO, 2.0)
@@ -98,14 +104,6 @@ func _desenhar_objetos_especiais() -> void:
 		if objeto is InicioCachorro:
 			_caixa(objeto.caixa_editor(), objeto.global_transform, COR_REGRAS, 1.5)
 			_seta_orientacao(objeto.global_position + Vector3.UP * 0.02, objeto.global_rotation.y, COR_REGRAS)
-			_texto(objeto.global_position + Vector3.UP * 0.8, "Início", COR_REGRAS)
-		elif objeto is ZonaSemLargar or objeto is ParedeInvisivel:
-			var cor := COR_REGRAS if objeto is ZonaSemLargar else Color(0.8, 0.8, 0.8)
-			_caixa(objeto.caixa_editor(), objeto.global_transform, cor, 1.0)
-			_texto(objeto.global_position + Vector3.UP * (objeto.caixa_editor().end.y + 0.1), objeto.nome_no_editor(), cor)
-		elif objeto is Fogueira and (objeto as Fogueira).gravetos_para_acender > 0:
-			_texto(objeto.global_position + Vector3.UP * 0.9,
-				"acende com %d graveto(s)" % (objeto as Fogueira).gravetos_para_acender, COR_REGRAS)
 		if objeto.visibilidade != ObjetoFase.Visibilidade.SEMPRE:
 			var cor := COR_SO_ISO if objeto.visibilidade == ObjetoFase.Visibilidade.SO_ISO else COR_SO_3D
 			var topo: Vector3 = objeto.global_position + Vector3.UP * (editor.caixa_local(objeto).end.y * objeto.scale.y + 0.15)
@@ -132,7 +130,9 @@ func _desenhar_canais() -> void:
 			fontes += 1
 			_tracejada(fonte.global_position + Vector3.UP * 0.1, alvo.global_position + Vector3.UP * 0.5, cor)
 		var todas: bool = alvo.get(&"regra") == Portao.REGRA_TODAS
-		if fontes > 1 or todas:
+		# A regra (OU / E) só aparece escrita apontando para o portão ou ligando peças.
+		var em_foco := alvo == editor.objeto_sob_mouse or alvo == editor.selecionado or editor.modo == EditorFase.Modo.LIGAR
+		if (fontes > 1 or todas) and em_foco:
 			var topo := alvo.global_position + Vector3.UP * (editor.caixa_local(alvo).end.y + 0.35)
 			_texto(topo, "E (todas)" if todas else "OU (qualquer)", cor)
 	if editor.modo != EditorFase.Modo.LIGAR:
@@ -147,6 +147,13 @@ func _desenhar_canais() -> void:
 		if editor.objeto_sob_mouse:
 			destino = editor.objeto_sob_mouse.global_position + Vector3.UP * 0.5
 		_linha(origem.global_position + Vector3.UP * 0.3, destino, cor, 3.0)
+
+
+## Caixa do pincel (tamanho × tamanho) em volta da célula do cursor.
+func _area_do_pincel(centro: Vector3i) -> AABB:
+	var inicio := -(editor.tamanho_pincel - 1) / 2
+	return AABB(Vector3(centro.x + inicio, centro.y, centro.z + inicio),
+		Vector3(editor.tamanho_pincel, 1, editor.tamanho_pincel))
 
 
 func _tracejada(a: Vector3, b: Vector3, cor: Color) -> void:

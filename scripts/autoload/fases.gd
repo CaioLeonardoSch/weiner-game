@@ -31,6 +31,8 @@ var rascunho_modificado := false
 var testando := false
 ## Câmera, ferramenta etc. do editor, para voltar do teste onde estava.
 var estado_editor := {}
+## "Testar daqui" (F2 no editor): onde o cachorro começa no teste, no lugar do Início (ou null).
+var inicio_do_teste: Variant = null
 ## O que o editor copiou (Ctrl+C: um Trecho). Fica aqui para dar para colar em outra fase.
 var area_transferencia: RefCounted
 ## Progresso e preferências do jogador (fases concluídas, skin...), em user://progresso.cfg.
@@ -129,6 +131,7 @@ func proxima() -> String:
 
 func jogar(caminho: String) -> void:
 	caminho_atual = caminho
+	inicio_do_teste = null
 	rascunho = null
 	rascunho_modificado = false
 	testando = false

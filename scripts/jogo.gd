@@ -124,6 +124,9 @@ func _ready() -> void:
 
 	var inicio := fase.primeiro(InicioCachorro)
 	cachorro.posicionar(inicio.global_position, inicio.global_rotation.y)
+	# "Testar daqui" (F2 no editor): começa onde o cursor estava.
+	if Fases.testando and Fases.inicio_do_teste != null:
+		cachorro.posicionar(Fases.inicio_do_teste, inicio.global_rotation.y)
 	camera_controller.configurar(cachorro)
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
 	cachorro.puxar_falhou.connect(_on_puxar_falhou)
@@ -146,6 +149,9 @@ func _preparar_objetivo() -> void:
 			("  %s: latir" % Teclas.nome(&"latir") if cachorro.pode_latir else "")))
 		um_graveto.boca_cheia.connect(func() -> void:
 			mostrar_aviso("Boca cheia! %s larga este graveto para pegar outro" % Teclas.nome(&"largar_graveto")))
+	for placa in fase.todos(Placa):
+		(placa as Placa).pisada_sem_peso.connect(
+			mostrar_aviso.bind("Placa de pedra: só algo pesado aciona — uma pedra, um tronco", 3.0))
 	for objeto in fase.todos(Fogueira):
 		var fogueira := objeto as Fogueira
 		marcas_fogueira[fogueira] = _criar_marca()
