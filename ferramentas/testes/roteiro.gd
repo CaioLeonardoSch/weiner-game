@@ -149,6 +149,9 @@ func _process(_d: float) -> bool:
 			"chamar":
 				print("chamar: ", load(p[1]).call(p[2], current_scene))
 			"fase":
+				# Semente fixa: o que é sorteado (ovelhas pastando, desvios do piloto) sai igual
+				# a cada execução, e a rota não passa numa máquina e falha na outra.
+				seed(1)
 				root.get_node("Fases").jogar(p[1])
 				_espera = 5
 				return false
