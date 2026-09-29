@@ -43,7 +43,7 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
 | R | reiniciar | subir camada (com F: descer) |
 | Esc | pausa (solta o mouse; ao continuar, prende de novo); no mirante, sai dele | Cursor / cancelar linha / desmarcar |
 | **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
-| F2 | — | testar daqui (o cachorro começa no cursor) |
+| F2 | — | testar daqui (o cachorro começa no cursor, em chão firme) |
 | F3 | liga/desliga o pixelado | idem |
 | H | — | lista de atalhos do editor |
 
@@ -109,12 +109,13 @@ O progresso (fases concluídas e pelagens) fica em `progresso.cfg`, na pasta do 
 ## Testes das fases
 
 `ferramentas/testar_fases.sh` joga cada fase com as entradas de `ferramentas/testes/rotas/*.txt`
-(sem janela, em segundos) e confere que ela termina. Ao mudar uma fase, rode de novo; se o
+(sem janela, em segundos) e confere que ela termina. Um `SCRIPT ERROR` na saída reprova a rota,
+mesmo que as checagens passem. Ao mudar uma fase, rode de novo; se o
 caminho mudou, ajuste a rota (o formato está no topo de `ferramentas/testes/roteiro.gd`).
 A rota `save` testa a pasta do save, os ids das fases e a migração de saves antigos; a rota
 `mecanismos` testa a regra OU / E dos portões e a ferramenta Ligar do editor
 (`ferramentas/testes/teste_mecanismos.gd`); `editor` testa trechos, colar girado, módulos,
-balde e bioma (`teste_editor.gd`); `neve` e `celeiro` montam fases de neve por código
+balde, bioma, o F2 sem chão firme e o tronco escolhido no editor (`teste_editor.gd`); `neve` e `celeiro` montam fases de neve por código
 (`teste_neve.gd`) e testam frio, fogueira, gelo e o celeiro; `menu` escolhe a raça da região
 no menu e confere que ela vale no jogo, a raça fixa da Fase 05 e a tela *antes de jogar*
 (`teste_menu.gd`); `passagens` testa toca de texugo, portinhola, alavanca, comporta, portão
@@ -232,7 +233,8 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
 - **Madeira ou pedra** (como no Minecraft): a placa de **madeira** (tábuas) é acionada por
   qualquer coisa — o cachorro, um graveto largado, uma ovelha, um passarinho, o bloco, o tronco;
   a de **pedra** (laje cinza) só por algo pesado — o **bloco de pedra** e o **tronco**. Pisando
-  numa de pedra, o jogo avisa que ela precisa de algo pesado.
+  numa de pedra, o jogo avisa que ela precisa de algo pesado. O tronco aciona com qualquer uma das
+  células em cima (o meio ou uma ponta), e o graveto comprido, com qualquer parte dele.
 - **Pontes de madeira:** as tábuas ficam dentro do bloco (do tamanho do vão, rente ao chão). Há
   três tipos (propriedade *Tipo* no painel): **Firme**; **Cede com o tempo** (ponte velha, mais
   escura: quem fica parado em cima mais que *tempo para ceder* segundos faz ela ranger, tremer e
@@ -449,7 +451,8 @@ ROADMAP):
   itens usados. Tudo tem ícone.
 - **Sem texto por cima dos objetos**: o nome do que está sob o mouse aparece na barra de status.
   Paredes invisíveis e zonas aparecem translúcidas (só no editor).
-- **G** é o conta-gotas. **F2 testa daqui**: o cachorro começa onde está o cursor.
+- **G** é o conta-gotas. **F2 testa daqui**: o cachorro começa onde está o cursor. Precisa ser
+  chão firme: na água funda ou no vazio o editor avisa e não testa.
 
 Ao **Testar** o editor valida a fase (falta início, dono ou graveto; início sem chão...) e pede
 confirmação se houver problema grave; ao salvar, mostra os avisos (placa de pedra sem nada pesado

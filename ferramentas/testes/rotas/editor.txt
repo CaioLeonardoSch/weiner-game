@@ -1,6 +1,11 @@
-# Editor modular: trecho (copiar, colar, girar, apagar), balde, módulos, bioma e regiões
-# (ver teste_editor.gd).
+# Editor modular: trecho (copiar, colar, girar, apagar), balde, módulos, bioma, regiões e o F2
+# sem chão firme (ver teste_editor.gd). Depois, o editor aberto por alguns quadros com
+# troncos-fantasma: fora de uma fase eles não assentam (sem SCRIPT ERROR).
 fase res://scenes/fases/fase_01.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_editor.gd rodar
 checar jogo.get_meta("editor_ok", false)
+chamar res://ferramentas/testes/teste_editor.gd abrir_com_tronco
+esperar 5
+chamar res://ferramentas/testes/teste_editor.gd fechar_editor
+checar jogo.get_meta("editor_tronco_ok", false)

@@ -72,7 +72,7 @@ func acionada_por_algo() -> bool:
 		return true
 	for no in get_tree().get_nodes_in_group(&"pesos"):
 		var objeto := no as ObjetoFase
-		if objeto == null or not objeto.visible or not _sobre(objeto.global_position):
+		if objeto == null or not objeto.visible or not _algum_sobre(objeto.pontos_de_apoio()):
 			continue
 		var aciona := objeto.pesado_para_placa() if tipo == PEDRA else objeto.peso_na_placa() > 0.0
 		if aciona:
@@ -83,6 +83,13 @@ func acionada_por_algo() -> bool:
 func _cachorro_sobre() -> bool:
 	for no in get_tree().get_nodes_in_group(&"cachorro"):
 		if _sobre((no as Node3D).global_position):
+			return true
+	return false
+
+
+func _algum_sobre(pontos: PackedVector3Array) -> bool:
+	for ponto in pontos:
+		if _sobre(ponto):
 			return true
 	return false
 

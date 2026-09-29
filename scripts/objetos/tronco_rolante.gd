@@ -66,7 +66,8 @@ func caixa_editor() -> AABB:
 
 func _ready() -> void:
 	_montar()
-	if Engine.is_editor_hint():
+	# Fora de uma fase (a amostra da paleta, os fantasmas do editor) não tem terreno onde assentar.
+	if Engine.is_editor_hint() or fase_do_objeto() == null:
 		return
 	add_to_group(&"pesos")
 	add_to_group(&"com_acao")
@@ -83,6 +84,14 @@ func peso_na_placa() -> float:
 ## Pesado: aciona até a placa de pedra.
 func pesado_para_placa() -> bool:
 	return estado == Estado.TERRA
+
+
+## O centro de cada célula: o tronco aciona a placa com qualquer parte deitada nela.
+func pontos_de_apoio() -> PackedVector3Array:
+	var pontos := PackedVector3Array()
+	for i in comprimento:
+		pontos.append(to_global(Vector3(float(i), 0.0, 0.0)))
+	return pontos
 
 
 ## As células que o tronco ocupa (na camada do chão + 1), da ponta 0 à ponta `comprimento - 1`.

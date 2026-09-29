@@ -70,6 +70,12 @@ func pesado_para_placa() -> bool:
 	return false
 
 
+## Pontos (globais) em que o objeto se apoia: a placa fica acionada se qualquer um deles estiver
+## em cima dela. Padrão: só a origem; objetos compridos (o tronco, o graveto) sobrescrevem.
+func pontos_de_apoio() -> PackedVector3Array:
+	return PackedVector3Array([global_position])
+
+
 ## Mecanismos ligados por canal (a cor, ver Canais): "aciona" (placa...), "reage" (portão...)
 ## ou "" (não é mecanismo). Mecanismos têm a propriedade `canal`, que a ferramenta Ligar do
 ## editor troca.

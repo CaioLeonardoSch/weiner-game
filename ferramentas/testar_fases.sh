@@ -18,7 +18,9 @@ for nome in "${nomes[@]}"; do
 		--script res://ferramentas/testes/roteiro.gd -- "@$ROTAS/$nome.txt" 2>&1)
 	codigo=$?
 	segundos=$(( $(date +%s) - inicio ))
-	if [ $codigo -eq 0 ] && echo "$saida" | grep -q "RESULTADO: passou"; then
+	# Um SCRIPT ERROR reprova a rota mesmo que as checagens passem: é um erro de verdade no jogo.
+	if [ $codigo -eq 0 ] && echo "$saida" | grep -q "RESULTADO: passou" \
+		&& ! echo "$saida" | grep -q "SCRIPT ERROR"; then
 		echo "✓ $nome (${segundos}s)"
 	else
 		falhas=$((falhas + 1))

@@ -1,8 +1,9 @@
 extends RefCounted
 ## Testes do editor modular (e do Editor de fases 2: pincel com tamanho, linha com prévia,
 ## ferramentas, recentes, ícones e volumes das paredes invisíveis) (rota ferramentas/testes/rotas/editor.txt): trecho (copiar, colar,
-## girar, apagar, desfazer), balde, módulos (salvar e carregar), bioma e regiões. Guarda o
-## resultado em jogo.get_meta("editor_ok").
+## girar, apagar, desfazer), balde, módulos (salvar e carregar), bioma, regiões e o "testar daqui"
+## (F2) sem chão firme. Guarda o resultado em jogo.get_meta("editor_ok"). À parte, o editor aberto
+## por alguns quadros com troncos-fantasma (abrir_com_tronco, fechar_editor).
 
 const PASTA_TESTE := "user://teste_modulos/"
 
@@ -23,6 +24,7 @@ static func rodar(jogo: Node) -> String:
 	_bioma(editor, checar)
 	_regioes(checar)
 	_editor_2(editor, checar)
+	_testar_daqui(editor, checar)
 	jogo.remove_child(editor)
 	editor.free()
 	jogo.set_meta(&"editor_ok", falhas.is_empty())
@@ -202,3 +204,56 @@ static func _editor_2(editor, checar: Callable) -> void:
 
 	var parede := fase.adicionar_objeto(load("res://scenes/objetos/parede_invisivel.tscn"), Vector3(60.5, 0, 60.5))
 	checar.call("parede invisível aparece translúcida no editor", parede.get_node_or_null("VolumeEditor") != null)
+
+
+## Testar daqui (F2): só em chão firme. Na água funda ou no vazio o cachorro cairia e voltaria ao
+## próprio início sem parar ("Splash!" em laço); o editor recusa e avisa. (Nunca chama _testar num
+## chão que serve: ele trocaria de cena no meio do teste.)
+static func _testar_daqui(editor, checar: Callable) -> void:
+	var terreno: GridMap = editor.terreno
+	terreno.set_cell_item(Vector3i(70, -1, 80), Tiles.GRAMA)
+	terreno.set_cell_item(Vector3i(72, -1, 80), Tiles.AGUA)
+	terreno.set_cell_item(Vector3i(72, -2, 80), Tiles.GRAMA)
+	terreno.set_cell_item(Vector3i(74, 0, 80), Tiles.TABUA)
+	checar.call("F2: na grama serve", editor._motivo_sem_chao(Vector3(70.5, 0, 80.5)).is_empty())
+	checar.call("F2: no alto, acima da grama, serve (cai até ela)", editor._motivo_sem_chao(Vector3(70.5, 3, 80.5)).is_empty())
+	checar.call("F2: na tábua serve", editor._motivo_sem_chao(Vector3(74.5, 0, 80.5)).is_empty())
+	var agua := Vector3(72.5, -1 + 0.85, 80.5)
+	checar.call("F2: na água funda não serve", editor._motivo_sem_chao(agua).begins_with("Água funda"))
+	checar.call("F2: no vazio não serve", editor._motivo_sem_chao(Vector3(76.5, 0, 80.5)).begins_with("Sem chão"))
+	if not editor._motivo_sem_chao(agua).is_empty():
+		editor.alvo_valido = true
+		editor.ponto_livre = agua
+		editor.ponto_alvo = agua
+		editor._testar(true, true)
+		checar.call("F2 na água: não testa e avisa", Fases.inicio_do_teste == null and editor.aviso.visible
+			and (editor.aviso.text as String).begins_with("Água funda"))
+
+
+## O editor aberto com o tronco escolhido e uma linha de troncos-fantasma, vivos por alguns quadros
+## (a rota espera e chama fechar_editor). Fora de uma fase o tronco não tem onde assentar: antes,
+## cada fantasma dava um SCRIPT ERROR (que reprova a rota).
+static func abrir_com_tronco(jogo: Node) -> void:
+	# Como Fases.editar: o editor abre do zero (o teste anterior deixou só os recentes).
+	Fases.estado_editor = {}
+	var editor = (load("res://scenes/editor/editor_fase.tscn") as PackedScene).instantiate()
+	jogo.add_child(editor)
+	editor._carregar(editor._fase_modelo("teste"))
+	var entrada: Dictionary = editor._catalogo.filter(func(c): return c.caminho.ends_with("tronco_rolante.tscn"))[0]
+	editor._escolher_objeto(entrada)
+	editor.ponto_alvo = Vector3(0.5, 0, 0.5)
+	editor._clique_linha_objetos()
+	editor.ponto_alvo = Vector3(0.5, 0, 6.5)
+	editor._continuar_linha_objetos()
+	jogo.set_meta(&"editor", editor)
+
+
+static func fechar_editor(jogo: Node) -> void:
+	var editor = jogo.get_meta(&"editor")
+	var fantasmas: Array = editor._fantasmas_linha
+	var fora_da_fase := func(no: Node) -> bool: return not no.is_in_group(&"pesos") and not no.is_in_group(&"com_acao")
+	jogo.set_meta(&"editor_tronco_ok", editor.fantasma is TroncoRolante and fantasmas.size() >= 2
+		and fora_da_fase.call(editor.fantasma) and fantasmas.all(fora_da_fase))
+	jogo.remove_child(editor)
+	editor.free()
+	jogo.remove_meta(&"editor")

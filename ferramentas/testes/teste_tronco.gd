@@ -94,3 +94,45 @@ static func preparar_ponte_que_cede(jogo: Node) -> String:
 	jogo.cachorro.posicionar(Vector3(7.0, 0.05, -2.5), 0.0)
 	return "ok"
 
+
+## Fase 06, num gramado livre: uma placa de pedra (32.5, 31.5) e uma de madeira (32.5, 34.5), cada
+## uma com um tronco de 3 células ao longo de X deitado com o **meio** em cima (células x 31 a 33).
+static func preparar_tronco_na_placa(jogo: Node) -> String:
+	for dados in [["pedra", Placa.PEDRA, 31.5], ["madeira", Placa.MADEIRA, 34.5]]:
+		var placa := _colocar(jogo, "placa", Vector3(32.5, 0, dados[2])) as Placa
+		placa.tipo = dados[1]
+		jogo.set_meta(StringName("placa_" + dados[0]), placa)
+		jogo.set_meta(StringName("tronco_" + dados[0]), _tronco(jogo, Vector3(31.5, 0, dados[2]), 0.0, 3))
+	return "ok"
+
+
+## Os dois troncos com a origem em `x` (as células vão de x a x + 2).
+static func _troncos_em(jogo: Node, x: float) -> String:
+	for nome in ["pedra", "madeira"]:
+		var tronco := jogo.get_meta(StringName("tronco_" + nome)) as TroncoRolante
+		tronco.global_position.x = x
+	return "células %s" % [(jogo.get_meta(&"tronco_pedra") as TroncoRolante).celulas()]
+
+
+## A ponta 2 (a última célula) em cima das placas.
+static func troncos_com_a_ponta_2(jogo: Node) -> String:
+	return _troncos_em(jogo, 30.5)
+
+
+## A ponta 0 (a origem) em cima das placas.
+static func troncos_com_a_ponta_0(jogo: Node) -> String:
+	return _troncos_em(jogo, 32.5)
+
+
+## Nenhuma célula em cima das placas.
+static func troncos_fora_das_placas(jogo: Node) -> String:
+	return _troncos_em(jogo, 33.5)
+
+
+## Um graveto comum de 2 m largado ao longo de X com o meio em x = 31.5: só a ponta leste fica
+## sobre a placa de madeira (32.5, 34.5).
+static func graveto_com_a_ponta_na_placa(jogo: Node) -> String:
+	var graveto := _colocar(jogo, "graveto_comum", Vector3(31.5, 0.08, 34.5), PI * 0.5) as Graveto
+	graveto.comprimento = 2.0
+	jogo.set_meta(&"graveto_na_placa", graveto)
+	return "peso %.1f" % graveto.peso_na_placa()

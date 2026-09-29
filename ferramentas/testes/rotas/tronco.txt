@@ -1,7 +1,7 @@
 # O tronco: empurrado de lado rola, ao comprido desliza; mordendo a ponta e andando para trás, é
 # puxado; na correnteza boia, desce e, encalhado na margem, volta para o lugar. O graveto ao
 # comprido empurra de longe; o tronco caído como pinguela é passagem estreita; a ponte velha
-# cede com alguém parado em cima.
+# cede com alguém parado em cima. O tronco e o graveto comprido acionam a placa com qualquer parte.
 fase res://scenes/fases/fase_11.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_tronco.gd preparar_tronco
@@ -51,6 +51,23 @@ chamar res://ferramentas/testes/teste_tronco.gd preparar_pinguela
 esperar 5
 checar not jogo.fase.passagem_estreita_em(Vector3(11.5, 0.1, -4.5)).is_empty()
 checar jogo.fase.passagem_estreita_em(Vector3(11.5, 0.1, -5.5)).is_empty()
+# Tronco na placa (pedra e madeira): aciona com qualquer célula em cima — o meio, a ponta 2 e a
+# ponta 0 —, e solta quando nenhuma está. O graveto comprido aciona só com a ponta em cima.
+chamar res://ferramentas/testes/teste_tronco.gd preparar_tronco_na_placa
+esperar 10
+checar jogo.get_meta("placa_pedra").ativa and jogo.get_meta("placa_madeira").ativa
+chamar res://ferramentas/testes/teste_tronco.gd troncos_com_a_ponta_2
+esperar 5
+checar jogo.get_meta("placa_pedra").ativa and jogo.get_meta("placa_madeira").ativa
+chamar res://ferramentas/testes/teste_tronco.gd troncos_com_a_ponta_0
+esperar 5
+checar jogo.get_meta("placa_pedra").ativa and jogo.get_meta("placa_madeira").ativa
+chamar res://ferramentas/testes/teste_tronco.gd troncos_fora_das_placas
+esperar 5
+checar not jogo.get_meta("placa_pedra").ativa and not jogo.get_meta("placa_madeira").ativa
+chamar res://ferramentas/testes/teste_tronco.gd graveto_com_a_ponta_na_placa
+esperar 5
+checar jogo.get_meta("placa_madeira").ativa and not jogo.get_meta("placa_pedra").ativa
 # Ponte que cede: passar correndo não quebra; parado em cima, quebra e o cachorro cai na água e
 # volta para a margem.
 fase res://scenes/fases/fase_08.tscn
