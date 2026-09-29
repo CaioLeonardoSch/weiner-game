@@ -173,7 +173,10 @@ func _preparar_objetivo() -> void:
 		fogueira.acendeu.connect(mostrar_aviso.bind("A fogueira acendeu! Perto do fogo é quentinho", 3.0))
 		fogueira.cresceu.connect(mostrar_aviso.bind("O fogo cresceu!"))
 		fogueira.recebeu.connect(func(_gravetos: int, faltam: int) -> void:
-			mostrar_aviso("Mais %d graveto%s para acender a fogueira" % [faltam, "" if faltam == 1 else "s"]))
+			if faltam <= 0:
+				mostrar_aviso("Lenha pronta! Falta o fogo: encoste um graveto aceso", 3.0)
+			else:
+				mostrar_aviso("Mais %d graveto%s para acender a fogueira" % [faltam, "" if faltam == 1 else "s"]))
 	objetivo.preparar(self)
 
 

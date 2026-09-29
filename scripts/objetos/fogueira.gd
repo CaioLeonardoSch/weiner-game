@@ -8,6 +8,9 @@ extends ObjetoFase
 ## neve. Cada graveto a mais aumenta o fogo: o raio cresce até `raio_maximo`.
 ## O graveto lendário não vai para o fogo. Acesa, também aciona o canal (a cor): dá para ligar
 ## um portão a ela com a ferramenta Ligar — ou deixar sem ligação nenhuma.
+##
+## Com `acende_com_fogo`, a pilha completa fica só montada: falta trazer fogo — um graveto aceso
+## (a ponta encostada em outra fogueira acesa) encostado na lenha, ou F perto dela.
 
 signal acendeu
 signal cresceu
@@ -25,6 +28,11 @@ signal recebeu(gravetos: int, faltam: int)
 @export_range(0.0, 3.0, 0.25) var raio_por_graveto := 1.0
 @export_range(1.0, 12.0, 0.5) var raio_maximo := 6.0
 @export_enum("Amarelo", "Azul", "Vermelho", "Verde", "Roxo", "Laranja", "Ciano", "Rosa") var canal := 0
+## A pilha completa não acende sozinha: precisa de um graveto aceso.
+@export var acende_com_fogo := false:
+	set(valor):
+		acende_com_fogo = valor
+		_montar()
 
 ## Gravetos já na pilha.
 var gravetos := 0
@@ -48,7 +56,7 @@ func categoria_no_editor() -> String:
 
 
 func propriedades_editaveis() -> Array[StringName]:
-	return [&"gravetos_para_acender", &"raio_inicial", &"raio_por_graveto", &"raio_maximo", &"canal"]
+	return [&"gravetos_para_acender", &"acende_com_fogo", &"raio_inicial", &"raio_por_graveto", &"raio_maximo", &"canal"]
 
 
 func papel_no_canal() -> String:
@@ -69,10 +77,11 @@ func _ready() -> void:
 		return
 	add_to_group(&"com_acao")
 	add_to_group(&"fontes_de_calor")
+	add_to_group(&"fogueiras")
 	_fase = fase_do_objeto()
 	if _fase:
 		_fase.definir_fonte(canal, self, false)
-	if gravetos_para_acender == 0:
+	if gravetos_para_acender == 0 and not acende_com_fogo:
 		_acender_no_inicio.call_deferred()
 
 
@@ -84,14 +93,38 @@ func aquece(ponto: Vector3) -> bool:
 	return absf(ate.y) < 3.0 and Vector2(ate.x, ate.z).length() <= raio
 
 
-## Aceita este graveto na pilha? (Comum, e o fogo ainda pode crescer.)
+## Este ponto está no fogo (a até `alcance` m do meio, em XZ, e na altura das chamas)?
+func alcanca(ponto: Vector3, alcance: float) -> bool:
+	var ate := ponto - global_position
+	return ate.y > -0.3 and ate.y < 1.0 and Vector2(ate.x, ate.z).length() <= alcance
+
+
+## A pilha está completa, mas falta o fogo (`acende_com_fogo`).
+func precisa_de_fogo() -> bool:
+	return acende_com_fogo and not acesa and gravetos >= gravetos_para_acender
+
+
+## Um graveto aceso encostou na lenha montada.
+func acender_com_fogo() -> void:
+	if precisa_de_fogo():
+		_acender()
+
+
+## Aceita este graveto na pilha? (Comum, e o fogo ainda pode crescer. Com a pilha montada
+## esperando fogo, só o graveto aceso — que acende a fogueira.)
 func aceita(graveto: Graveto) -> bool:
-	return graveto != null and not graveto.lendario and (not acesa or raio < raio_maximo - 0.01)
+	if graveto == null or graveto.lendario:
+		return false
+	if precisa_de_fogo():
+		return graveto.aceso
+	return not acesa or raio < raio_maximo - 0.01
 
 
 func acao_da_boca(cachorro: Dachshund) -> String:
 	if not cachorro.tem_graveto or not aceita(cachorro.graveto):
 		return ""
+	if precisa_de_fogo():
+		return "acender a fogueira"
 	if acesa:
 		return "pôr o graveto no fogo"
 	return "pôr o graveto na fogueira (%d de %d)" % [gravetos + 1, gravetos_para_acender]
@@ -100,6 +133,10 @@ func acao_da_boca(cachorro: Dachshund) -> String:
 func executar_acao(cachorro: Dachshund) -> void:
 	if acao_da_boca(cachorro).is_empty():
 		return
+	# Com o graveto aceso, a fogueira montada acende e o graveto continua na boca.
+	if precisa_de_fogo():
+		_acender()
+		return
 	var jogo := get_tree().current_scene
 	if jogo and jogo.has_method("entregar_graveto"):
 		jogo.entregar_graveto(self)
@@ -107,14 +144,17 @@ func executar_acao(cachorro: Dachshund) -> void:
 
 ## O graveto veio para a fogueira (quem tirou da boca foi o jogo): some e entra na pilha.
 func receber_graveto(graveto: Graveto) -> void:
+	var trouxe_fogo := graveto.aceso
 	graveto.queimar()
 	gravetos += 1
-	if acesa:
+	if precisa_de_fogo() and trouxe_fogo:
+		_acender()
+	elif acesa:
 		raio = minf(raio + raio_por_graveto, raio_maximo)
 		_atualizar_fogo()
 		_derreter()
 		cresceu.emit()
-	elif gravetos >= gravetos_para_acender:
+	elif gravetos >= gravetos_para_acender and not acende_com_fogo:
 		_acender()
 	else:
 		recebeu.emit(gravetos, gravetos_para_acender - gravetos)
@@ -134,6 +174,8 @@ func _acender_no_inicio() -> void:
 
 ## "gravetos / pedidos" enquanto apagada (o jogo mostra em cima da fogueira); "" acesa.
 func texto_do_contador() -> String:
+	if precisa_de_fogo():
+		return "precisa de fogo"
 	if acesa or gravetos_para_acender <= 0:
 		return ""
 	return "%d / %d" % [gravetos, gravetos_para_acender]
@@ -205,6 +247,8 @@ func _derreter() -> void:
 				enterrados.append([Vector2(ate.x, ate.z).length(), graveto])
 	celulas.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	enterrados.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	if celulas.is_empty() and enterrados.is_empty():
+		return
 	var tween := create_tween()
 	var anterior := 0.0
 	var i := 0
@@ -297,6 +341,9 @@ func _montar_lenha() -> void:
 		return
 	var voxels := {}
 	var quantos := maxi(gravetos, 0)
+	# Montada à espera de fogo sem pedir gravetos: já vem com a lenha.
+	if acende_com_fogo and gravetos_para_acender == 0:
+		quantos = maxi(quantos, 4)
 	var madeira := [Color("7a5230"), Color("6b4428"), Color("8a6038")]
 	for i in mini(quantos, 10):
 		var angulo := i * TAU / maxf(mini(quantos, 10), 1) + 0.4

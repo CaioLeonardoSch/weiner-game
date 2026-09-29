@@ -24,8 +24,9 @@ atual, para a arquitetura não precisar mudar.
 Ideia que vale para quase tudo daqui em diante: cada fase escolhe quais **habilidades** o
 cachorro tem (pular, cavar, latir...). Isso deixa as fases antigas corretas quando uma habilidade
 nova entra — a Fase 01, por exemplo, depende de o cachorro *não* pular o barranco de 2 m.
-Já é assim: `Fase.habilidades` (flags no painel da fase no editor), somadas às habilidades
-nativas da raça; o `jogo.gd` liga só essas.
+Já é assim: `Fase.habilidades` (flags no painel da fase no editor); o `jogo.gd` liga só essas.
+As raças não têm habilidades nem peso próprios: todas fazem o mesmo, e só o **tamanho** muda
+(colisão, o vão embaixo da cerca, o tempo de passar na portinhola).
 
 ## Pontes, gatilho e tronco ✅ (feito)
 
@@ -161,11 +162,12 @@ Como isso vira jogo:
   ✓ verde = com a raça escolhida, apagado = com outra). `Fase.raca_fixa` (Fase 05) ignora a
   escolha; `Fase.raca` é a do teste no editor. A **pelagem** é só aparência, no menu principal
   (Pelagens).
-- Todas as raças andam e pulam igual (sem velocidade ou pulo por raça); o que muda é o corpo
-  (colisão), o peso e as habilidades nativas. As rotas da Floresta passam com o pug.
+- Todas as raças andam, pulam, pesam e fazem o mesmo (sem velocidade, peso ou habilidades por
+  raça); o que muda é só o tamanho do corpo (colisão). As rotas da Floresta passam com o pug.
 - Falta: **conferir jogando cada fase da Floresta com o pug**; textos ou cenas de abertura e de
-  final de região (a descrição da região e das raças saiu do menu); fases que só abrem com certa raça (rotas alternativas: toca, portinhola,
-  peso). Toda fase precisa ter solução com cada raça compatível da região.
+  final de região (a descrição da região e das raças saiu do menu). Toda fase precisa ter solução
+  com cada raça compatível da região; o tamanho do cão só muda o caminho onde o corpo não cabe
+  (o vão embaixo da cerca) ou o tempo (a portinhola).
 
 ## Etapa 3 — Graveto de verdade ✅ (feito, com ideias para depois)
 
@@ -195,7 +197,7 @@ com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso.
 - ✅ **Degrau alto** (0,72 m): só pulando, e com graveto na boca o pulo não chega. Fase 10.
 - ✅ **Túneis**: montados no editor — tampas "só isométrico"/"só 3D" (caminhos que abrem ou fecham
   na volta) e túneis de uma célula, onde graveto comprido só passa ao comprido. Tocas de texugo
-  e portinholas (Etapa 10) levam a ideia adiante.
+  e portinholas (Etapa 10, ✅) levam a ideia adiante.
 - Correção feita junto: o graveto numa beirada na altura da boca não segura mais o cachorro
   pendurado no ar.
 
@@ -238,7 +240,7 @@ sozinho para onde começou.
   cachorro em cima, até encalhar; parando sobre água funda, encaixa e vira ponte. Fase 11
   ("O Tronco no Rio"). Folhas boiando ficam como enfeite para depois.
 - ✅ **Travessias**: tronco, pedras de apoio (meio bloco + pulo, no editor), graveto como ponte
-  (Etapa 10). Ainda por vir: comporta que baixa a água (Etapa 10) e o barquinho (Etapa 12).
+  (Etapa 10), comporta que baixa a água (Etapa 10 ✅). Ainda por vir: o barquinho (Etapa 12).
 
 ## Etapa 8 — Latir ✅ (feito)
 
@@ -253,7 +255,7 @@ raça — agudo no salsicha e no pug, grave no border collie); objetos até 5 m 
 - ✅ **Outros cachorros**: o *Cão vizinho* late de volta quando ouve um latido e late de ciúme
   quando passa perto um cachorro com graveto na boca; o latido dele alcança o que está perto
   dele. É o jeito de latir com o graveto na boca. Fase 12 ("O Vizinho").
-- Pássaros no contrapeso (voam e voltam, corrida contra o tempo): Etapa 10.
+- ✅ Pássaros no contrapeso (voam e voltam, corrida contra o tempo): Etapa 10.
 
 ## Etapa 9 — Truques (rolar, abanar o rabo, ficar em duas patas) — para depois
 
@@ -265,7 +267,7 @@ raça — agudo no salsicha e no pug, grave no border collie); objetos até 5 m 
   novo); **abanar o rabo** para interagir com animais.
 - Ações novas no InputMap (`truque_rolar`, `truque_rabo`, `truque_duas_patas`) ou um menu radial.
 
-## Etapa 10 — Quebra-cabeças com gravetos: placas, pontes, tocas e mirantes (em parte ✅)
+## Etapa 10 — Quebra-cabeças com gravetos: placas, pontes, tocas e mirantes (quase toda ✅)
 
 A ideia central: o graveto deixa de ser só o prêmio e vira também **ferramenta**. Tudo aqui
 combina com o que já existe — a troca de perspectiva, a colisão e o peso do graveto, blocos,
@@ -287,11 +289,13 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   *Onde encaixa:* objetos `Placa` (Area3D que soma o peso do que está em cima) e `Portao`
   (colisão ligada/desligada, como `ObjetoFase.definir_ativo`), ligados por um **canal** (nome ou
   número no painel do editor). O mesmo canal serve para comporta, ponte levadiça, lanterna...
-  Feito também: regra OU / E no portão e a ferramenta **Ligar (L)** do editor. Próximos passos:
-  mostrar no próprio portão (para o jogador) quantas placas a regra E pede — lampadinhas que
-  acendem uma por placa; **atraso ao fechar** (fica aberto N segundos: corrida contra o tempo);
-  **alavanca** (F liga e desliga, sem precisar de peso); e outros que reagem ao canal (ponte
-  levadiça, comporta, plataforma), todos via `ObjetoFase.papel_no_canal()`.
+  Feito também: regra OU / E no portão e a ferramenta **Ligar (L)** do editor.
+  - ✅ **Lampadinhas** em cima do portão da regra E: uma por placa da cor, acesas as acionadas.
+  - ✅ **Atraso ao fechar** (`Portao.atraso`): fica aberto N segundos depois que o canal desliga
+    — corrida contra o tempo.
+  - ✅ **Alavanca**: F morde e ela vira, ligando ou desligando o canal; fica como está (sem peso).
+  - Próximos: outros que reagem ao canal (ponte levadiça, plataforma), via
+    `ObjetoFase.papel_no_canal()`.
 - ~~**O graveto vira ponte.**~~ Feito e depois **retirado** (ver *Pontes, gatilho e tronco*): o
   papel de pinguela ficou com o tronco que se morde, gira e boia.
 - **Troncos: gravetos gigantes.** Praticamente troncos, pesados demais para carregar: o cachorro
@@ -299,32 +303,28 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   (o tronco vem atrás, como um reboque) e enrosca em quinas. Largados sobre água ou vãos de 2 a
   3 células, viram pontes largas.
   *Onde encaixa:* modo "arrastar" no `dachshund.gd`: uma ponta presa na boca e a outra seguindo
-  a trajetória, com colisão ao longo do tronco; ao soltar, encaixa na grade.
-- **Toca de texugo (a mecânica do salsicha).** "Dachshund" quer dizer "cão de texugo": o
-  salsicha foi criado para entrar em tocas. Duas tocas ligadas: o cachorro entra numa e sai na
-  outra. O graveto precisa caber (só ao comprido, ou só gravetos curtos), e uma toca "só 3D" é
-  um atalho que só existe na volta. Raças grandes não entram — uma rota que só o salsicha faz.
-  *Onde encaixa:* objeto `Toca` com um canal para o par; entrando de frente, a tela escurece e
-  o cachorro sai pela outra. A raça e o graveto na boca dizem se cabe.
-- **Portinhola de cachorro.** A portinha na porta de casa ou do quintal: o cachorro passa; com
-  o graveto, só ao comprido — e um graveto grande demais não passa de jeito nenhum. Pode ser de
-  mão única. É por onde o cão policial entra na casa para farejar (ver missões), e o tamanho do
-  cão também conta: um pastor alemão não cabe na portinhola de um salsicha. O mesmo raciocínio
-  vale para vãos, cercas e troncos: cada tamanho de graveto passa por lugares diferentes (a
-  colisão do graveto já garante isso).
-  *Onde encaixa:* objeto com moldura (colisão) e abertura do tamanho escolhido; a mão única é
-  uma área que só deixa passar num sentido. Depende da colisão por raça (seção de raças).
-- **Pássaros no contrapeso (corrida contra o tempo).** Um bando pousado numa alavanca ou num
-  contrapeso: o peso deles segura o mecanismo. Um latido e eles voam — a alavanca se mexe (abre
-  um portão, baixa a água, levanta uma ponte) —, mas com o tempo eles voltam e pousam de novo,
-  desfazendo tudo. É preciso ser rápido para passar.
-  *Onde encaixa:* `Passaro` ganha "voltar ao pouso depois de N segundos"; a alavanca é uma
-  `Placa` que conta os pássaros pousados.
-- **Comporta: o nível da água.** Ligada a uma placa, a uma alavanca ou aos pássaros, a comporta
-  troca a água de uma área — funda ↔ rasa, ou seca — por um tempo ou de vez. Junta placa,
+  a trajetória, com colisão ao longo do tronco; ao soltar, encaixa na grade. Hoje o tronco se
+  morde pela ponta, gira e é puxado de célula em célula; o **reboque** de verdade (a outra ponta
+  seguindo a trajetória em curvas abertas e enroscando nas quinas) fica para depois.
+- **Toca de texugo. ✅** "Dachshund" quer dizer "cão de texugo", mas a toca vale para **todos os
+  cães**. Objeto `Toca` (monte de terra com um buraco, +Z local): o cachorro entra andando para
+  dentro (ou com F), a tela escurece e ele sai pela outra toca da **mesma cor**. Com o graveto na
+  boca: `so_ao_comprido` e `comprimento_maximo` dizem se ele cabe. Uma toca "só 3D" (um atalho que
+  só existe na volta) sai do mesmo objeto com a visibilidade por perspectiva.
+- **Portinhola de cachorro. ✅** Objeto `Portinhola`: parede de tábuas com a portinha no meio; o
+  cachorro passa andando contra ela (ou com F) e a aba balança. **Todas as raças passam**; o
+  tamanho do cão só muda o **tempo** de se espremer. O graveto só passa ao comprido, e
+  `comprimento_maximo` barra os compridos demais; `mao_unica` só abre num sentido (o da seta).
+  Para depois: uma animação cômica dos cães grandes **entalando** na portinhola (o bumbum preso,
+  as patinhas de trás pedalando) antes de passar.
+- **Pássaros no contrapeso (corrida contra o tempo). ✅** `Passaro.volta_depois`: espantado pelo
+  latido, o passarinho volta e pousa no mesmo lugar depois de N segundos. Pousados numa placa,
+  são um contrapeso que vai e volta — é preciso ser rápido para passar.
+- **Comporta: o nível da água. ✅** Objeto `Comporta` ligado a um canal (placa, alavanca ou os
+  pássaros): com o canal ligado, a água funda do trecho à frente (`largura` × `comprimento`)
+  vira rasa; com `encher`, a rasa vira funda (fecha um caminho). `de_vez` deixa a mudança para
+  sempre; senão ela volta quando o canal desliga — nunca com o cachorro dentro. Junta placa,
   pássaros, correnteza e o barco (Etapa 12).
-  *Onde encaixa:* objeto `Comporta` com uma área marcada no editor; troca os tiles `AGUA` ↔
-  `AGUA_RASA` do GridMap, do mesmo jeito que o cavar tira a terra fofa.
 - **Mirante: o graveto fincado. ✅** Num ponto alto, um graveto preso (fincado no chão ou num
   tronco) que não sai do lugar. Mordendo-o, a perspectiva muda — só para olhar: o jogador estuda
   a fase pelo outro ângulo e planeja os próximos passos; soltando, volta. Evolução: no mirante,
@@ -340,7 +340,7 @@ combina com o que já existe — a troca de perspectiva, a colisão e o peso do 
   da ação ou vazio); o cachorro procura o objeto à frente do focinho (como o `_bloco_na_frente`
   do puxar) e o HUD mostra a ação disponível ("F: morder", "F: puxar corda").
 
-## Etapa 11 — Neve: frio, fogo e vento (em boa parte ✅)
+## Etapa 11 — Neve: frio, fogo e vento ✅ (feito)
 
 Fases de inverno em que andar já é um esforço e o caminho precisa ser aberto com fogo.
 
@@ -350,8 +350,11 @@ Fases de inverno em que andar já é um esforço e o caminho precisa ser aberto 
   `aderencia`). As ovelhas também ficam mais lentas.
 - ✅ **Montes de neve**: bloco que se cava (C) ou derrete no fogo.
 - ✅ **Gelo** (versão simples): aderência baixa — o cachorro desliza e demora a parar.
-  Ideia para depois: o quebra-cabeça clássico de deslizar até bater em algo (com o graveto
-  atravessado ele bate antes; virar com Q muda onde ele para) e blocos que deslizam no gelo.
+- ✅ **Gelo liso** (tile `GELO_LISO`, com reflexos): o quebra-cabeça clássico — pisando nele, o
+  cachorro desliza em linha reta (na direção da grade mais perto de onde andava) sem poder virar
+  nem frear, até bater em algo ou sair do gelo. Com o graveto atravessado ele bate antes; virar
+  com Q muda onde ele para. Blocos empurrados também deslizam até bater. Parado no gelo, uma
+  rajada de vento põe o cachorro para deslizar.
 - ✅ **Frio**: `Fase.frio` — longe do fogo o calor cai (barra no HUD, mais rápido na água); com
   pouco calor o cachorro treme e fica lento; gelado, volta para o último lugar quente.
 - ✅ **Fogueira montada com gravetos**: pede N gravetos comuns (F perto dela, ou largar junto);
@@ -360,18 +363,36 @@ Fases de inverno em que andar já é um esforço e o caminho precisa ser aberto 
   (opcional) — dá para abrir um portão quando ela acende.
 - ✅ **Cavar na neve**: o graveto enterrado vira um montinho de neve no bioma de neve (cava-se
   com C, ou o fogo revela).
-- Ideias para depois: outros jeitos de acender (a corda de um lampião, empurrar uma brasa,
-  **levar um graveto aceso** de uma fogueira a outra com o vento tentando apagar); o fogo derreter
-  gelo em água (o caminho que piora); "montinho de neve" que esconde outro objeto qualquer (um
-  osso, um pano, uma chave), achado pelo faro.
+- ✅ **Graveto aceso**: a ponta de um graveto comum encostada numa fogueira acesa pega fogo. A
+  chama derrete a neve em que encosta (montes de neve), acende fogueiras e vai se acabando (uns
+  25 s; mais rápido na chuva e no vento forte), e o graveto volta a ser comum. O lendário não pega
+  fogo.
+- ✅ **Fogueira que só acende com fogo** (`Fogueira.acende_com_fogo`): a pilha completa fica só
+  montada, esperando um graveto aceso — levar o fogo de uma fogueira a outra com o vento tentando
+  apagar.
+- Ideias para depois: outros jeitos de acender (a corda de um lampião, empurrar uma brasa); o fogo
+  derreter gelo em água (o caminho que piora); "montinho de neve" que esconde outro objeto
+  qualquer (um osso, um pano, uma chave), achado pelo faro.
 - ✅ **Celeiro** (para o pastoreio na neve): abrigo das ovelhas, quente por dentro; telhado e
   paredes altas somem com o cachorro perto. As ovelhas **balem** (com som) quando estão longe —
   para achá-las em mapas grandes.
-- **Vento forte**: rajadas que empurram o cachorro para trás; é preciso avançar de abrigo em
-  abrigo, atrás de paredes, árvores e pedras. O graveto atravessado vira vela (empurra mais), ao
-  comprido corta o vento, e um graveto pesado deixa o cachorro mais firme.
-  *Onde encaixa:* objeto `Vento` (área com direção e rajadas) que soma um arrasto como a
-  correnteza (`_efeito_da_agua`); um raio na direção do vento diz se há abrigo.
+- ✅ **Vento forte**: objeto `Vento` — uma biruta e um corredor (`largura` × `comprimento`) com
+  vento fraco o tempo todo e **rajadas** a cada `intervalo` (a biruta levanta e os riscos
+  aparecem um pouco antes, para dar tempo de se abrigar). A rajada empurra o cachorro para trás;
+  atrás de algo sólido (pedra, bloco, muro) ele fica abrigado. O graveto atravessado vira vela
+  (empurra mais), ao comprido corta o vento, e o peso do graveto segura. Apaga mais rápido o
+  graveto aceso, e reforça o vento do clima (árvores, chuva) perto dele.
+
+## Clima e chão molhado ✅ (feito)
+
+- ✅ **Clima da fase** (`Fase.clima`: do bioma, tempo bom, chuva, neve, ventania, tempestade). O
+  nó `Clima` segue o cachorro: chuva com respingos no chão, neve caindo, folhas voando, céu mais
+  cinzento, raios e trovões, sons de chuva e vento. É só visual e sonoro (quem empurra é o Vento
+  forte).
+- ✅ **Vento nas árvores**: parâmetros globais de shader (`vento`, `chuva`) balançam árvores,
+  capim e flores e, na chuva, abrem anéis na água e pingos nas poças.
+- ✅ **Grama com poças** (cosmético; na neve, poças de neve derretida) e **Lama**. Para depois: a
+  lama e as poças **sujarem o cão** (pelagem manchada que sai na água).
 
 ## Etapa 12 — Mar: o barquinho
 
@@ -410,8 +431,8 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
   cores (recurso `Pelagem`). O salsicha tem 8: vermelho, preto e fogo, chocolate, malhado,
   creme, branco e pelo longo (vermelho, preto e fogo). Escolha no menu (tela Cachorro); com as
   regiões, passa a ser escolhida ao entrar na região, depois da raça.
-- ✅ **Raças como dados** (`assets/racas/*.tres`, recurso `Raca`): proporções, orelha, rabo,
-  velocidade e habilidades nativas; a fase escolhe a raça. Já existem salsicha, pug e border
+- ✅ **Raças como dados** (`assets/racas/*.tres`, recurso `Raca`): proporções, orelha, rabo e
+  as medidas da colisão; a fase escolhe a raça. Já existem salsicha, pug e border
   collie.
 - ✅ **Objetivo da fase como dado** (`Fase.objetivo`): trazer o graveto ao dono (o de sempre) ou
   levar as ovelhas ao abrigo (cercado ou celeiro). Cada objetivo é uma classe em
@@ -420,30 +441,23 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
   latido, não entra na água funda) e *Cercado*; Fase 05 ("O Pastor").
 - **Raças com mecânica própria.** Cada raça resolve os quebra-cabeças do seu jeito; a raça é
   escolhida ao entrar na região, entre as compatíveis (ver *Visão → Regiões e história*).
-  Regra geral do corpo: raças **mais gordinhas são mais pesadas** (seguram uma placa de pressão
-  sozinhas, empurram melhor) e raças **mais esguias passam por frestas** (vira-lata, galgo,
-  salsicha). Ideias por raça (a definir):
-  - *Salsicha*: tocas de texugo, cavar, túneis baixos, frestas.
-  - *Border Collie*: pastoreio e latido (feito).
+  Decidido: **sem peso nem habilidades por raça** — todas fazem o mesmo, e só o **tamanho**
+  muda (o que cabe num vão, o tempo de passar na portinhola). O que diferencia as raças são as
+  **missões** e os temas de cada uma:
+  - *Salsicha*: buscar gravetos (a história principal).
+  - *Border Collie*: pastoreio (feito).
   - *Pastor Alemão e Malinois*: faro, morder e guardar a casa (ver missões).
-  - *Pug*: pesado — segura uma placa sozinho, empurra melhor.
-  - *Corgi*: túneis bem baixos.
-  - *Vira-lata caramelo*: se vira na cidade — acha comida pelo faro, passa por frestas de muros
-    e grades, conhece os atalhos.
-  - *Galgo*: esguio — frestas.
-
-  *Onde encaixa:* o level design ganha rotas que só certas raças usam (toca, portinhola,
-  fresta, pulo alto, peso). Depende da colisão por raça e de um "peso" na `Raca`.
+  - *Corgi*: pequeno — cabe em túneis bem baixos.
+  - *Vira-lata caramelo*: a cidade — acha comida pelo faro, conhece os atalhos.
 - Próximas raças (o formato já comporta, falta a mecânica de cada uma):
-  - *Pug*: já tem modelo e pelagens (bege, preto); falta uma fase com a cara dele (mais lento,
-    mas passa por baixo de coisas? empurra com o peso?).
+  - *Pug*: já tem modelo e pelagens (bege, preto); falta uma fase com a cara dele.
   - *Pastor Alemão e Malinois*: cães policiais e de guarda. Seguem o **faro** — objetivo novo
     "achar o objeto": rastro de cheiro visível ao farejar (tecla nova), em casas, cidade,
     fazenda, fases noturnas (ex.: entrar numa casa pela portinhola e farejar um item) — e
     guardam a casa à noite (ver missões).
   - *Vira-lata caramelo*: o cachorro brasileiro por excelência, com pelagens de vira-lata
     (caramelo e outras); fases na cidade grande, em favelas e no interior do Brasil.
-  - *Galgo*: esguio; passa por frestas.
+  - *Galgo*: esguio e alto.
   - *Corgi*: tema britânico (patas curtíssimas: passa em túneis bem baixos).
   - *Akita*: homenagem ao Hachiko (esperar o dono na estação?).
   - *Jack Russell*: buscar uma máscara mágica do dono, com homenagens a filmes na visão 3D.

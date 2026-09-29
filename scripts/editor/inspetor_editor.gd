@@ -31,6 +31,13 @@ const ROTULOS := {
 	&"clima": "Clima (chuva, neve, vento)",
 	&"frio": "Frio (o cachorro precisa se esquentar)",
 	&"tempo_de_frio": "Segundos até gelar",
+	&"largura": "Largura (m)",
+	&"forca": "Vento de sempre (m/s)",
+	&"forca_rajada": "Rajada (m/s)",
+	&"intervalo": "Segundos entre rajadas",
+	&"duracao_rajada": "Duração da rajada (s)",
+	&"defasagem": "Atraso do ciclo (s)",
+	&"acende_com_fogo": "Só acende com graveto aceso",
 }
 const NOMES_VISIBILIDADE := ["Sempre", "Só isométrico", "Só 3D"]
 

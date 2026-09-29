@@ -15,9 +15,20 @@ signal pego(cachorro: Dachshund)
 signal protegido
 ## O cachorro encostou já com outro graveto na boca (no máximo 1 vez a cada 2 s).
 signal boca_cheia
+## A ponta pegou fogo (encostada numa fogueira acesa) / o fogo acabou.
+signal acendeu
+signal apagou
 
 const MATERIAL_LENDARIO := preload("res://assets/materiais/graveto_lendario.tres")
 const MATERIAL_COMUM := preload("res://assets/materiais/graveto_comum.tres")
+## Segundos que a ponta acesa dura sem chuva nem vento.
+const DURACAO_CHAMA := 25.0
+## Distância (em XZ) da ponta até o meio de uma fogueira para pegar fogo (ou acender a fogueira).
+const ALCANCE_FOGO := 0.75
+## Segundos com a ponta no fogo até ela pegar.
+const TEMPO_PARA_PEGAR_FOGO := 0.4
+## Quanto do fogo cada bloco de neve derretido gasta.
+const GASTO_DERRETER := 0.25
 
 ## O lendário (dourado) é o que o dono quer; os comuns são ferramentas.
 @export var lendario := true:
@@ -56,6 +67,17 @@ var _barrado_por_passaro := false
 ## Um bicho (esquilo) está levando o graveto: não dá para pegar e não pesa em placa.
 var com_bicho: Node = null
 var _montinho: MeshInstance3D
+## Graveto aceso: um graveto comum encostado no fogo leva uma chama na ponta. Ela derrete a neve
+## que encosta, acende fogueiras montadas (ver Fogueira.acende_com_fogo) e vai se acabando —
+## mais rápido na chuva e no vento forte.
+var aceso := false
+## Quanto resta da chama (1 = acabou de acender, 0 = apagou).
+var chama := 0.0
+## Qual ponta está acesa (+1 ou -1, ao longo do Z do graveto).
+var _lado_aceso := 1.0
+var _no_fogo := 0.0
+var _espera_derreter := 0.0
+var _fogo: Node3D
 
 @onready var visual: Node3D = $Visual
 @onready var area: Area3D = $AreaPegar
@@ -88,7 +110,13 @@ func peso_na_placa() -> float:
 
 
 func _process(delta: float) -> void:
-	if ja_pego or enterrado or com_bicho or Engine.is_editor_hint():
+	if Engine.is_editor_hint():
+		return
+	if aceso:
+		_arder(delta)
+	elif ja_pego and not lendario and com_bicho == null and is_inside_tree():
+		_pegar_fogo(delta)
+	if ja_pego or enterrado or com_bicho:
 		return
 	_bloqueio = maxf(_bloqueio - delta, 0.0)
 	_espera_aviso = maxf(_espera_aviso - delta, 0.0)
@@ -146,6 +174,8 @@ func _atualizar_forma() -> void:
 	(($Visual/Haste as MeshInstance3D).mesh as BoxMesh).size.z = comprimento
 	($Visual/Galhinho as Node3D).position.z = comprimento * 0.22
 	(($AreaPegar/Colisao as CollisionShape3D).shape as BoxShape3D).size.z = comprimento + 0.1
+	if _fogo:
+		_fogo.position = Vector3(0.0, 0.03, _lado_aceso * comprimento * 0.5)
 
 
 ## Dourado com brilho (lendário) ou marrom (comum).
@@ -260,6 +290,157 @@ func largar_do_bicho(posicao: Vector3, yaw: float) -> void:
 	com_bicho = null
 	global_transform = Transform3D(Basis(Vector3.UP, yaw + PI * 0.5), posicao + Vector3.UP * 0.08)
 	soltar()
+
+
+# --- Graveto aceso -------------------------------------------------------------------------
+
+## Ponta do graveto (lado +1 ou -1), no mundo.
+func ponta(lado: float) -> Vector3:
+	return visual.global_transform * Vector3(0.0, 0.0, lado * comprimento * 0.5)
+
+
+## Acende a ponta `lado` (o lendário não pega fogo).
+func acender(lado := 1.0) -> void:
+	if lendario or aceso or not is_node_ready():
+		return
+	aceso = true
+	chama = 1.0
+	_lado_aceso = signf(lado) if lado != 0.0 else 1.0
+	_fogo = Node3D.new()
+	_fogo.name = "Fogo"
+	var labareda := MeshInstance3D.new()
+	labareda.name = "Chama"
+	labareda.mesh = Fogueira._malha_chama(0)
+	labareda.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_fogo.add_child(labareda)
+	var luz := OmniLight3D.new()
+	luz.name = "Luz"
+	luz.light_color = Color(1.0, 0.62, 0.3)
+	luz.omni_range = 2.5
+	luz.light_energy = 0.9
+	luz.position.y = 0.2
+	_fogo.add_child(luz)
+	var faiscas := _criar_brilho()
+	faiscas.name = "Faiscas"
+	(faiscas.mesh.surface_get_material(0) as StandardMaterial3D).albedo_color = Color("ffb347")
+	faiscas.emission_sphere_radius = 0.06
+	faiscas.amount = 5
+	faiscas.gravity = Vector3(0, 0.8, 0)
+	faiscas.position.y = 0.12
+	_fogo.add_child(faiscas)
+	visual.add_child(_fogo)
+	_atualizar_forma()
+	_escalar_fogo()
+	acendeu.emit()
+
+
+## A chama acabou (ou foi apagada): uma fumacinha e o graveto volta a ser comum.
+func apagar() -> void:
+	if not aceso:
+		return
+	aceso = false
+	chama = 0.0
+	if is_inside_tree():
+		Efeitos.vapor(get_parent(), ponta(_lado_aceso) + Vector3.UP * 0.1)
+	if _fogo:
+		_fogo.queue_free()
+		_fogo = null
+	apagou.emit()
+
+
+## Com a ponta na chama de uma fogueira acesa por um instante, o graveto pega fogo.
+func _pegar_fogo(delta: float) -> void:
+	for fogueira: Fogueira in get_tree().get_nodes_in_group(&"fogueiras"):
+		if not fogueira.acesa or not fogueira.visible:
+			continue
+		for lado: float in [1.0, -1.0]:
+			if fogueira.alcanca(ponta(lado), ALCANCE_FOGO):
+				_no_fogo += delta
+				if _no_fogo >= TEMPO_PARA_PEGAR_FOGO:
+					_no_fogo = 0.0
+					acender(lado)
+					_avisar("A ponta do graveto pegou fogo!")
+				return
+	_no_fogo = 0.0
+
+
+## A chama vai se acabando (chuva e vento aceleram), derrete a neve em que encosta e acende
+## fogueiras montadas.
+func _arder(delta: float) -> void:
+	var ponta_acesa := ponta(_lado_aceso)
+	var gasto := 1.0 / DURACAO_CHAMA
+	var jogo := get_tree().current_scene
+	var clima: Variant = jogo.get(&"clima") if jogo else null
+	if clima is Clima:
+		gasto *= 1.0 + (clima as Clima).chuva * 2.0
+	gasto += Vento.total_em(self, ponta_acesa).length() * 0.016
+	chama -= gasto * delta
+	if chama <= 0.0:
+		apagar()
+		_avisar("O graveto apagou")
+		return
+	_escalar_fogo()
+	for fogueira: Fogueira in get_tree().get_nodes_in_group(&"fogueiras"):
+		if fogueira.precisa_de_fogo() and fogueira.visible and fogueira.alcanca(ponta_acesa, ALCANCE_FOGO):
+			fogueira.acender_com_fogo()
+	_espera_derreter = maxf(_espera_derreter - delta, 0.0)
+	if _espera_derreter <= 0.0:
+		_derreter_na_ponta(ponta_acesa)
+
+
+## Derrete o bloco de neve em que a ponta encosta (na altura dela; o chão fica).
+func _derreter_na_ponta(ponta_acesa: Vector3) -> void:
+	# Na boca, o graveto fica fora da fase (no cachorro): a fase vem do jogo.
+	var fase := fase_do_objeto()
+	if fase == null:
+		var jogo := get_tree().current_scene
+		fase = jogo.get(&"fase") as Fase if jogo else null
+	if fase == null:
+		return
+	var terreno := fase.terreno
+	var para_fora := (ponta_acesa - visual.global_position)
+	para_fora.y = 0.0
+	var pontos: Array[Vector3] = [ponta_acesa, ponta_acesa + para_fora.normalized() * 0.2]
+	var dono := get_parent() as Node3D
+	if ja_pego and dono:
+		var frente := dono.global_basis.x
+		frente.y = 0.0
+		pontos.append(ponta_acesa + frente.normalized() * 0.3)
+	for ponto in pontos:
+		var celula := terreno.local_to_map(terreno.to_local(ponto))
+		var id := terreno.get_cell_item(celula)
+		if not Tiles.derrete(id):
+			continue
+		var novo: int = Tiles.definicao(id).derrete_em
+		terreno.set_cell_item(celula, novo if novo >= 0 else GridMap.INVALID_CELL_ITEM,
+			terreno.get_cell_item_orientation(celula))
+		Efeitos.vapor(fase.objetos, terreno.to_global(terreno.map_to_local(celula)) + Vector3.UP * 0.3)
+		chama -= GASTO_DERRETER
+		_espera_derreter = 0.3
+		if chama <= 0.0:
+			apagar()
+			_avisar("O graveto apagou")
+		return
+
+
+## Chama menor conforme se acaba, tremulando.
+func _escalar_fogo() -> void:
+	if _fogo == null:
+		return
+	var tamanho := 0.18 + 0.2 * clampf(chama, 0.0, 1.0)
+	var pulso := sin(Time.get_ticks_msec() * 0.013 + get_instance_id()) * 0.5 + 0.5
+	# A chama fica em pé, qualquer que seja o jeito do graveto.
+	_fogo.global_rotation = Vector3.ZERO
+	_fogo.scale = Vector3(1.0 - pulso * 0.12, 0.85 + pulso * 0.3, 1.0 - pulso * 0.12) * tamanho
+	var luz := _fogo.get_node_or_null(^"Luz") as OmniLight3D
+	if luz:
+		luz.light_energy = 0.5 + 0.6 * chama + pulso * 0.15
+
+
+func _avisar(texto: String) -> void:
+	var jogo := get_tree().current_scene
+	if jogo and jogo.has_method(&"mostrar_aviso") and ja_pego:
+		jogo.mostrar_aviso(texto)
 
 
 ## Foi para a fogueira: some da fase (não pesa, não é pego, não é levado por bichos).

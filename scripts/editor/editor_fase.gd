@@ -428,11 +428,15 @@ func _validar() -> Dictionary:
 	var pedidos := 0
 	for fogueira in fase.todos(Fogueira):
 		pedidos += (fogueira as Fogueira).gravetos_para_acender
+	var com_fogo := fase.todos(Fogueira).filter(func(f: ObjetoFase) -> bool: return (f as Fogueira).acende_com_fogo)
+	if not com_fogo.is_empty() and com_fogo.size() == fase.todos(Fogueira).size():
+		avisos.append("Todas as fogueiras precisam de graveto aceso, mas nenhuma acende sozinha para dar o fogo.")
 	if pedidos > comuns:
 		avisos.append("As fogueiras pedem %d graveto(s) para acender, mas a fase só tem %d graveto(s) comum(ns)." % [pedidos, comuns])
 	var tem_neve := not terreno.get_used_cells_by_item(Tiles.NEVE_FOFA).is_empty() \
 		or not terreno.get_used_cells_by_item(Tiles.MONTE_DE_NEVE).is_empty() \
-		or not terreno.get_used_cells_by_item(Tiles.GELO).is_empty()
+		or not terreno.get_used_cells_by_item(Tiles.GELO).is_empty() \
+		or not terreno.get_used_cells_by_item(Tiles.GELO_LISO).is_empty()
 	if tem_neve and fase.bioma != Biomas.NEVE:
 		avisos.append("Há neve ou gelo no terreno, mas o bioma da fase é Floresta.")
 	for bloco in fase.todos(Empurravel):

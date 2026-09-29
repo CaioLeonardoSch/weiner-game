@@ -46,6 +46,7 @@ const MONTE_DE_NEVE := 24
 const GELO := 25
 const GRAMA_COM_POCAS := 26
 const LAMA := 27
+const GELO_LISO := 28
 
 ## Quanto (m) a malha VISUAL de cada tile passa da célula em X e Z, para os vizinhos se
 ## sobreporem um fio. Sem isso, na emenda entre dois blocos de 8×8 células do GridMap (os
@@ -93,7 +94,8 @@ const _TABUA := [Vector2(-0.5, -0.58), Vector2(0.5, -0.58), Vector2(0.5, -0.5), 
 ## `rasa`: água rasa, dá para atravessar a pé; `lentidao` multiplica a velocidade e
 ## `correnteza` (m/s) arrasta o cachorro no sentido +X do tile (gire no editor com Q/E).
 ## `aderencia` (0 a 1, padrão 1): com menos, o cachorro demora a arrancar e a parar (neve fofa)
-## ou desliza (gelo). `lama`: chão de lama (por enquanto só a aparência; no futuro, suja o
+## ou desliza (gelo). `deslizante`: gelo liso — o cachorro e os blocos empurrados deslizam em
+## linha reta, sem controle, até bater em algo ou sair do gelo. `lama`: chão de lama (por enquanto só a aparência; no futuro, suja o
 ## cachorro). As poças da grama e da lama são só visuais (o material desenha). `derrete_em`: o fogo aceso por perto troca o tile por este (-1 = some).
 ## Colisão: "perfil" (o formato), "bloco" (cubo cheio) ou "nenhuma"; `colisao_perfil` usa
 ## outro perfil para a colisão (escadas colidem como rampa).
@@ -129,6 +131,7 @@ static func definicoes() -> Array[Dictionary]:
 		{id = GELO, nome = "Gelo", perfil = _BLOCO, material = "gelo", aderencia = 0.06, cor = Color("a6d4f0")},
 		{id = GRAMA_COM_POCAS, nome = "Grama com poças", perfil = _BLOCO, material = "grama_pocas", cor = Color("4f9a5a")},
 		{id = LAMA, nome = "Lama", perfil = _BLOCO, material = "lama", lama = true, cor = Color("5e4028")},
+		{id = GELO_LISO, nome = "Gelo liso", perfil = _BLOCO, material = "gelo_liso", deslizante = true, cor = Color("c4e6fa")},
 	]
 
 
@@ -161,6 +164,11 @@ static func eh_lama(id: int) -> bool:
 
 static func eh_escorregadia(id: int) -> bool:
 	return definicao(id).get("escorregadia", false)
+
+
+## Gelo liso (o "gelo de puzzle"): quem pisa desliza em linha reta até bater em algo.
+static func eh_deslizante(id: int) -> bool:
+	return definicao(id).get("deslizante", false)
 
 
 ## O fogo derrete este tile?

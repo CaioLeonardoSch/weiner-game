@@ -39,6 +39,8 @@ uniform vec3 cor_poca : source_color = vec3(0.36, 0.52, 0.64);
 uniform vec3 cor_margem : source_color = vec3(0.34, 0.27, 0.17);
 // Poças congeladas (neve): sem anéis de chuva, com riscos claros.
 uniform bool pocas_congeladas = false;
+// Gelo liso: faixas diagonais claras no topo (superfície polida, reflete o céu).
+uniform bool reflexos = false;
 // Quanto o modelo balança com o vento (0 = parado). Árvores ~1; capim baixo, mais.
 uniform float balanco = 0.0;
 
@@ -161,6 +163,14 @@ void fragment() {
 	vec3 cor = base * (1.0 + nivel * variacao);
 	if (topo && fracao_brilho > 0.0 && hash(texel + vec3(11.3, 5.1, 2.7)) < fracao_brilho) {
 		cor = mix(cor, cor_brilho, clamp(2.2 - tamanho_texel_na_tela, 0.0, 1.0));
+	}
+	if (topo && reflexos) {
+		// Duas faixas por metro, de larguras diferentes, na diagonal do mundo (contínuas entre blocos).
+		float diagonal = texel.x + texel.z;
+		float faixa = mod(diagonal, 8.0);
+		if (faixa < 1.0 || (faixa > 3.0 && faixa < 3.5 + 0.5 * step(0.5, hash(vec3(floor(diagonal / 8.0), 1.0, 2.0))))) {
+			cor = mix(cor, cor_brilho, 0.35 * clamp(2.2 - tamanho_texel_na_tela, 0.0, 1.0));
+		}
 	}
 	if (topo && pocas > 0.0) {
 		cor = desenhar_pocas(cor, clamp(2.2 - tamanho_texel_na_tela, 0.0, 1.0));

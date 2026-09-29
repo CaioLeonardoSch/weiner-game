@@ -117,7 +117,10 @@ A rota `save` testa a pasta do save, os ids das fases e a migração de saves an
 balde e bioma (`teste_editor.gd`); `neve` e `celeiro` montam fases de neve por código
 (`teste_neve.gd`) e testam frio, fogueira, gelo e o celeiro; `menu` escolhe a raça da região
 no menu e confere que ela vale no jogo, a raça fixa da Fase 05 e a tela *antes de jogar*
-(`teste_menu.gd`).
+(`teste_menu.gd`); `passagens` testa toca de texugo, portinhola, alavanca, comporta, portão
+com atraso e lampadinhas e passarinhos que voltam (`teste_passagens.gd`); `clima` testa os
+climas da fase e os tiles de poças e lama (`teste_clima.gd`); `vento_gelo_fogo` testa gelo liso,
+vento forte e graveto aceso (`teste_etapa11.gd`).
 Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
 Os testes não mexem nos arquivos do jogador: usam as opções de fábrica e guardam o progresso
 só na memória (se o `progresso.cfg` real mudar durante um teste, o teste falha).
@@ -244,7 +247,22 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
   ("F: ..."). Segurar F + andar para trás continua puxando o bloco.
 - **Regra OU / E:** com várias placas da mesma cor, o portão abre com **qualquer uma** acionada
   (OU, o padrão) ou só com **todas** ao mesmo tempo (E) — propriedade *Regra* do portão.
-- **No editor:** Placa, Portão, Gatilho e Mirante ficam em *Mecanismos*; linhas tracejadas na cor do canal
+- **Alavanca:** o cachorro morde (F) e ela vira para o outro lado, ligando ou desligando a cor
+  dela — ao contrário da placa, fica como está. Com *ligada*, a fase começa com ela ligada.
+- **Portão com atraso:** com *atraso* (s), continua aberto uns segundos depois que o canal
+  desliga — dá tempo de correr da placa até ele. Na regra E, **lampadinhas** em cima do portão
+  mostram quantas placas da cor já estão acionadas.
+- **Comporta:** com a cor dela ligada, a tábua sobe e a água do trecho à frente (*largura* ×
+  *comprimento* células) baixa — a funda vira rasa e dá para atravessar a pé. Com *encher*, o
+  contrário (a rasa vira funda); com *de vez*, a mudança fica mesmo quando o canal desliga
+  (senão volta — nunca com o cachorro dentro).
+- **Toca de texugo:** um monte de terra com um buraco; qualquer cachorro entra (andando para
+  dentro ou com F) e sai pela outra toca da **mesma cor**, por baixo da terra. Com o graveto:
+  *só ao comprido* e *comprimento máximo* (0 = qualquer).
+- **Portinhola:** parede de tábuas com uma portinhola de cachorro. Todas as raças passam — quanto
+  maior o cachorro, mais ele demora para se espremer. O graveto só passa ao comprido (e com
+  *comprimento máximo*); com *mão única*, só se entra pela frente (a seta).
+- **No editor:** Placa, Portão, Alavanca, Comporta, Gatilho, Mirante e Vento forte ficam em *Mecanismos*; linhas tracejadas na cor do canal
   ligam as placas aos portões, e o portão que reage a mais de uma placa mostra a regra ("OU" /
   "E"). A validação avisa placa sem portão (e vice-versa) e regra E com uma placa só. Ver
   *Ligando mecanismos* em "Criando fases".
@@ -268,6 +286,9 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
   guarda; um latido assusta — larga o que levava e se esconde por `tempo_escondido` s.
 - **Cão vizinho**: late de volta quando ouve um latido e late de ciúme quando um cachorro com
   graveto passa perto (3 m); o latido dele alcança o que está perto dele.
+- **Passarinho**: guarda o graveto ou (com *bloqueia passagem*) o caminho; um latido espanta. Com
+  *volta depois* (s), volta para o mesmo lugar — pousado numa placa, é um contrapeso que vai e
+  volta.
 - **Dono dormindo** (`dormindo`, no painel do Dono): "Zzz" — só recebe o graveto depois de um
   latido (a validação avisa se ninguém pode latir).
 - **Som**: o latido é gerado por código (`scripts/som.gd`), com o tom pela altura da raça.
@@ -278,7 +299,9 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
   coberta de neve, pedra nevada, mato nevado, terra gelada), céu frio, neve caindo, entorno
   branco e árvores e pedras com neve. Tiles próprios: **Neve fofa** (mais lento, e o cachorro
   demora a arrancar e a parar), **Monte de neve** (bloco que se cava com C ou derrete no fogo) e
-  **Gelo** (desliza: solta a tecla e ele continua).
+  **Gelo** (desliza: solta a tecla e ele continua) e **Gelo liso** (azul, mais brilhante: pisou,
+  o cachorro desliza em linha reta, sem controle, até bater em algo ou sair do gelo — um bloco
+  empurrado também).
 - **Frio** (propriedade *Frio* da fase): longe do fogo o **calor** cai (barra no canto de baixo)
   em *Segundos até gelar*, e mais rápido na água; com pouco calor o cachorro treme e anda mais
   devagar; gelado, volta para o último lugar quente. Esquentam: fogueira acesa (perto) e celeiro
@@ -288,12 +311,33 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
   derrete a neve em volta (neve fofa vira terra, montes somem) e revela o que estava enterrado
   na neve; cada graveto a mais aumenta o raio (`raio_por_graveto`, até `raio_maximo`). O
   lendário não vai para o fogo. Acesa, também aciona a cor dela (dá para abrir um portão com a
-  ferramenta Ligar) — ou fica sem ligação.
+  ferramenta Ligar) — ou fica sem ligação. Com *acende com fogo*, a pilha completa fica só
+  montada: falta trazer fogo.
+- **Graveto aceso**: um graveto comum com a ponta encostada numa fogueira acesa pega fogo. A
+  chama derrete a neve em que encosta, acende uma fogueira *acende com fogo* e vai se acabando
+  (`DURACAO_CHAMA` s; mais rápido na chuva e no vento). O lendário não pega fogo.
+- **Vento forte** (em *Mecanismos*): uma biruta num poste e, à frente dela, um corredor
+  (*largura* × *comprimento*) de vento que empurra o cachorro — fraco o tempo todo e, a cada
+  *intervalo* s, uma **rajada** (*força da rajada*; acima de 3,5 m/s não dá para andar contra).
+  A biruta levanta e os riscos aparecem um pouco antes, para dar tempo de se **abrigar** atrás
+  de algo sólido (pedra, bloco, muro). O graveto atravessado na boca vira **vela** (empurra
+  muito mais); no gelo liso a rajada faz deslizar. *Defasagem* tira ventos vizinhos de compasso.
 - **Celeiro**: abrigo das ovelhas (como o Cercado): porta larga no lado +X, feno num canto,
   telhado com neve no bioma de neve. Com o cachorro perto, o telhado e a parte alta das paredes
   somem para dar para ver dentro. Uma ovelha que entra fica guardada; dentro é quente.
 - **Ovelhas balem** ("Béé!", com som) de vez em quando quando estão longe do cachorro — é assim
   que se acha uma ovelha perdida num mapa grande. Neve fofa e água rasa atrasam as ovelhas também.
+
+## Clima e chão molhado
+
+- **Clima** (propriedade *Clima* da fase): *Do bioma* (neve no bioma que neva, tempo bom nos
+  outros), *Tempo bom*, *Chuva* (pingos e respingos no chão, poças com anéis, chão molhado),
+  *Neve*, *Ventania* (árvores e capim balançam, folhas voam) e *Tempestade* (chuva, vento, raios
+  e trovões). É só visual e sonoro (`scripts/clima.gd`); o vento que empurra é o **Vento
+  forte**, que também reforça o balanço das árvores perto dele. Os shaders leem os parâmetros
+  globais `chuva` e `vento` (em `project.godot`).
+- **Grama com poças** e **Lama**: tiles cosméticos por enquanto (as poças ganham pingos na
+  chuva). No futuro, a lama e as poças sujam o cachorro.
 
 ## Regiões e biomas
 
@@ -320,8 +364,9 @@ O cachorro é um modelo **voxel gerado por código** (`scripts/racas/cachorro_vo
 de dois dados:
 
 - **Raça** (`assets/racas/*.tres`, recurso `Raca`): proporções (corpo, patas, cabeça, focinho),
-  tipo de orelha (caída, em pé, dobrada) e de rabo (reto, enrolado, curto), colisão, peso e
-  **habilidades nativas** (somadas às da fase). Hoje: salsicha, pug e border collie.
+  tipo de orelha (caída, em pé, dobrada) e de rabo (reto, enrolado, curto) e colisão. As
+  raças não têm peso nem habilidades próprias: só o **tamanho** muda o jogo (por onde passa, o
+  vão cavado sob a cerca, o tempo na portinhola). Hoje: salsicha, pug e border collie.
 - **Pelagem** (recurso `Pelagem`, dentro da raça): cores do pelo, cabeça, orelhas, marcas
   (barriga/patas/focinho/sobrancelhas), máscara, manchas (malhado/merle) e pelo longo.
 
@@ -412,8 +457,7 @@ na fase, frio sem fogueira...).
 
 Nas propriedades da fase (nada selecionado) ficam a **região**, o **bioma**, o **objetivo**, a
 **raça** do cachorro (a do teste no editor; pelo menu vale a escolhida entre as da região, a
-não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir; a raça pode
-somar as dela) — a Fase 01 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
+não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir) — a Fase 01 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
 objetivo pede alguns objetos:
 
 | Objetivo | Precisa de |
@@ -503,7 +547,9 @@ Nada de arquivos externos: tudo é gerado pelo próprio Godot.
   rampa), *Canto de rampa* (externo e interno, baixo e alto) para fechar montes e barrancos,
   *Rampa lisa* baixa/alta (graveto pesado escorrega), *Degrau alto* (0,72 m, só pulando sem
   graveto), *Buraco* (o que a terra fofa do chão vira ao ser cavada), *Neve fofa* (`lentidao` e
-  `aderencia`), *Monte de neve* e *Gelo* (`aderencia` baixa: desliza). `derrete_em` diz no que o
+  `aderencia`), *Monte de neve*, *Gelo* (`aderencia` baixa: desliza), *Gelo liso*
+  (`deslizante`: desliza em linha reta até bater), *Grama com poças* e *Lama* (`lama`; por
+  enquanto só a aparência). `derrete_em` diz no que o
   fogo transforma o tile. Cada **bioma** tem a sua biblioteca (`Tiles.BIBLIOTECAS`): os
   geradores fazem todas; a troca de materiais por bioma fica em `Tiles.MATERIAIS_POR_BIOMA`.
 - **Modelos voxel em texto** — `assets/voxel/*.txt`: camadas desenhadas com letras, uma cor por
@@ -532,6 +578,7 @@ scenes/objetos/               objetos que o editor coloca
 scripts/jogo.gd               regras: pegar/largar graveto, perspectiva, vitória
 scripts/fase.gd               raiz de uma fase (consultas: objetos, tiles, água)
 scripts/biomas.gd             biomas: tiles, céu, luz, entorno, neve caindo
+scripts/clima.gd              clima da fase: chuva, neve, ventania, tempestade
 scripts/regioes/, assets/regioes/  regiões (agrupam as fases no menu)
 scripts/modulos/              Trecho (copiar/colar/girar pedaços de fase) e Modulos (catálogo)
 scripts/autoload/fases.gd     qual fase jogar/editar; troca menu ↔ jogo ↔ editor; progresso
@@ -564,9 +611,12 @@ por elas), 3 `objetos`, 4 `cachorro`.
 | Força da correnteza, lentidão da água rasa | `correnteza` / `lentidao` em `Tiles.definicoes()` |
 | Tempo segurando para puxar | `DURACAO_PUXAR` em `scripts/dachshund.gd` |
 | Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |
-| Medidas, peso e cores de uma raça | `assets/racas/*.tres` (inspetor do Godot) |
+| Medidas e cores de uma raça | `assets/racas/*.tres` (inspetor do Godot) |
 | Medo e velocidade das ovelhas | constantes no topo de `scripts/objetos/ovelha.gd` |
 | Frio (tempo até gelar) | "Segundos até gelar" nas propriedades da fase |
 | Raio e gravetos da fogueira | propriedades da Fogueira no editor |
 | Neve fofa e gelo (lentidão, aderência) | `lentidao` / `aderencia` em `Tiles.definicoes()` |
 | Céu, luz e chão de cada bioma | `Biomas.dados()` em `scripts/biomas.gd` |
+| Chuva, neve, vento e raios de cada clima | `dados()` em `scripts/clima.gd` |
+| Força e ritmo do vento forte | propriedades do Vento forte no editor; abrigo em `scripts/objetos/vento.gd` |
+| Duração da chama do graveto aceso | `DURACAO_CHAMA` em `scripts/graveto.gd` |

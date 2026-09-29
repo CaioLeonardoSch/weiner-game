@@ -90,7 +90,8 @@ func _celula() -> Vector3i:
 	return terreno.local_to_map(terreno.to_local(global_position + Vector3.UP * 0.3))
 
 
-func _mover(direcao: Vector3i, ignorar_cachorro: bool) -> bool:
+## `deslizando`: continuação no gelo liso (passo reto, sem acelerar e frear em cada célula).
+func _mover(direcao: Vector3i, ignorar_cachorro: bool, deslizando := false) -> bool:
 	if not pode_mover(direcao, ignorar_cachorro):
 		return false
 	var terreno := _fase().terreno
@@ -101,7 +102,10 @@ func _mover(direcao: Vector3i, ignorar_cachorro: bool) -> bool:
 
 	em_movimento = true
 	var tween := create_tween()
-	tween.tween_property(self, "global_position", alvo, DURACAO).set_trans(Tween.TRANS_SINE)
+	if deslizando:
+		tween.tween_property(self, "global_position", alvo, DURACAO * 0.6)
+	else:
+		tween.tween_property(self, "global_position", alvo, DURACAO).set_trans(Tween.TRANS_SINE)
 	if Tiles.eh_agua(chao):
 		# Afunda até o topo ficar rente ao chão em volta.
 		afundado = true
@@ -114,6 +118,9 @@ func _mover(direcao: Vector3i, ignorar_cachorro: bool) -> bool:
 		tween.tween_callback(afundou.emit)
 	await tween.finished
 	em_movimento = false
+	# Gelo liso: o bloco segue deslizando na mesma direção até bater em algo.
+	if not afundado and Tiles.eh_deslizante(chao) and pode_mover(direcao, false):
+		return await _mover(direcao, false, true)
 	if not afundado and not _algum_empurrao_possivel():
 		_voltar_ao_inicio()
 	return true
