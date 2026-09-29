@@ -27,6 +27,8 @@ var _tween_aviso: Tween
 var _proxima_fase := ""
 var _tempo_travado := 0.0
 var _dica_virar_mostrada := false
+var _tempo_sem_girar := 0.0
+var _dica_girar_mostrada := false
 var _pausa := MenuPausa.new()
 ## Contador do objetivo (ex.: ovelhas no cercado), no canto de baixo.
 var contador := Label.new()
@@ -247,6 +249,11 @@ func _process(delta: float) -> void:
 	if _tempo_travado > 0.8 and not _dica_virar_mostrada and not cachorro.graveto_ao_comprido:
 		_dica_virar_mostrada = true
 		mostrar_aviso("O graveto não passa atravessado — %s vira ao comprido" % Teclas.nome(&"virar_graveto"))
+	# O graveto bate dos dois lados e o cachorro anda de lado/de ré: explica (uma vez por fase).
+	_tempo_sem_girar = _tempo_sem_girar + delta if cachorro.giro_travado else 0.0
+	if _tempo_sem_girar > 0.8 and not _dica_girar_mostrada:
+		_dica_girar_mostrada = true
+		mostrar_aviso("O graveto bate e não deixa virar — afaste-se um pouco ou %s vira o graveto" % Teclas.nome(&"virar_graveto"))
 
 
 func _on_graveto_pego(quem: Dachshund, pego: Graveto) -> void:

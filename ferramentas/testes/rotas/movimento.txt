@@ -34,3 +34,20 @@ esperar 12
 apertar pular 3
 esperar 90
 checar jogo.cachorro.global_position.y < 0.3
+# Issue #28 — encostado na cerca com o graveto, o giro mais curto bate: vira pelo outro lado.
+chamar res://ferramentas/testes/teste_movimento.gd tirar_graveto
+chamar res://ferramentas/testes/teste_movimento.gd preparar_giro
+chamar res://ferramentas/testes/teste_movimento.gd encostado_na_cerca
+esperar 5
+apertar mover_direita 40
+esperar 40
+checar absf(jogo.cachorro.modelo.rotation.y) < 0.2 and not jogo.cachorro.giro_travado
+# Num corredor, ao comprido, não gira para nenhum lado: anda de ré, mas avisa.
+chamar res://ferramentas/testes/teste_movimento.gd tirar_graveto
+chamar res://ferramentas/testes/teste_movimento.gd no_corredor
+esperar 20
+apertar mover_direita 90
+esperar 30
+checar jogo.cachorro.giro_travado and absf(jogo.cachorro.modelo.rotation.y) > 3.0
+esperar 60
+checar jogo.aviso.text.contains("não deixa virar")
