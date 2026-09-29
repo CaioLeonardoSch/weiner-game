@@ -25,8 +25,11 @@ static func ventania(jogo: Node) -> String:
 	return "ok"
 
 
+## Sem os relâmpagos sorteados (a cada 5 a 12 s): um deles na hora de medir o céu escuro
+## reprovava a rota de vez em quando. O teste dispara o dele com `raio`.
 static func tempestade(jogo: Node) -> String:
 	jogo.trocar_clima(Clima.TEMPESTADE)
+	(jogo.clima as Clima)._proximo_raio = INF
 	return "ok"
 
 
