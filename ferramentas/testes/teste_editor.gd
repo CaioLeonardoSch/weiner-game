@@ -142,8 +142,10 @@ static func _bioma(editor, checar: Callable) -> void:
 static func _regioes(checar: Callable) -> void:
 	checar.call("regiões floresta e neve", Regioes.ids() == PackedStringArray(["floresta", "neve"]))
 	var lista := Fases.listar()
-	checar.call("fases da floresta em ordem", Fases.fases_da_regiao(&"floresta").size() == lista.size()
-		and lista[0].get_file() == "fase_01.tscn")
+	var floresta := Fases.fases_da_regiao(&"floresta")
+	var neve := Fases.fases_da_regiao(&"neve")
+	checar.call("fases por região, em ordem", floresta.size() + neve.size() == lista.size()
+		and lista[0].get_file() == "floresta_01_andar.tscn" and lista[floresta.size()].get_file() == "neve_01_neve_fofa.tscn")
 
 
 ## Pincel 3×3, linha de blocos (clique, clique), linha de objetos, teclas das ferramentas,

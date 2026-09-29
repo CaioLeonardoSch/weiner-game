@@ -68,6 +68,9 @@ func _ready() -> void:
 	_fase = fase_do_objeto()
 	if _fase == null:
 		return
+	# Numa cena de fase salva, os objetos ficam prontos antes da fase (e do seu terreno).
+	if not _fase.is_node_ready():
+		await _fase.ready
 	_guardar_trecho()
 	_fase.canal_mudou.connect(_on_canal_mudou)
 	_quer_abrir = _fase.canal_ligado(canal, regra == Portao.REGRA_TODAS)

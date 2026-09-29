@@ -1,0 +1,22 @@
+fase res://scenes/fases/floresta_26_contrapeso.tscn
+esperar 20
+ir 8.5 -4.0
+apertar latir
+esperar 20
+ir 8.5 -2.5
+ir 12.0 -2.5
+ir 13.5 -3.5
+esperar 310
+ir 11.8 -2.5
+apertar largar_graveto
+esperar 20
+eval jogo.cachorro.tem_graveto
+apertar latir
+esperar 3
+eval jogo.cachorro._espera_latido
+eval jogo.cachorro.entrada_bloqueada
+esperar 20
+eval obj("Passaro").voou
+apertar latir
+esperar 20
+eval obj("Passaro").voou

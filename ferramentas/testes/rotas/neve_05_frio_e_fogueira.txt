@@ -1,0 +1,18 @@
+fase res://scenes/fases/neve_05_frio_e_fogueira.tscn
+esperar 20
+eval jogo.cachorro.calor
+ir 4.5 -5.5
+esperar 10
+eval jogo.cachorro.tem_graveto
+ir 7.5 -3.5
+apertar acao
+esperar 30
+eval obj("Fogueira").gravetos
+ir 5.5 -1.5
+esperar 10
+eval jogo.cachorro.tem_graveto
+ir 7.5 -3.5
+apertar acao
+esperar 30
+eval obj("Fogueira").acesa
+eval jogo.cachorro.calor

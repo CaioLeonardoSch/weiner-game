@@ -1,0 +1,7 @@
+# N10 — O celeiro: com frio, leva as ovelhas ao celeiro (piloto automático de teste).
+fase res://scenes/fases/neve_10_celeiro.tscn
+esperar 20
+checar jogo.fase.frio
+chamar res://ferramentas/testes/piloto_pastoreio.gd iniciar
+esperar 9000
+checar jogo.concluida

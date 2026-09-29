@@ -1,5 +1,5 @@
 # Mecanismos: regra OU / E dos portões e a ferramenta Ligar do editor (ver teste_mecanismos.gd).
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_mecanismos.gd rodar
 checar jogo.get_meta("mecanismos_ok", false)

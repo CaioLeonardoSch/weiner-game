@@ -1,0 +1,13 @@
+# F33 — Dia de tempestade: chuva, vento e raios; poças e lama no caminho.
+fase res://scenes/fases/floresta_33_chuva.tscn
+esperar 20
+checar jogo.fase.clima == 5
+checar jogo.clima.chuva > 0.0
+ir 7.5 -3.5
+ir 11.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 3.0 -3.0
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

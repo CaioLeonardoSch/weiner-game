@@ -1,0 +1,14 @@
+fase res://scenes/fases/neve_07_graveto_aceso.tscn
+esperar 20
+eval obj("Fogueira").acesa
+eval obj("Fogueira", 1).acesa
+ir 2.5 -2.5
+esperar 10
+eval jogo.cachorro.tem_graveto
+ir 4.5 -4.4
+esperar 90
+eval jogo.cachorro.graveto.aceso
+ir 9.5 -4.4
+esperar 60
+eval obj("Fogueira", 1).acesa
+eval obj("Portao").aberto

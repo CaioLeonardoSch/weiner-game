@@ -1,0 +1,9 @@
+fase res://scenes/fases/floresta_32_tronco_no_rio.tscn
+esperar 20
+eval obj("TroncoRolante").celulas()
+ir 4.2 -4.5
+rumo 6.0 -4.5 90
+esperar 90
+esperar 400
+eval obj("TroncoRolante").celulas()
+eval obj("TroncoRolante").global_position

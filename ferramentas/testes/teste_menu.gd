@@ -41,15 +41,15 @@ static func _apertar(jogo: Node, texto: String) -> String:
 	return "sem botão com " + texto
 
 
-static func jogar_fase_01(jogo: Node) -> String:
-	return _apertar(jogo, "Fase 01")
+static func jogar_f01(jogo: Node) -> String:
+	return _apertar(jogo, "F01 ")
 
 
 static func jogar(jogo: Node) -> String:
 	return _apertar(jogo, "Jogar")
 
 
-## Volta ao menu na tela "antes de jogar" da Fase 03 (como na pausa, "Trocar de raça").
-static func antes_da_fase_03(jogo: Node) -> String:
-	_fases(jogo).antes_de_jogar("res://scenes/fases/fase_03.tscn")
+## Volta ao menu na tela "antes de jogar" da F03 (como na pausa, "Trocar de raça").
+static func antes_da_f03(jogo: Node) -> String:
+	_fases(jogo).antes_de_jogar("res://scenes/fases/floresta_03_pular.tscn")
 	return "ok"

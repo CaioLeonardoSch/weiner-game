@@ -1,0 +1,10 @@
+fase res://scenes/fases/floresta_31_tronco_gira.tscn
+esperar 20
+eval obj("TroncoRolante").celulas()
+ir 8.5 -2.2
+ir 8.5 -2.5 60
+apertar acao 200
+rumo 10.5 -3.0 200
+esperar 200
+eval obj("TroncoRolante").celulas()
+eval jogo.cachorro.global_position

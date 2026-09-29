@@ -1,0 +1,17 @@
+# N01 — Neve fofa: o cachorro anda mais devagar (e demora a arrancar e a parar).
+fase res://scenes/fases/neve_01_neve_fofa.tscn
+esperar 20
+checar jogo.fase.bioma == 1
+rumo 2.5 -3.5 40
+esperar 40
+eval jogo.cachorro.velocity.length()
+ir 4.0 -3.5
+rumo 9.0 -3.5 40
+esperar 40
+eval jogo.cachorro.velocity.length()
+ir 11.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

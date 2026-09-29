@@ -1,0 +1,26 @@
+# F21 — A ponte que cede: passando direto, aguenta; parado em cima, range, treme e cai — o
+# cachorro volta ao ponto seguro (com o graveto).
+fase res://scenes/fases/floresta_21_ponte_que_cede.tscn
+esperar 20
+ir 5.5 -3.5
+ir 10.0 -3.5
+checar not obj("Ponte").quebrada
+ir 11.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 10.0 -3.5
+ir 5.5 -3.5
+checar not obj("Ponte").quebrada
+checar jogo.cachorro.global_position.x < 6.0
+# Um tempo na margem, para o ponto seguro ficar deste lado (ver issue do ponto seguro).
+esperar 90
+# Parado em cima: cai.
+ir 7.8 -3.5
+esperar 150
+checar obj("Ponte").quebrada
+esperar 120
+checar jogo.cachorro.tem_graveto
+checar jogo.cachorro.global_position.x < 7.0 and jogo.cachorro.global_position.y > -0.2
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

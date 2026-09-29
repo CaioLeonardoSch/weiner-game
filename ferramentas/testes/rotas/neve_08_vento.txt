@@ -1,0 +1,9 @@
+# N08 — Vento forte: rajadas contra a ida; dá para chegar (andando entre as rajadas).
+fase res://scenes/fases/neve_08_vento.tscn
+esperar 20
+ir 14.5 -3.5 1500
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir -2.5 -3.0 1500
+esperar 60
+checar jogo.concluida

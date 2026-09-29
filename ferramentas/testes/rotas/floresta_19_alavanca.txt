@@ -1,0 +1,21 @@
+# F19 — Alavanca: F de frente para ela vira para o outro lado — e fica; o portão abre.
+fase res://scenes/fases/floresta_19_alavanca.tscn
+esperar 20
+checar not obj("Alavanca").ligada
+ir 6.5 -3.5
+ir 6.5 -5.0 200
+apertar acao 2
+esperar 40
+checar obj("Alavanca").ligada
+checar obj("Portao").aberto
+ir 8.0 -2.5
+ir 11.0 -2.5
+ir 13.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+checar obj("Portao").aberto
+ir 11.0 -2.5
+ir 7.5 -2.5
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

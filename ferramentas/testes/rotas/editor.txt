@@ -1,7 +1,7 @@
 # Editor modular: trecho (copiar, colar, girar, apagar), balde, módulos, bioma, regiões e o F2
 # sem chão firme (ver teste_editor.gd). Depois, o editor aberto por alguns quadros com
 # troncos-fantasma: fora de uma fase eles não assentam (sem SCRIPT ERROR).
-fase res://scenes/fases/fase_01.tscn
+fase res://scenes/fases/floresta_01_andar.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_editor.gd rodar
 checar jogo.get_meta("editor_ok", false)

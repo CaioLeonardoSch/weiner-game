@@ -1,0 +1,36 @@
+# F15 — Placa de madeira: abre o portão da mesma cor enquanto tiver algo em cima (o cachorro ou
+# um graveto largado). O graveto comum fica na placa e segura o portão aberto.
+fase res://scenes/fases/floresta_15_placa_madeira.tscn
+esperar 20
+checar not obj("Portao").aberto
+ir 6.5 -4.5
+ir 6.5 -5.5
+esperar 30
+checar obj("Placa").ativa
+checar obj("Portao").aberto
+ir 6.5 -3.5
+esperar 60
+ir 4.5 -3.5
+checar not obj("Placa").ativa
+checar not obj("Portao").aberto
+ir 3.5 -5.5
+esperar 10
+checar jogo.cachorro.tem_graveto and not jogo.cachorro.graveto.lendario
+ir 6.4 -5.5
+apertar largar_graveto 2
+esperar 20
+checar not jogo.cachorro.tem_graveto
+ir 6.0 -3.5
+esperar 30
+checar obj("Placa").ativa
+checar obj("Portao").aberto
+ir 8.0 -2.5
+ir 11.0 -2.5
+ir 13.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto and jogo.cachorro.graveto.lendario
+ir 11.0 -2.5
+ir 7.5 -2.5
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

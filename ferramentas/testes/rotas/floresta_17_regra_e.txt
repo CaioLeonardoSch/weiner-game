@@ -1,0 +1,32 @@
+# F17 — Regra E: o portão só abre com as duas placas acionadas; as lampadinhas contam quantas.
+fase res://scenes/fases/floresta_17_regra_e.tscn
+esperar 20
+checar obj("Portao")._luzes.size() == 2
+# O bloco na placa de baixo: uma só não abre.
+ir 3.3 -1.5
+ir 5.6 -1.5
+esperar 30
+checar obj("Placa", 1).ativa
+checar not obj("Portao").aberto
+# O graveto comum na placa de cima: agora abre.
+ir 4.5 -3.5
+ir 3.5 -5.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 6.0 -5.5
+apertar largar_graveto 2
+esperar 20
+ir 6.0 -3.5
+esperar 30
+checar obj("Placa", 0).ativa
+checar obj("Portao").aberto
+ir 9.0 -2.5
+ir 12.0 -2.5
+ir 13.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 12.0 -2.5
+ir 8.5 -2.5
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

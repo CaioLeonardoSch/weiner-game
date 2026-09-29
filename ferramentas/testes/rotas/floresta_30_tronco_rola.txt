@@ -1,0 +1,8 @@
+# F30 — O tronco rola: empurrado ao comprido ele desliza até atravessar o riacho e vira pinguela.
+fase res://scenes/fases/floresta_30_tronco_rola.tscn
+esperar 20
+ir 5.0 -3.5
+rumo 9.8 -3.5 900
+esperar 600
+eval obj("TroncoRolante").celulas()
+eval jogo.cachorro.global_position

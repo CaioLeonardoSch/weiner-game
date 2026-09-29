@@ -1,0 +1,36 @@
+# F02 — A outra perspectiva: na ida (isométrica) a folhagem tampa o corredor do barranco, então
+# sobe pela rampa e desce 1 m do outro lado; no mirante vê a volta; com o graveto (3D) a
+# folhagem some e a volta é pelo corredor.
+fase res://scenes/fases/floresta_02_perspectiva.tscn
+esperar 20
+# A folhagem fecha o corredor na ida.
+ir 5.5 -2.5
+ir 9.5 -2.5 120
+checar jogo.cachorro.global_position.x < 6.5
+# Mirante: F olha a fase como ela fica na volta; Esc sai.
+ir 3.5 -2.0
+apertar mover_tras 6
+esperar 10
+apertar acao 2
+esperar 90
+checar jogo._mirante != null
+apertar liberar_mouse 2
+esperar 120
+checar jogo._mirante == null
+# Pela rampa, em cima do barranco, e desce do outro lado.
+ir 4.0 -5.5
+ir 7.5 -5.5
+checar jogo.cachorro.global_position.y > 0.9
+ir 10.0 -5.5
+esperar 30
+checar jogo.cachorro.global_position.y < 0.3
+ir 12.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+# Volta (3D): o corredor está aberto.
+ir 10.0 -2.5
+ir 5.5 -2.5
+checar jogo.cachorro.global_position.x < 6.0
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

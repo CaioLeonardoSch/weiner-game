@@ -1,0 +1,24 @@
+# F14 — Puxar o bloco: preso no canto (cerca viva ao norte e a leste), só puxando — segura F
+# de frente para ele e anda para trás. Depois empurra até o riacho.
+fase res://scenes/fases/floresta_14_puxar.tscn
+esperar 20
+# Empurrar não adianta: o bloco está encostado na cerca viva.
+ir 6.5 -3.5
+ir 6.5 -4.3
+apertar acao 200
+esperar 20
+rumo 6.5 -1.0 150
+esperar 160
+checar obj("Empurravel").global_position.z > -4.0
+ir 4.5 -2.0
+ir 4.5 -3.5
+ir 13.5 -3.5
+esperar 10
+checar obj("Empurravel").afundado
+checar jogo.cachorro.tem_graveto
+ir 11.5 -3.5
+ir 8.0 -3.5
+checar jogo.cachorro.global_position.x < 9.0
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

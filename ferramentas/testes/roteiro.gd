@@ -9,8 +9,15 @@ extends SceneTree
 ##   esperar N               espera N quadros (60 por segundo)
 ##   apertar <ação> [N]      segura a ação por N quadros (padrão 2) — não espera
 ##   teleportar x y z        põe o cachorro nesse ponto
+##   ir x z [N]              anda até (x, z) como um jogador (teclas em relação à câmera) e
+##                           espera chegar (a 0,2 m) ou até N quadros (padrão 600)
+##   ir_devagar x z [N]      o mesmo, segurando "andar devagar"
+##   rumo x z [N]            anda até (x, z) como o "ir", mas sem esperar: os passos seguintes
+##                           (esperar, apertar pular...) correm enquanto ele anda
 ##   eval <expressão>        mostra o valor
 ##   checar <expressão>      falha o teste se a expressão der falso
+##                           (nas expressões, obj("Classe", i) é o i-ésimo objeto da fase daquela
+##                           classe, ex.: checar obj("Portao").aberto)
 ##   chamar <script> <func>  chama func(jogo) de um script (ex.: um piloto automático)
 ##   foto <arquivo.png>      salva a tela (não funciona com --headless)
 ##   cena <caminho>, mouse x y, clique b x y, segurar b x y 0|1, sair
@@ -26,6 +33,14 @@ var _eventos_depois: Array = []
 var _falhas := 0
 ## Impressão digital do save real no começo (ver _encerrar).
 var _save_antes := ""
+## "ir": o ponto (x, z) aonde o cachorro está indo (ou null), quadros que restam e se é devagar.
+var _indo: Variant = null
+var _indo_quadros := 0
+var _indo_devagar := false
+## "rumo": o "ir" que não segura os passos seguintes.
+var _indo_sem_esperar := false
+
+const _MOVIMENTO := ["mover_esquerda", "mover_direita", "mover_frente", "mover_tras"]
 
 
 func _initialize() -> void:
@@ -61,6 +76,8 @@ func _process(_d: float) -> bool:
 			ev.pressed = false
 			Input.parse_input_event(ev)
 			_soltar.erase(acao)
+	if _indo != null and _conduzir() and not _indo_sem_esperar:
+		return false
 	if _espera > 0:
 		_espera -= 1
 		return false
@@ -108,6 +125,13 @@ func _process(_d: float) -> bool:
 			"teleportar":
 				var c := current_scene.get_node("Dachshund") as CharacterBody3D
 				c.global_position = Vector3(float(p[1]), float(p[2]), float(p[3]))
+			"ir", "ir_devagar", "rumo":
+				_indo = Vector2(float(p[1]), float(p[2]))
+				_indo_quadros = int(p[3]) if p.size() > 3 else 600
+				_indo_devagar = p[0] == "ir_devagar"
+				_indo_sem_esperar = p[0] == "rumo"
+				if not _indo_sem_esperar:
+					return false
 			"cena":
 				change_scene_to_file(p[1])
 				_espera = 5
@@ -135,11 +159,66 @@ func _process(_d: float) -> bool:
 	return true
 
 
+## Um quadro do "ir": aperta as teclas de movimento na direção do ponto, em relação à câmera do
+## cachorro (como o jogador vê a tela). Devolve false quando chegou ou acabou o tempo.
+func _conduzir() -> bool:
+	var cachorro := current_scene.get_node_or_null("Dachshund") as Node3D
+	var camera: Camera3D = cachorro.get("camera_referencia") if cachorro else null
+	var falta := Vector2.ZERO
+	if cachorro:
+		falta = (_indo as Vector2) - Vector2(cachorro.global_position.x, cachorro.global_position.z)
+	_indo_quadros -= 1
+	var concluida: bool = current_scene.get(&"concluida") == true
+	if cachorro == null or camera == null or concluida or falta.length() < 0.2 or _indo_quadros <= 0:
+		if _indo_quadros <= 0 and not concluida:
+			print("ir: parou a %.2f m de %s" % [falta.length(), _indo])
+		for acao: String in _MOVIMENTO + ["andar_devagar"]:
+			Input.action_release(acao)
+		_indo = null
+		return false
+	var frente := -camera.global_basis.z
+	frente.y = 0.0
+	var direita := camera.global_basis.x
+	direita.y = 0.0
+	var direcao := Vector3(falta.x, 0.0, falta.y).normalized()
+	var x := direcao.dot(direita.normalized())
+	var y := -direcao.dot(frente.normalized())
+	for acao: String in _MOVIMENTO:
+		Input.action_release(acao)
+	if x > 0.01:
+		Input.action_press("mover_direita", x)
+	elif x < -0.01:
+		Input.action_press("mover_esquerda", -x)
+	if y > 0.01:
+		Input.action_press("mover_tras", y)
+	elif y < -0.01:
+		Input.action_press("mover_frente", -y)
+	if _indo_devagar:
+		Input.action_press("andar_devagar")
+	return true
+
+
 func _avaliar(texto: String) -> Variant:
 	var e := Expression.new()
 	if e.parse(texto, ["jogo"]) != OK:
 		return "erro: " + e.get_error_text()
 	return e.execute([current_scene], self)
+
+
+## O i-ésimo objeto da fase atual cuja classe (class_name) é `classe` (ou null). Para as expressões.
+func obj(classe: String, i := 0) -> Node:
+	var fase: Node = current_scene.get(&"fase") if current_scene else null
+	if fase == null:
+		return null
+	for objeto: Node in fase.call(&"lista_objetos"):
+		var script: Script = objeto.get_script()
+		while script and script.get_global_name() != classe:
+			script = script.get_base_script()
+		if script:
+			if i == 0:
+				return objeto
+			i -= 1
+	return null
 
 
 func _impressao_do_save() -> String:

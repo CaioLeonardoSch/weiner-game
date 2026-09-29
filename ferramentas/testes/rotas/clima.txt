@@ -1,7 +1,7 @@
 # Clima (ver teste_clima.gd e scripts/clima.gd): grama com poças e lama são só visuais (o
 # cachorro anda por cima); cada clima monta o que tem (chuva com respingos, folhas, neve) e
 # manda a chuva e o vento para os shaders; tempo bom zera a chuva.
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 checar jogo.clima.tipo == 1
 chamar res://ferramentas/testes/teste_clima.gd pintar_chao

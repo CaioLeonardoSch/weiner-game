@@ -2,7 +2,7 @@
 # puxado; na correnteza boia, desce e, encalhado na margem, volta para o lugar. O graveto ao
 # comprido empurra de longe; o tronco caído como pinguela é passagem estreita; a ponte velha
 # cede com alguém parado em cima. O tronco e o graveto comprido acionam a placa com qualquer parte.
-fase res://scenes/fases/fase_11.tscn
+fase res://ferramentas/testes/cenas/rio.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_tronco.gd preparar_tronco
 esperar 5
@@ -34,7 +34,7 @@ esperar 360
 checar jogo.get_meta("voltas") >= 1
 # Graveto comprido ao comprido: a ponta empurra o bloco de longe (o cachorro fica a mais de
 # 1 m dele).
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_tronco.gd preparar_graveto_empurra
 chamar res://ferramentas/testes/teste_tronco.gd recuar_do_bloco
@@ -70,7 +70,7 @@ esperar 5
 checar jogo.get_meta("placa_madeira").ativa and not jogo.get_meta("placa_pedra").ativa
 # Ponte que cede: passar correndo não quebra; parado em cima, quebra e o cachorro cai na água e
 # volta para a margem.
-fase res://scenes/fases/fase_08.tscn
+fase res://ferramentas/testes/cenas/ponte_velha.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_tronco.gd preparar_ponte_que_cede
 esperar 5
