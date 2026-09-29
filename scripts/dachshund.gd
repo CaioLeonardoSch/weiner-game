@@ -20,6 +20,12 @@ signal gelou
 
 ## Até onde o latido chega (m).
 const ALCANCE_LATIDO := 5.0
+## Maior giro do modelo num quadro (rad) e de quanto em quanto o caminho do graveto é conferido.
+const GIRO_MAXIMO := 0.5
+const PASSO_CONFERIR_GIRO := 0.15
+## Só vira pelo lado mais longo (quando o curto bate) se falta girar ao menos isto (rad); abaixo
+## disso também não conta como "giro travado".
+const GIRO_MINIMO_OUTRO_LADO := PI * 0.5
 
 @export var velocidade := 3.5
 ## Velocidade com que o modelo gira para a direção do movimento.
@@ -57,9 +63,13 @@ var balanco := 0.0
 var em_passagem_estreita := false
 ## O graveto está impedindo o cachorro de andar (e não há encaixe para o lado).
 var graveto_travado := false
+## O graveto bate nos dois sentidos de giro e o cachorro não consegue virar para onde anda.
+var giro_travado := false
 
 var _gravidade: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _yaw_alvo := 0.0
+## Girando pelo lado mais longo (o curto bateu com o graveto): +1 ou -1; 0 = pelo mais curto.
+var _sentido_giro_longo := 0.0
 ## Últimas posições em chão firme (a mais antiga é usada ao voltar, para não
 ## reaparecer bem na beirada de onde caiu).
 var _pontos_seguros: Array[Vector3] = []
@@ -680,15 +690,44 @@ func _girar_modelo(delta: float) -> void:
 			var para_o_bloco := bloco.global_position - global_position
 			alvo = snappedf(atan2(-para_o_bloco.z, para_o_bloco.x), PI * 0.5)
 	# O modelo olha para +X quando rotation.y == 0.
-	var novo := lerp_angle(modelo.rotation.y, alvo, 1.0 - exp(-velocidade_giro * delta))
-	if is_equal_approx(novo, modelo.rotation.y):
+	var atual := modelo.rotation.y
+	var curto := wrapf(alvo - atual, -PI, PI)
+	# Já passou da metade pelo lado longo (daqui em diante ele é o curto) ou largou o graveto.
+	if _sentido_giro_longo != 0.0 and (signf(curto) == _sentido_giro_longo or absf(curto) < 0.01
+			or not tem_graveto):
+		_sentido_giro_longo = 0.0
+	var peso := 1.0 - exp(-velocidade_giro * delta)
+	var diferenca := curto if _sentido_giro_longo == 0.0 else curto - signf(curto) * TAU
+	var passo := clampf(diferenca * peso, -GIRO_MAXIMO, GIRO_MAXIMO)
+	if is_zero_approx(snappedf(passo, 0.0001)):
+		giro_travado = false
 		return
-	# Com o graveto na boca, só gira se o graveto não bater em nada no caminho.
-	if tem_graveto and not _graveto_cabe(novo, graveto_ao_comprido):
-		return
-	modelo.rotation.y = novo
+	# Com o graveto na boca, só gira se o graveto não bater em nada no caminho. Se o giro mais
+	# curto bate (ex.: o graveto encostado numa cerca) e é uma meia-volta, tenta pelo outro lado;
+	# num giro pequeno, dar a volta inteira seria estranho.
+	if tem_graveto and not _giro_cabe(atual, passo):
+		var outro := clampf((diferenca - signf(diferenca) * TAU) * peso, -GIRO_MAXIMO, GIRO_MAXIMO)
+		if (_sentido_giro_longo == 0.0 and absf(curto) < GIRO_MINIMO_OUTRO_LADO) \
+				or not _giro_cabe(atual, outro):
+			# Não deu: conta como travado se ele fica de lado ou de costas para onde anda.
+			giro_travado = absf(curto) >= GIRO_MINIMO_OUTRO_LADO
+			return
+		passo = outro
+		_sentido_giro_longo = 0.0 if _sentido_giro_longo != 0.0 else signf(outro)
+	giro_travado = false
+	modelo.rotation.y = wrapf(atual + passo, -PI, PI)
 	if tem_graveto:
 		_atualizar_colisao_graveto()
+
+
+## O graveto cabe em todo o caminho do giro de `de` até `de + passo` (conferido em pedaços, para
+## um giro grande não atravessar uma cerca fina)?
+func _giro_cabe(de: float, passo: float) -> bool:
+	var pedacos := maxi(ceili(absf(passo) / PASSO_CONFERIR_GIRO), 1)
+	for i in range(1, pedacos + 1):
+		if not _graveto_cabe(de + passo * i / pedacos, graveto_ao_comprido):
+			return false
+	return true
 
 
 # --- Graveto -----------------------------------------------------------------------------

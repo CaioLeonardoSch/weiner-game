@@ -1,7 +1,7 @@
 # F15 — Placa de madeira: abre o portão da mesma cor enquanto tiver algo em cima (o cachorro ou
 # um graveto largado). O graveto comum fica na placa e segura o portão aberto.
-# (Com o graveto encostado na cerca, o cachorro não gira e anda de ré — issue #28; a rota
-# chega ao graveto por um caminho que evita isso.)
+# O graveto é pego chegando pelo leste, pela fileira de cima: encostado na cerca viva ao norte,
+# o giro mais curto bate, e o cachorro tem de virar pelo outro lado para voltar ao leste.
 fase res://scenes/fases/floresta_15_placa_madeira.tscn
 esperar 20
 checar not obj("Portao").aberto
@@ -15,10 +15,15 @@ esperar 60
 ir 4.5 -3.5
 checar not obj("Placa").ativa
 checar not obj("Portao").aberto
+ir 4.5 -5.5
 ir 3.5 -5.5
 esperar 10
 checar jogo.cachorro.tem_graveto and not jogo.cachorro.graveto.lendario
-ir 6.4 -5.5
+rumo 6.4 -5.5
+esperar 30
+checar absf(jogo.cachorro.modelo.rotation.y) < 0.3
+checar not jogo.cachorro.giro_travado
+esperar 60
 apertar largar_graveto 2
 esperar 20
 checar not jogo.cachorro.tem_graveto
