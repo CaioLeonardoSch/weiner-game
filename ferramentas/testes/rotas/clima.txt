@@ -26,7 +26,8 @@ chamar res://ferramentas/testes/teste_clima.gd medir
 checar jogo.get_meta("chuva_global") < 0.1
 checar jogo.get_meta("vento_global") > 1.5
 checar jogo.clima.get_node("Folhas") != null
-# Tempestade: chuva, folhas e raio (o sol pisca e volta).
+# Tempestade: chuva, folhas e raio (o sol pisca e volta). Os raios sorteados ficam desligados
+# (um deles na hora de medir o céu escuro reprovava a rota); o teste dispara o dele.
 chamar res://ferramentas/testes/teste_clima.gd tempestade
 esperar 60
 chamar res://ferramentas/testes/teste_clima.gd raio
