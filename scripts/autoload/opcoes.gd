@@ -57,6 +57,14 @@ var _teclas_padrao := {}
 var _so_memoria := false
 
 
+## Fechando o jogo: a fase sai da árvore antes dos autoloads e para os sons em laço. O
+## AudioServer só solta um playback parado na mixagem seguinte (na thread de áudio), então
+## espera um pouco antes de soltar os sons guardados: senão eles vazam ao sair.
+func _exit_tree() -> void:
+	OS.delay_msec(100)
+	Som.limpar()
+
+
 func _ready() -> void:
 	for item in Teclas.REMAPEAVEIS:
 		_teclas_padrao[item[0]] = InputMap.action_get_events(item[0])
