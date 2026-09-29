@@ -58,10 +58,13 @@ func _lado(cachorro: Dachshund) -> int:
 	var local := to_local(cachorro.global_position)
 	if absf(local.x) > 0.3 or absf(local.y) > 0.6:
 		return 0
+	var lado := 1 if local.z > 0.0 else -1
 	var alcance := ESPESSURA * 0.5 + cachorro.raca.raio_colisao + 0.3 if cachorro.raca else 0.8
+	# Com o graveto ao comprido apontado para a portinhola, a ponta bate nas tábuas antes.
+	alcance += cachorro.alcance_extra_do_graveto(-global_basis.z * lado)
 	if absf(local.z) > alcance or absf(local.z) < 0.05:
 		return 0
-	return 1 if local.z > 0.0 else -1
+	return lado
 
 
 func ponto_da_acao(cachorro: Dachshund) -> Vector3:

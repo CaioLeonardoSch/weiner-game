@@ -166,8 +166,8 @@ editar uma fase no editor deve levar a mudança para o gerador (ou parar de usá
 | F20 A ponte que cai | pegar o graveto derruba a ponte (gatilho) |
 | F21 A ponte que cede | a ponte fraca cai com alguém parado em cima |
 | F22 Comporta | a alavanca liga a comporta: a água funda baixa e dá pé |
-| F23 Toca de texugo | a toca leva à outra da mesma cor, por baixo da terra (volta: ver issue #31) |
-| F24 Portinhola | a portinhola só passa com o graveto ao comprido (volta: ver issue #31) |
+| F23 Toca de texugo | a toca leva à outra da mesma cor, por baixo da terra |
+| F24 Portinhola | a portinhola só passa com o graveto ao comprido |
 | F25 Passarinhos | o latido espanta o passarinho que guarda o graveto e o que fecha o vão |
 | F26 O passarinho na placa | o passarinho pousado segura o portão fechado; o latido o faz voar por um tempo |
 | F27 O esquilo | guarda o graveto; um latido e ele se esconde |
