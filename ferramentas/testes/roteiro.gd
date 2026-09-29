@@ -169,7 +169,12 @@ func _conduzir() -> bool:
 		falta = (_indo as Vector2) - Vector2(cachorro.global_position.x, cachorro.global_position.z)
 	_indo_quadros -= 1
 	var concluida: bool = current_scene.get(&"concluida") == true
-	if cachorro == null or camera == null or concluida or falta.length() < 0.2 or _indo_quadros <= 0:
+	# Sem câmera de referência (no meio de uma transição): espera, sem andar.
+	if cachorro and camera == null and not concluida and _indo_quadros > 0:
+		for acao: String in _MOVIMENTO:
+			Input.action_release(acao)
+		return true
+	if cachorro == null or concluida or falta.length() < 0.2 or _indo_quadros <= 0:
 		if _indo_quadros <= 0 and not concluida:
 			print("ir: parou a %.2f m de %s" % [falta.length(), _indo])
 		for acao: String in _MOVIMENTO + ["andar_devagar"]:

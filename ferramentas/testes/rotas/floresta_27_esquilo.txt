@@ -10,9 +10,11 @@ ir 12.8 -4.0
 apertar latir
 esperar 30
 checar obj("Esquilo").estado != 0
-ir 14.0 -4.4 200
+ir 14.8 -4.0 200
+ir 14.3 -4.9 120
 esperar 10
 checar jogo.cachorro.tem_graveto
+ir 14.6 -3.2
 ir 10.0 -3.5
 ir -2.5 -3.0
 esperar 60

@@ -1,8 +1,21 @@
-# F30 — O tronco rola: empurrado ao comprido ele desliza até atravessar o riacho e vira pinguela.
+# F30 — O tronco rola: empurrado ao comprido ele desliza até atravessar o riacho e vira pinguela
+# (as duas pontas nas margens); o cachorro atravessa por cima, com o graveto na volta.
 fase res://scenes/fases/floresta_30_tronco_rola.tscn
 esperar 20
+checar obj("TroncoRolante").estado == 0
 ir 5.0 -3.5
 rumo 9.8 -3.5 900
 esperar 600
-eval obj("TroncoRolante").celulas()
-eval jogo.cachorro.global_position
+checar obj("TroncoRolante").celulas() == [Vector3i(10, 0, -4), Vector3i(11, 0, -4), Vector3i(12, 0, -4)]
+checar obj("TroncoRolante").estado == 2
+ir 13.5 -3.5
+checar jogo.cachorro.global_position.x > 13.0
+ir 15.5 -2.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 13.5 -3.5
+ir 9.0 -3.5
+checar jogo.cachorro.global_position.x < 10.0
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida
