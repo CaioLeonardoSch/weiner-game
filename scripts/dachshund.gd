@@ -113,6 +113,14 @@ var _ponta_girando := -1
 var _tempo_empurrando := 0.0
 ## Atravessando uma passagem (toca, portinhola): quem conduz é `atravessar`; a física fica parada.
 var atravessando := false
+## Pendurado pelo graveto numa beirada: o cachorro escorrega nesta direção (sem o jogador
+## controlar) até o graveto sair da quina e ele cair.
+var _escorregando := Vector3.ZERO
+var _tempo_escorregando := 0.0
+const DURACAO_ESCORREGAR := 0.3
+const VELOCIDADE_ESCORREGAR := 1.5
+## Forma para testar se o corpo tem chão embaixo (a cápsula dele, um pouco mais fina).
+var _forma_corpo_teste := CapsuleShape3D.new()
 
 @onready var modelo: Node3D = $Modelo
 @onready var boca: Marker3D = $Modelo/Boca
@@ -124,6 +132,9 @@ var raca: Raca
 
 func _ready() -> void:
 	colisao_graveto.disabled = true
+	var forma := ($Colisao as CollisionShape3D).shape as CapsuleShape3D
+	_forma_corpo_teste.radius = maxf(forma.radius - 0.03, 0.02)
+	_forma_corpo_teste.height = forma.height
 	raca = voxel.raca
 	add_to_group(&"cachorro")
 	_guardar_ponto_seguro()
@@ -141,6 +152,8 @@ func aplicar_raca(nova_raca: Raca, indice_pelagem: int) -> void:
 	var colisao := $Colisao as CollisionShape3D
 	colisao.shape = forma
 	colisao.position.y = forma.height * 0.5
+	_forma_corpo_teste.radius = maxf(forma.radius - 0.03, 0.02)
+	_forma_corpo_teste.height = forma.height
 
 
 ## Coloca o cachorro numa posição, olhando para `yaw` (radianos; 0 = +X).
@@ -175,6 +188,9 @@ func _physics_process(delta: float) -> void:
 			horizontal = (ate / delta).limit_length(velocidade * 2.0)
 			if _tempo_puxando <= 0.0:
 				_tronco_girando = null
+	elif _tempo_escorregando > 0.0:
+		_tempo_escorregando -= delta
+		horizontal = _escorregando
 	elif not entrada_bloqueada and Input.is_action_pressed("acao"):
 		var motivo := _tentar_puxar(horizontal)
 		if not motivo.is_empty() and motivo != _motivo_puxar_avisado:
@@ -806,23 +822,28 @@ func _empurrao_do_balanco(delta: float, horizontal: Vector3) -> Vector3:
 ## O graveto tem colisão própria: numa beirada na altura da boca (pulando contra um degrau alto),
 ## ele poderia "segurar" o cachorro no ar, pendurado. Apoiado só pelo graveto, o cachorro
 ## escorrega para trás, para longe da beirada, e cai.
+## (Parado, o chão vem do "snap" do move_and_slide, sem colisão de deslize — por isso o teste é
+## direto: o corpo sozinho tem chão logo embaixo?)
 func _soltar_se_pendurado() -> void:
-	if not tem_graveto or not is_on_floor():
+	if not tem_graveto or not is_on_floor() or _tempo_escorregando > 0.0 or _corpo_tem_chao():
 		return
-	var pelo_graveto := Vector3.ZERO
-	for i in get_slide_collision_count():
-		var colisao := get_slide_collision(i)
-		if colisao.get_normal().y <= 0.7:
-			continue
-		if colisao.get_local_shape() != colisao_graveto:
-			return
-		pelo_graveto = colisao.get_position()
-	if pelo_graveto == Vector3.ZERO:
-		return
-	var para_longe := global_position - pelo_graveto
+	var para_longe := global_position - colisao_graveto.global_position
 	para_longe.y = 0.0
-	global_position += para_longe.normalized() * 0.06
+	if para_longe.length_squared() < 0.0001:
+		para_longe = -modelo.global_basis.x
+		para_longe.y = 0.0
+	_escorregando = para_longe.normalized() * VELOCIDADE_ESCORREGAR
+	_tempo_escorregando = DURACAO_ESCORREGAR
 	velocity.y = minf(velocity.y, -1.0)
+
+
+func _corpo_tem_chao() -> bool:
+	var consulta := PhysicsShapeQueryParameters3D.new()
+	consulta.shape = _forma_corpo_teste
+	consulta.transform = ($Colisao as CollisionShape3D).global_transform.translated(Vector3.DOWN * 0.1)
+	consulta.collision_mask = collision_mask
+	consulta.exclude = [get_rid()]
+	return not get_world_3d().direct_space_state.intersect_shape(consulta, 1).is_empty()
 
 
 # --- Buraco e rampa lisa ---
