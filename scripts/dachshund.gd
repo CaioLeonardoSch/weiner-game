@@ -74,6 +74,11 @@ var _sentido_giro_longo := 0.0
 ## reaparecer bem na beirada de onde caiu).
 var _pontos_seguros: Array[Vector3] = []
 var _tempo_ponto_seguro := 0.0
+## Andou por cima de uma ponte ou objeto desde o último ponto seguro: ao pisar de novo no
+## terreno, os pontos antigos (talvez da outra margem) são descartados.
+var _saiu_do_terreno := false
+## O único ponto seguro é o da beirada, de quando voltou ao terreno: vale só até guardar o próximo.
+var _ponto_provisorio := false
 var _fase_balanco := 0.0
 var _tempo_fora_da_passagem := 0.0
 ## Forma um pouco menor que a do graveto, para testar giros sem contar o simples encostar.
@@ -1068,10 +1073,20 @@ func _checar_queda(delta: float) -> void:
 		_voltar_ao_ponto_seguro("agua")
 	elif global_position.y < (fase.limite_de_queda if fase else -10.0):
 		_voltar_ao_ponto_seguro("queda")
-	elif is_on_floor() and not em_passagem_estreita and not em_correnteza and _pisando_no_terreno():
-		_tempo_ponto_seguro += delta
-		if _tempo_ponto_seguro >= 0.25:
+	elif is_on_floor() and not em_correnteza:
+		if em_passagem_estreita or not _pisando_no_terreno():
+			_saiu_do_terreno = true
+		elif _saiu_do_terreno:
+			# Voltou ao terreno depois de uma ponte ou objeto: o ponto seguro fica deste lado. A
+			# beirada vale só até o próximo ponto, um pouco mais para dentro.
+			_saiu_do_terreno = false
+			_pontos_seguros.clear()
 			_guardar_ponto_seguro()
+			_ponto_provisorio = true
+		else:
+			_tempo_ponto_seguro += delta
+			if _tempo_ponto_seguro >= 0.25:
+				_guardar_ponto_seguro()
 
 
 ## O centro do corpo já está sobre água funda, sem nada embaixo, mas a cápsula ainda se
@@ -1097,6 +1112,9 @@ func _na_beira_da_agua() -> bool:
 
 func _guardar_ponto_seguro() -> void:
 	_tempo_ponto_seguro = 0.0
+	if _ponto_provisorio:
+		_ponto_provisorio = false
+		_pontos_seguros.clear()
 	_pontos_seguros.append(global_position)
 	if _pontos_seguros.size() > 4:
 		_pontos_seguros.pop_front()
@@ -1109,4 +1127,5 @@ func _voltar_ao_ponto_seguro(motivo: String) -> void:
 	var ponto := _pontos_seguros[0]
 	_pontos_seguros.clear()
 	_pontos_seguros.append(ponto)
+	_saiu_do_terreno = false
 	voltou_ao_ponto_seguro.emit(motivo)

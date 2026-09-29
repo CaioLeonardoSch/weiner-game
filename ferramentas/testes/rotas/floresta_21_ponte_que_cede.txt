@@ -12,9 +12,8 @@ ir 10.0 -3.5
 ir 5.5 -3.5
 checar not obj("Ponte").quebrada
 checar jogo.cachorro.global_position.x < 6.0
-# Um tempo na margem, para o ponto seguro ficar deste lado (issue #30).
-esperar 90
-# Parado em cima: cai.
+# Parado em cima: cai — e volta para esta margem, mesmo tendo passado só um instante nela
+# (issue #30).
 ir 7.8 -3.5
 esperar 150
 checar obj("Ponte").quebrada
