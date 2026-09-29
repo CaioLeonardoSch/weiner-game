@@ -19,7 +19,7 @@ apertar virar_graveto
 esperar 30
 checar jogo.cachorro.graveto_ao_comprido
 # A volta ao comprido ainda não dá: a ponta do graveto bate nas tábuas antes de o cachorro
-# chegar à portinhola (issue "graveto ao comprido não alcança toca/portinhola"). Quando for
+# chegar à portinhola (issue #31). Quando for
 # corrigida, a rota continua assim:
 #   ir 7.0 -2.5 200
 #   checar jogo.cachorro.global_position.x < 8.0

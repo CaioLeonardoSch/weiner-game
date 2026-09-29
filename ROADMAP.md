@@ -1,15 +1,16 @@
 # Próximas etapas
 
-O que já existe: visual pixelado, trilha mais linear na Fase 01 com floresta em volta, pipeline
+O que já existe: visual pixelado, trilha mais linear na primeira fase com floresta em volta, pipeline
 de assets (tiles gerados por código, modelos voxel em texto e procedurais, objetos que aparecem
 sozinhos no editor), o editor de fases dentro do jogo (F1), o graveto com colisão, peso e
 equilíbrio (etapa 3), habilidades por fase com o pulo, escadas e cantos de rampa (etapa 4),
 cavar (5), empurrar e puxar (6), água rasa e correnteza (7), latir e passarinhos (8), as
 melhorias principais do editor, o menu principal com pausa, o cachorro em voxel com raças e
-pelagens, o objetivo da fase como dado (graveto ou pastoreio) e as Fases 02 a 12. As etapas 3 a
+pelagens, o objetivo da fase como dado (graveto ou pastoreio) e a esteira de fases de teste
+(F01 a F33 na Floresta, N01 a N10 na Neve). As etapas 3 a
 8 estão fechadas (as ideias que sobraram delas também: rampa lisa, degrau alto, buraco, graveto
 enterrado, cavar sob a cerca, tronco que rola e boia, esquilo, dono dormindo,
-cão vizinho e o som do latido — Fases 10, 11 e 12). Depois vieram o bioma de neve (tiles e
+cão vizinho e o som do latido). Depois vieram o bioma de neve (tiles e
 texturas, céu, entorno, neve caindo), as regiões no menu, o frio e a fogueira montada com
 gravetos, o celeiro para o rebanho e o editor modular (trechos, copiar/colar entre fases, módulos,
 balde) — ver *Versão de teste*. Do Pacote 1
@@ -23,7 +24,7 @@ atual, para a arquitetura não precisar mudar.
 
 Ideia que vale para quase tudo daqui em diante: cada fase escolhe quais **habilidades** o
 cachorro tem (pular, cavar, latir...). Isso deixa as fases antigas corretas quando uma habilidade
-nova entra — a Fase 01, por exemplo, depende de o cachorro *não* pular o barranco de 2 m.
+nova entra — a F02, por exemplo, depende de o cachorro *não* pular o barranco de 2 m.
 Já é assim: `Fase.habilidades` (flags no painel da fase no editor); o `jogo.gd` liga só essas.
 As raças não têm habilidades nem peso próprios: todas fazem o mesmo, e só o **tamanho** muda
 (colisão, o vão embaixo da cerca, o tempo de passar na portinhola).
@@ -41,8 +42,8 @@ como ponte não fazia sentido.
    rangido e estalo gerados por código. Novo objeto **Gatilho** (área que liga o canal quando o
    cachorro entra, entra com graveto, ou quando um graveto de dentro dela é pego).
 3. ✅ **Sem peso na água**: o tronco só pesa em placa em terra; o graveto-ponte saiu.
-4. ✅ **Equilíbrio no precipício**: a Fase 02 virou "O Precipício" — dois platôs de 2 m e um tronco
-   redondo entre eles, que balança mesmo sem graveto.
+4. ✅ **Equilíbrio no precipício**: dois platôs de 2 m e um tronco redondo entre eles, que balança
+   mesmo sem graveto (hoje na F08).
 5. ✅ **Tronco novo**: comprimento de 2 a 5; rola de lado, desliza ao comprido; mordendo a ponta,
    puxa (para trás) e **gira 90°** (de lado); vira pinguela entre margens; boia e desce a
    correnteza (mais forte agora) até parar numa pedra ou encaixar onde o rio estreita; encalhado,
@@ -99,15 +100,18 @@ Junto, duas mudanças de mecânica pedidas:
 - ✅ **Placas de madeira e de pedra** (no lugar do peso mínimo com pontinhos): a de madeira é acionada
   por qualquer coisa em cima (o cachorro, um graveto, uma ovelha, um bloco...); a de pedra só por
   algo pesado — o bloco de pedra e o tronco. A cor da moldura continua dizendo o que ela aciona.
-- ✅ **Sem graveto molhado**: a água não muda mais o peso do graveto. (A Fase 11 ficou com uma placa
-  de madeira; a 06 e a 09, com placas de pedra.)
+- ✅ **Sem graveto molhado**: a água não muda mais o peso do graveto. (Na esteira: F15 e F16.)
 
 ## Versão de teste: Floresta e Neve
 
 O plano para a primeira versão jogável por outras pessoas: **dois biomas**, cada um uma região.
 
-- **Floresta**: as fases de buscar o graveto com as mecânicas de sempre (Fases 01 a 12, e a 05
-  de pastoreio).
+- **Floresta**: as fases de buscar o graveto com as mecânicas de sempre.
+- ✅ **Esteira de fases de teste**: as fases antigas saíram; no lugar, uma fase simples por
+  mecânica — F01 a F33 na Floresta e N01 a N10 na Neve (neve fofa, gelo, monte de neve, frio e
+  fogueira, vento, pastoreio, celeiro). Cada uma tem uma rota em `ferramentas/testes/rotas/` que
+  a joga sozinha (`ferramentas/testar_fases.sh`) e as cenas saem de `ferramentas/gerar_esteira.gd`.
+  Os bugs achados ao montar as rotas viraram issues, para corrigir em sessões separadas.
 - **Neve**: buscar o graveto no frio (fogueiras montadas com gravetos, neve para derreter ou
   cavar, gelo) e **abrigar o rebanho**: fases do Border Collie em que ele explora um mapa grande,
   acha as ovelhas (elas balem) e as guia com segurança até o **celeiro** — protegidas do frio ou
@@ -116,7 +120,8 @@ O plano para a primeira versão jogável por outras pessoas: **dois biomas**, ca
   peças e do editor. ✅ Feito para isso: bioma Neve, tiles de neve, Fogueira, frio, Celeiro,
   balido, regiões no menu, editor modular (trecho, módulos, balde, busca) e mapas de qualquer
   tamanho e formato (entorno que segue o formato do mapa, queda relativa).
-- Falta: as fases da região Neve (mapas) e, se preciso, ajustes finos de frio/fogo com elas.
+- Falta: as fases de verdade (mapas maiores, montados no editor) e os ajustes finos que as
+  issues da esteira apontarem.
 
 ## Visão
 
@@ -144,7 +149,7 @@ Como isso vira jogo:
 - **Exemplo — a primeira região, o parque**: um cão e seu dono passeiam por um parque, e o
   cãozinho vai coletando seus gravetos favoritos; cada fase é um dia de passeio diferente. No
   fim da última fase, vemos o dono e o cão em casa, com uma pilha de gravetos lendários.
-- Outras regiões candidatas (deste brainstorm): fazenda (pastoreio — a Fase 05 já é dela),
+- Outras regiões candidatas (deste brainstorm): fazenda (pastoreio — a N09 já testa),
   neve, mar, a casa à noite (cão de guarda), a cidade e suas ruas (a mãe e os filhotes),
   Brasil (cidade, favela, interior), Reino Unido (corgi)...
 - **Raça e pelagem por região**: nem toda fase serve para todo cão, então cada região diz com
@@ -159,7 +164,7 @@ Como isso vira jogo:
   e border collie). Menu **Regiões → região (história, raça, fases)**; a tela *antes de jogar*
   (Continuar, região nova, *Trocar de raça* na pausa) mostra a história e a escolha da raça. A
   escolha fica por região no progresso (`[racas]`), e o ✓ guarda com que raça (`[racas_concluidas]`;
-  ✓ verde = com a raça escolhida, apagado = com outra). `Fase.raca_fixa` (Fase 05) ignora a
+  ✓ verde = com a raça escolhida, apagado = com outra). `Fase.raca_fixa` (N09) ignora a
   escolha; `Fase.raca` é a do teste no editor. A **pelagem** é só aparência, no menu principal
   (Pelagens).
 - Todas as raças andam, pulam, pesam e fazem o mesmo (sem velocidade, peso ou habilidades por
@@ -173,7 +178,7 @@ Como isso vira jogo:
 
 Colisão própria do graveto na boca, bloqueio de giro, correção de quina, virar o graveto ao
 comprido (Q), peso (velocidade e pulo) e equilíbrio em passagens estreitas (tile *Tábua*),
-com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso.
+com barra de equilíbrio no HUD. A F08 usa tudo isso.
 
 - ✅ **Mais passagens estreitas**: o *Tronco caído* com `pinguela` (atravessado sobre um vão) e o
   *Tronco* que boia de pinguela são passagens estreitas feitas por objetos (grupo
@@ -191,10 +196,10 @@ com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso.
 - ✅ **Pular** (Espaço): 0,65 m sem graveto — sobe meio bloco, não um bloco inteiro. Com graveto
   na boca o pulo é 12% mais baixo, e o peso baixa mais.
 - ✅ **Nivelamentos**: *Escada baixa/alta* (colide como rampa, parece degraus) e *Canto de
-  rampa* externo e interno, baixo e alto. A Fase 04 tem um monte fechado com cantos e uma escada.
+  rampa* externo e interno, baixo e alto. A F04 tem as rampas e os cantos.
 - ✅ **Rampa lisa** (baixa e alta): com graveto pesado (1,5+) o cachorro escorrega e não sobe —
   caminho de mão única para quem carrega peso.
-- ✅ **Degrau alto** (0,72 m): só pulando, e com graveto na boca o pulo não chega. Fase 10.
+- ✅ **Degrau alto** (0,72 m): só pulando, e com graveto na boca o pulo não chega. F05.
 - ✅ **Túneis**: montados no editor — tampas "só isométrico"/"só 3D" (caminhos que abrem ou fecham
   na volta) e túneis de uma célula, onde graveto comprido só passa ao comprido. Tocas de texugo
   e portinholas (Etapa 10, ✅) levam a ideia adiante.
@@ -205,14 +210,14 @@ com barra de equilíbrio no HUD. Fase 02 ("A Pinguela") usa tudo isso.
 
 Tile **Terra fofa** (`cavavel`), habilidade *Cavar* e ação C. Não cava com o graveto na boca.
 
-- ✅ Bloco de terra fofa na frente do focinho: some (túnel cavado — Fase 03).
+- ✅ Bloco de terra fofa na frente do focinho: some (túnel cavado — F10).
 - ✅ **Cavar para baixo**: terra fofa no chão vira **Buraco** (meio metro). O cachorro sai
   escalando a borda; um bloco empurrado para dentro cai e tapa o buraco.
 - ✅ **Graveto enterrado** (`Graveto.enterrado`): só um montinho com a pontinha de fora; cavar de
-  frente desenterra. Fase 10.
+  frente desenterra. F12.
 - ✅ **Cavar por baixo de cercas**: *Cerca* com `terra_fofa` — cavar abre um vão baixo naquele
   metro (0,66 m): salsicha e pug passam, border collie não; graveto comprido, só ao comprido.
-  Fase 10 ("Debaixo da Cerca").
+  F11.
 
 ## Etapa 6 — Empurrar ✅ (feito)
 
@@ -222,9 +227,9 @@ ficar rente ao chão e vira passagem; num buraco, tapa o buraco. Se ficar encurr
 sozinho para onde começou.
 
 - ✅ **Puxar**: segurando F de frente para o bloco e andando para trás (sem graveto). Segurando
-  F perto do bloco, o cachorro vira de frente e agarra; se não dá, avisa por quê. Fase 04.
+  F perto do bloco, o cachorro vira de frente e agarra; se não dá, avisa por quê. F13 e F14.
 - ✅ **Tronco que rola** (duas células): empurrado de lado rola uma célula (ao comprido não). Na
-  água funda afunda e vira ponte larga; na água rasa boia (Etapa 7). Fase 11.
+  água funda afunda e vira ponte larga; na água rasa boia (Etapa 7). F30 a F32.
 - ✅ **Empurrar com o graveto**: o graveto na boca empurra também; ao comprido, a ponta vai longe
   (alcance maior — empurrar algo do outro lado de um vão).
 - ✅ **Blocos que tampam túneis**: montado no editor (bloco na boca do túnel).
@@ -234,11 +239,10 @@ sozinho para onde começou.
 
 - ✅ **Água** funda (sem colisão, "Splash!"), **Água rasa** (atravessável, mais lenta) e
   **Correnteza** (água rasa que arrasta no sentido +X do tile; graveto pesado deixa o cachorro
-  mais firme). O shader da água mostra o fluxo. Fase 04 ("A Correnteza").
+  mais firme). O shader da água mostra o fluxo. F09.
 - ~~Graveto molhado~~: existiu e foi retirado (a água não muda o peso do graveto).
 - ✅ **Objetos que boiam e descem a correnteza**: o tronco desce o rio célula por célula, com o
-  cachorro em cima, até encalhar; parando sobre água funda, encaixa e vira ponte. Fase 11
-  ("O Tronco no Rio"). Folhas boiando ficam como enfeite para depois.
+  cachorro em cima, até encalhar; parando sobre água funda, encaixa e vira ponte. F32. Folhas boiando ficam como enfeite para depois.
 - ✅ **Travessias**: tronco, pedras de apoio (meio bloco + pulo, no editor), graveto como ponte
   (Etapa 10), comporta que baixa a água (Etapa 10 ✅). Ainda por vir: o barquinho (Etapa 12).
 
@@ -248,13 +252,13 @@ Habilidade *Latir* e ação B: onda, "Au!" e o **som do latido** (gerado por có
 raça — agudo no salsicha e no pug, grave no border collie); objetos até 5 m recebem
 `ao_ouvir_latido(origem)` (`Fase.espalhar_latido`). Não dá para latir com o graveto na boca.
 
-- ✅ **Passarinho**: guarda o graveto ou bloqueia a passagem; o latido espanta. Fase 03.
+- ✅ **Passarinho**: guarda o graveto ou bloqueia a passagem; o latido espanta. F25 e F26.
 - ✅ **Esquilo** (com a toca): junta gravetos largados por perto na porta da toca e guarda; um
-  latido assusta (larga o que levava e se esconde um tempo). Fase 12.
-- ✅ **Acordar o dono**: `Dono.dormindo` — só recebe o graveto depois de um latido. Fase 12.
+  latido assusta (larga o que levava e se esconde um tempo). F27.
+- ✅ **Acordar o dono**: `Dono.dormindo` — só recebe o graveto depois de um latido. F29.
 - ✅ **Outros cachorros**: o *Cão vizinho* late de volta quando ouve um latido e late de ciúme
   quando passa perto um cachorro com graveto na boca; o latido dele alcança o que está perto
-  dele. É o jeito de latir com o graveto na boca. Fase 12 ("O Vizinho").
+  dele. É o jeito de latir com o graveto na boca. F28.
 - ✅ Pássaros no contrapeso (voam e voltam, corrida contra o tempo): Etapa 10.
 
 ## Etapa 9 — Truques (rolar, abanar o rabo, ficar em duas patas) — para depois
@@ -416,11 +420,12 @@ Fases de inverno em que andar já é um esforço e o caminho precisa ser aberto 
   classes `Trecho` e `Modulos` servem também para um gerador de mapas montar fases com peças.
 - ✅ Busca na paleta; ícones dos tiles no bioma da fase; painel da fase com região, bioma e frio.
 - ✅ Mapas de qualquer tamanho e formato (entorno que segue o formato, queda relativa).
-- Ideias: editar um módulo direto (abrir como fase), prévia/miniatura dos módulos na paleta,
-  minimapa para mapas grandes, pontos de encaixe nos módulos (para um gerador saber onde ligar
-  uma peça na outra).
+- ✅ Minimapa para mapas grandes e miniatura dos módulos na paleta.
+- Ideias: editar um módulo direto (abrir como fase), pontos de encaixe nos módulos (para um
+  gerador saber onde ligar uma peça na outra).
 - Mostrar no editor as habilidades liberadas e o comprimento do graveto (prévia de passagens).
-- Validação mais esperta: o graveto é alcançável? (rodar uma busca de caminho pela grade).
+- ✅ Validação: o graveto é alcançável? (`AlcanceEditor`, busca de caminho pela grade). Ainda dá
+  falso aviso quando a passagem depende de um mecanismo (comporta, portinhola) — issue #32.
 - Preservar os IDs internos ao salvar para o diff no git ficar menor.
 
 ## Raças, skins, missões e temas (começou ✅)
@@ -438,7 +443,7 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
   levar as ovelhas ao abrigo (cercado ou celeiro). Cada objetivo é uma classe em
   `scripts/objetivos/` que diz o que a fase precisa (`faltando`, `avisos`) e prepara e confere a fase (`preparar`, `processar`).
 - ✅ **Border Collie**: objetos *Ovelha* (foge do cachorro, anda em rebanho, se espanta com o
-  latido, não entra na água funda) e *Cercado*; Fase 05 ("O Pastor").
+  latido, não entra na água funda) e *Cercado*; N09.
 - **Raças com mecânica própria.** Cada raça resolve os quebra-cabeças do seu jeito; a raça é
   escolhida ao entrar na região, entre as compatíveis (ver *Visão → Regiões e história*).
   Decidido: **sem peso nem habilidades por raça** — todas fazem o mesmo, e só o **tamanho**
@@ -494,7 +499,7 @@ O editor de fases é a base de tudo isso (e a seção *Visão*, no começo, diz 
 
 ## Visual e câmera
 
-- Árvores entre a câmera 3D e o cachorro ficarem transparentes (dither) em vez de taparem.
+- ✅ Árvores entre a câmera 3D e o cachorro ficam transparentes (dither) em vez de taparem.
 - ✅ Modelo do cachorro em voxel e animações de andar (patas, rabo, orelhas). Faltam animações
   de cavar, latir e pular mais caprichadas (hoje o corpo todo inclina).
 - ✅ Céu e luz por bioma (`Biomas.aplicar_ambiente`). Faltam biomas de noite e mar.

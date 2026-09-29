@@ -9,7 +9,7 @@ extends Node3D
 ## Dá para editar também no editor do Godot (pintar o GridMap, arrastar objetos).
 ## Rodar esta cena direto (F6 no editor do Godot) abre o jogo nela.
 
-## Habilidades que o cachorro pode usar (flags). Cada fase escolhe as suas: a Fase 01, por
+## Habilidades que o cachorro pode usar (flags). Cada fase escolhe as suas: a F02, por
 ## exemplo, depende de o cachorro não pular o barranco. Para uma habilidade nova, acrescente
 ## o nome em @export_flags (no fim) e uma constante com o próximo bit.
 const HABILIDADE_PULAR := 1
@@ -36,7 +36,7 @@ const OBJETIVO_PASTOREIO := 1
 ## editor — e a de sempre, com `raca_fixa`.
 @export var raca := &"salsicha"
 ## A fase é sempre jogada com a `raca` acima, qualquer que seja a escolhida para a região (ex.:
-## o pastoreio da Fase 05 é do Border Collie).
+## o rebanho N09 é do Border Collie).
 @export var raca_fixa := false
 ## Região a que a fase pertence (id de assets/regioes/*.tres): o menu agrupa as fases por
 ## região, na ordem das regiões e, dentro de cada uma, pelo nome do arquivo.

@@ -1,8 +1,14 @@
-# F32 — O tronco no rio: empurrado ao comprido, cai na correnteza larga (rasa), boia, desce o rio
-# e encaixa onde ele estreita (canal fundo entre duas margens): vira pinguela.
+# F32 — O tronco no rio: empurrado ao comprido, cai na correnteza larga (rasa), boia e desce o rio
+# até onde ele fica fundo: afunda atravessado e vira pinguela. A pé, a correnteza leva o cachorro
+# para a água funda (volta ao ponto seguro).
 fase res://scenes/fases/floresta_32_tronco_no_rio.tscn
 esperar 20
 checar obj("TroncoRolante").celulas() == [Vector3i(3, 0, -6), Vector3i(4, 0, -6), Vector3i(5, 0, -6)]
+# A pé não dá.
+ir 5.3 -2.5
+ir 8.5 -2.5 200
+ir 9.5 -1.5 400
+checar jogo.cachorro.global_position.x < 7.0
 ir 1.5 -4.0
 ir 2.0 -5.5
 rumo 5.2 -5.5 400
