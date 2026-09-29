@@ -9,7 +9,10 @@ ir 14.5 -3.5
 esperar 30
 checar jogo.cachorro.tem_graveto
 checar obj("Ponte").quebrada
-# (O aviso da ponte some sob o "Nova perspectiva!" — issue #29.)
+# O "Nova perspectiva!" da câmera interrompe o aviso da ponte (da fase), mas ele volta depois.
+checar jogo.aviso.text.begins_with("Nova perspectiva!")
+esperar 150
+checar jogo.aviso_painel.visible and jogo.aviso.text.begins_with("A ponte caiu!")
 ir 12.8 -2.5
 ir 11.7 -2.5
 ir 7.0 -2.5

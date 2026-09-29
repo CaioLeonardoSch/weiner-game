@@ -53,3 +53,17 @@ eval jogo.cachorro.set("entrada_bloqueada", true)
 eval jogo.set_meta("z", jogo.cachorro.global_position.z)
 esperar 60
 checar absf(jogo.cachorro.global_position.z - jogo.get_meta("z")) < 0.05
+# Avisos (issue #29): um comum interrompe um importante (da fase), que volta depois; um
+# importante que chega durante outro espera a vez.
+eval jogo.mostrar_aviso("Dica da fase", 3.0, true)
+esperar 30
+eval jogo.mostrar_aviso("Resposta a uma tecla")
+checar jogo.aviso.text == "Resposta a uma tecla"
+esperar 130
+checar jogo.aviso_painel.visible and jogo.aviso.text == "Dica da fase"
+eval jogo.mostrar_aviso("Outra dica", 2.0, true)
+checar jogo.aviso.text == "Dica da fase"
+esperar 160
+checar jogo.aviso_painel.visible and jogo.aviso.text == "Outra dica"
+esperar 130
+checar not jogo.aviso_painel.visible

@@ -24,6 +24,13 @@ var dono: Dono
 var objetivo: Objetivo
 var concluida := false
 var _tween_aviso: Tween
+## O aviso na tela é importante (escrito pela fase: dica, ponte que caiu) — não se perde sob outro.
+var _aviso_importante := false
+var _texto_aviso := ""
+var _segundos_aviso := 0.0
+## Avisos importantes esperando a vez (interrompidos ou que chegaram durante outro):
+## [texto, segundos, importante].
+var _avisos_na_fila: Array[Array] = []
 var _proxima_fase := ""
 var _tempo_travado := 0.0
 var _dica_virar_mostrada := false
@@ -53,6 +60,8 @@ const AVISO_LARGURA_MAXIMA := 720.0
 const AVISO_FONTE_GRANDE := 34
 const AVISO_FONTE_PEQUENA := 22
 const AVISO_CURTO := 40
+## Um aviso importante interrompido volta por pelo menos isto (s), para dar tempo de ler.
+const AVISO_VOLTA_MINIMO := 2.0
 
 
 func _ready() -> void:
@@ -145,7 +154,7 @@ func _ready() -> void:
 		(bloco as Empurravel).voltou_ao_inicio.connect(
 			mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
 	for zona in fase.todos(ZonaDica):
-		(zona as ZonaDica).ativada.connect(func(texto: String) -> void: mostrar_aviso(_com_teclas(texto), 4.5))
+		(zona as ZonaDica).ativada.connect(func(texto: String) -> void: mostrar_aviso(_com_teclas(texto), 4.5, true))
 	_preparar_objetivo()
 	mostrar_aviso(fase.nome)
 
@@ -162,7 +171,7 @@ func _preparar_objetivo() -> void:
 	for ponte in fase.todos(Ponte):
 		var aviso := (ponte as Ponte).aviso_ao_quebrar
 		(ponte as Ponte).quebrou.connect(mostrar_aviso.bind(
-			_com_teclas(aviso) if not aviso.is_empty() else "A ponte caiu! A água levou as tábuas", 4.5))
+			_com_teclas(aviso) if not aviso.is_empty() else "A ponte caiu! A água levou as tábuas", 4.5, true))
 	for tronco in fase.todos(TroncoRolante):
 		(tronco as TroncoRolante).voltou_ao_inicio.connect(
 			mostrar_aviso.bind("O tronco encalhou longe — ele voltou para o lugar", 3.0))
@@ -445,9 +454,7 @@ func _ponto_para_largar() -> Vector3:
 
 ## Pausa (Esc): some com o aviso do momento, para ele não ficar por cima do painel.
 func _abrir_pausa() -> void:
-	if _tween_aviso:
-		_tween_aviso.kill()
-	aviso_painel.hide()
+	_limpar_avisos()
 	_pausa.abrir()
 
 
@@ -476,7 +483,7 @@ func concluir() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	# Senão um clique na tela de "fase concluída" prenderia o mouse de novo.
 	camera_controller.set_process_unhandled_input(false)
-	aviso_painel.hide()
+	_limpar_avisos()
 	var texto := "Fase concluída! 🦴\n"
 	if Fases.testando:
 		texto += "%s: voltar ao editor    %s: jogar de novo" % [Teclas.nome(&"alternar_editor"), Teclas.nome(&"reiniciar")]
@@ -537,7 +544,35 @@ func _montar_aviso() -> void:
 	aviso_painel.hide()
 
 
-func mostrar_aviso(texto: String, segundos := 2.0) -> void:
+## Mostra um aviso no topo da tela por `segundos`. Um aviso novo toma o lugar do anterior, mas
+## um `importante` (o que a fase quer dizer ao jogador: dica, ponte que caiu) não se perde: se um
+## comum o interrompe (ex.: a resposta a uma tecla), ele volta depois com o tempo que faltava; se
+## chega outro importante, este espera a vez.
+func mostrar_aviso(texto: String, segundos := 2.0, importante := false) -> void:
+	var na_tela := aviso_painel.visible and not _texto_aviso.is_empty()
+	# O mesmo aviso de novo: só fica mais tempo.
+	if na_tela and texto == _texto_aviso:
+		_exibir_aviso(texto, maxf(segundos, _tempo_restante_aviso()), importante or _aviso_importante)
+		return
+	if na_tela and _aviso_importante:
+		if importante:
+			if not _avisos_na_fila.any(func(a: Array) -> bool: return a[0] == texto):
+				_avisos_na_fila.append([texto, segundos, true])
+			return
+		_avisos_na_fila.push_front([_texto_aviso, maxf(_tempo_restante_aviso(), AVISO_VOLTA_MINIMO), true])
+	_exibir_aviso(texto, segundos, importante)
+
+
+func _tempo_restante_aviso() -> float:
+	if _tween_aviso == null or not _tween_aviso.is_valid():
+		return 0.0
+	return maxf(_segundos_aviso - _tween_aviso.get_total_elapsed_time(), 0.0)
+
+
+func _exibir_aviso(texto: String, segundos: float, importante: bool) -> void:
+	_aviso_importante = importante
+	_texto_aviso = texto
+	_segundos_aviso = segundos
 	var curto := texto.length() <= AVISO_CURTO and not "\n" in texto
 	var tamanho := AVISO_FONTE_GRANDE if curto else AVISO_FONTE_PEQUENA
 	aviso.add_theme_font_size_override("font_size", tamanho)
@@ -554,7 +589,24 @@ func mostrar_aviso(texto: String, segundos := 2.0) -> void:
 		_tween_aviso.kill()
 	_tween_aviso = create_tween()
 	_tween_aviso.tween_interval(segundos)
-	_tween_aviso.tween_callback(aviso_painel.hide)
+	_tween_aviso.tween_callback(_proximo_aviso)
+
+
+## Some com o aviso da tela e com os que esperavam a vez.
+func _limpar_avisos() -> void:
+	if _tween_aviso:
+		_tween_aviso.kill()
+	_avisos_na_fila.clear()
+	_proximo_aviso()
+
+
+func _proximo_aviso() -> void:
+	aviso_painel.hide()
+	_aviso_importante = false
+	_texto_aviso = ""
+	if not _avisos_na_fila.is_empty():
+		var proximo: Array = _avisos_na_fila.pop_front()
+		_exibir_aviso(proximo[0], proximo[1], proximo[2])
 
 
 ## Junta `pedacos` com `separador` em linhas de até `largura` px (um pedaço nunca é partido).
