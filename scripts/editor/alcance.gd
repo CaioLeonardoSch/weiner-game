@@ -12,8 +12,11 @@ extends RefCounted
 ## - objetos com colisão (pedra, árvore, cerca, parede invisível...) viram chão onde cobrem o
 ##   centro da célula (a ponte, a pinguela) e barram a passagem entre duas células quando o
 ##   caminho cruza a colisão e ela é alta demais para pular;
-## - portões e mecanismos que reagem contam como abertos; o dono, o bloco e o tronco em terra
+## - portões e mecanismos que reagem contam como abertos: a água funda do trecho de uma comporta
+##   conta como rasa se algo aciona o canal dela; o dono, o bloco e o tronco em terra
 ##   (que rolam) não barram — o tronco na água (boiando ou de pinguela) é chão; pássaros não barram com Latir; a cerca com terra fofa não barra com Cavar;
+## - a portinhola deixa passar pelo meio (na volta, só se o graveto não for comprido demais para
+##   ela; a mão única não entra);
 ## - as tocas da mesma cor ligam as duas entradas.
 ## Ida: sem graveto, com os objetos "só isométrico"; volta: com o graveto e os "só 3D".
 ## É uma estimativa (gelo liso, vento e correnteza não entram): o resultado é só um aviso.
@@ -160,24 +163,49 @@ func _juntar_caixas() -> void:
 	for objeto in fase.lista_objetos():
 		if objeto.visibilidade == ausente or not _barra(objeto):
 			continue
+		if objeto is Portinhola and _passa_pela_portinhola(objeto as Portinhola):
+			_juntar_laterais_da_portinhola(objeto as Portinhola)
+			continue
 		for corpo in objeto.find_children("*", "StaticBody3D", true, false):
 			for filho in corpo.get_children():
 				var colisao := filho as CollisionShape3D
 				if colisao == null or colisao.disabled or colisao.shape == null:
 					continue
-				var caixa := _caixa_da_forma(colisao.shape)
-				var xf := colisao.global_transform
-				var global_aabb := xf * caixa
-				var indice := _caixas.size()
-				_caixas.append({xf = xf.affine_inverse(), caixa = caixa,
-					topo = global_aabb.end.y, base = global_aabb.position.y})
-				var folga := RAIO_CACHORRO + 1.0
-				for x in range(floori(global_aabb.position.x - folga), floori(global_aabb.end.x + folga) + 1):
-					for z in range(floori(global_aabb.position.z - folga), floori(global_aabb.end.z + folga) + 1):
-						var celula := Vector2i(x, z)
-						if not _caixas_por_celula.has(celula):
-							_caixas_por_celula[celula] = []
-						_caixas_por_celula[celula].append(indice)
+				_juntar_caixa(colisao.global_transform, _caixa_da_forma(colisao.shape))
+
+
+func _juntar_caixa(xf: Transform3D, caixa: AABB) -> void:
+	var global_aabb := xf * caixa
+	var indice := _caixas.size()
+	_caixas.append({xf = xf.affine_inverse(), caixa = caixa,
+		topo = global_aabb.end.y, base = global_aabb.position.y})
+	var folga := RAIO_CACHORRO + 1.0
+	for x in range(floori(global_aabb.position.x - folga), floori(global_aabb.end.x + folga) + 1):
+		for z in range(floori(global_aabb.position.z - folga), floori(global_aabb.end.z + folga) + 1):
+			var celula := Vector2i(x, z)
+			if not _caixas_por_celula.has(celula):
+				_caixas_por_celula[celula] = []
+			_caixas_por_celula[celula].append(indice)
+
+
+## Na ida sempre; na volta, se o graveto não for comprido demais para ela.
+func _passa_pela_portinhola(portinhola: Portinhola) -> bool:
+	if not com_graveto or portinhola.comprimento_maximo <= 0.0:
+		return true
+	var graveto := fase.primeiro(Graveto) as Graveto
+	return graveto == null or graveto.comprimento <= portinhola.comprimento_maximo
+
+
+## Só as tábuas dos lados barram: a célula do meio (as duas do meio, com largura par) fica livre.
+func _juntar_laterais_da_portinhola(portinhola: Portinhola) -> void:
+	var meia := portinhola.largura * 0.5
+	var livre := 0.5 if portinhola.largura % 2 == 1 else 1.0
+	if meia <= livre:
+		return
+	for lado: float in [-1.0, 1.0]:
+		var centro := Vector3(lado * (livre + meia) * 0.5, Portinhola.ALTURA * 0.5, 0.0)
+		var tamanho := Vector3(meia - livre, Portinhola.ALTURA, Portinhola.ESPESSURA)
+		_juntar_caixa(portinhola.global_transform * Transform3D(Basis(), centro), AABB(-tamanho * 0.5, tamanho))
 
 
 static func _caixa_da_forma(forma: Shape3D) -> AABB:
@@ -213,10 +241,13 @@ func _barra(objeto: ObjetoFase) -> bool:
 func _montar_colunas() -> void:
 	var cavar := fase.tem_habilidade(Fase.HABILIDADE_CAVAR)
 	var terreno := fase.terreno
+	var baixadas := _aguas_das_comportas()
 	# Vector2i → lista de faixas sólidas {base, topo, tile, celula}.
 	var faixas := {}
 	for celula in terreno.get_used_cells():
 		var tile := terreno.get_cell_item(celula)
+		if tile == Tiles.AGUA and baixadas.has(celula):
+			tile = Tiles.AGUA_RASA
 		if cavar and celula.y >= 0 and Tiles.eh_cavavel(tile):
 			continue
 		var coluna := Vector2i(celula.x, celula.z)
@@ -259,6 +290,23 @@ func _montar_colunas() -> void:
 				buraco = faixa.tile != -1 and Tiles.eh_buraco(faixa.tile)})
 		if not chaos.is_empty():
 			_colunas[coluna] = chaos
+
+
+## Células de água funda que uma comporta baixa (vira rasa), se algo aciona o canal dela.
+func _aguas_das_comportas() -> Dictionary:
+	var ausente := ObjetoFase.Visibilidade.SO_ISO if com_graveto else ObjetoFase.Visibilidade.SO_3D
+	var canais_acionados := {}
+	for objeto in fase.lista_objetos():
+		if objeto.papel_no_canal() == "aciona":
+			canais_acionados[objeto.get(&"canal")] = true
+	var celulas := {}
+	for objeto in fase.todos(Comporta):
+		var comporta := objeto as Comporta
+		if comporta.encher or comporta.visibilidade == ausente or not canais_acionados.has(comporta.canal):
+			continue
+		for celula in comporta.celulas_do_trecho(fase.terreno):
+			celulas[celula] = true
+	return celulas
 
 
 static func _topo_do_tile(tile: int) -> float:

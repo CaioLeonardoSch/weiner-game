@@ -87,15 +87,24 @@ func _pontos_do_trecho() -> Array[Vector3]:
 	return pontos
 
 
-## Guarda as células de água (funda ou rasa) do trecho, na camada da comporta e na de baixo.
+## Guarda as células de água (funda ou rasa) do trecho.
 func _guardar_trecho() -> void:
 	var terreno := _fase.terreno
+	for celula in celulas_do_trecho(terreno):
+		_originais[celula] = [terreno.get_cell_item(celula), terreno.get_cell_item_orientation(celula)]
+
+
+## Células de água (funda ou rasa) do trecho, na camada da comporta e na de baixo. Também usada
+## pela validação do editor (AlcanceEditor).
+func celulas_do_trecho(terreno: GridMap) -> Array[Vector3i]:
+	var celulas: Array[Vector3i] = []
 	for ponto in _pontos_do_trecho():
 		for descida: float in [-0.1, -0.6, 0.4]:
 			var celula := terreno.local_to_map(terreno.to_local(ponto + Vector3.UP * descida))
 			var id := terreno.get_cell_item(celula)
-			if id == Tiles.AGUA or id == Tiles.AGUA_RASA:
-				_originais[celula] = [id, terreno.get_cell_item_orientation(celula)]
+			if (id == Tiles.AGUA or id == Tiles.AGUA_RASA) and not celulas.has(celula):
+				celulas.append(celula)
+	return celulas
 
 
 func _on_canal_mudou(qual: int) -> void:
