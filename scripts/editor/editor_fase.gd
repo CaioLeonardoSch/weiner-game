@@ -43,6 +43,9 @@ const TOPO_TILE := {
 	Tiles.RAMPA_ALTA: 0.75, Tiles.AGUA: 0.85, Tiles.TABUA: 0.0,
 }
 
+## Testar daqui (F2): até quantos metros abaixo do ponto ainda conta como chão.
+const QUEDA_MAXIMA_DO_TESTE := 20
+
 var fase: Fase
 var terreno: GridMap
 ## Arquivo da fase ("" = ainda não salva).
@@ -485,6 +488,10 @@ func _testar(confirmado := false, daqui := false) -> void:
 		_avisar("Aponte para o chão onde o cachorro deve começar e aperte F2")
 		return
 	var ponto := Vector3(floorf(ponto_livre.x) + 0.5, ponto_alvo.y, floorf(ponto_livre.z) + 0.5)
+	var sem_chao := _motivo_sem_chao(ponto) if daqui else ""
+	if not sem_chao.is_empty():
+		_avisar(sem_chao)
+		return
 	var problemas := _validar()
 	if not confirmado and problemas.graves.size() > 0:
 		confirmar.dialog_text = "Esta fase não dá para jogar direito:\n\n• %s\n\nTestar mesmo assim?" \
@@ -501,6 +508,22 @@ func _testar(confirmado := false, daqui := false) -> void:
 	Fases.estado_editor = _estado()
 	Fases.inicio_do_teste = ponto if daqui else null
 	Fases.testar(cena, modificado)
+
+
+## Testar daqui (F2): o cachorro precisa começar em chão firme. Na água funda ou no vazio ele
+## cairia na hora e voltaria ao próprio ponto de início, em laço ("Splash!" sem fim). Devolve o
+## aviso, ou "" se o chão serve. Desce pela coluna do ponto até o primeiro tile com o topo nele
+## ou abaixo (a tábua tem o topo na base da própria célula; mais abaixo, o cachorro cai até lá).
+func _motivo_sem_chao(ponto: Vector3) -> String:
+	var celula := Vector3i(floori(ponto.x), floori(ponto.y + 0.05), floori(ponto.z))
+	for _descida in QUEDA_MAXIMA_DO_TESTE:
+		var tile := terreno.get_cell_item(celula)
+		if tile != GridMap.INVALID_CELL_ITEM and float(celula.y) + float(TOPO_TILE.get(tile, 1.0)) <= ponto.y + 0.1:
+			if Tiles.eh_agua(tile):
+				return "Água funda: o cachorro não nada. Aponte para chão firme e aperte F2"
+			return ""
+		celula += Vector3i.DOWN
+	return "Sem chão aqui: aponte para o chão onde o cachorro deve começar e aperte F2"
 
 
 func _estado() -> Dictionary:

@@ -109,6 +109,17 @@ func peso_na_placa() -> float:
 	return 0.0 if ja_pego or enterrado or com_bicho else peso
 
 
+## Pontos ao longo do comprimento (no máximo meio metro entre eles): um graveto comprido pesa na
+## placa com qualquer parte em cima dela, não só com o meio.
+func pontos_de_apoio() -> PackedVector3Array:
+	var meio := maxf(comprimento * 0.5 - 0.1, 0.0)
+	var partes := maxi(ceili(meio * 2.0 / 0.5), 1)
+	var pontos := PackedVector3Array()
+	for i in partes + 1:
+		pontos.append(to_global(Vector3(0.0, 0.0, -meio + meio * 2.0 * float(i) / float(partes))))
+	return pontos
+
+
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
