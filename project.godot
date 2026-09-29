@@ -299,6 +299,17 @@ editor_mod_alt={
 
 3d/physics_engine="Jolt Physics"
 
+[shader_globals]
+
+chuva={
+"type": "float",
+"value": 0.0
+}
+vento={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+
 [rendering]
 
 textures/vram_compression/import_etc2_astc=true

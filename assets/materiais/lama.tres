@@ -1,0 +1,19 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://shaders/pixel_mundo.gdshader" id="1_shader"]
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/cor_lado = Color(0.4, 0.27, 0.16, 1)
+shader_parameter/cor_topo = Color(0.38, 0.26, 0.16, 1)
+shader_parameter/variacao = 0.16
+shader_parameter/fracao_escuros = 0.3
+shader_parameter/fracao_claros = 0.1
+shader_parameter/texels_por_metro = 8.0
+shader_parameter/franja_texels = 0.0
+shader_parameter/usar_cor_vertice = false
+shader_parameter/fracao_brilho = 0.02
+shader_parameter/cor_brilho = Color(0.62, 0.5, 0.38, 1)
+shader_parameter/pocas = 0.95
+shader_parameter/cor_poca = Color(0.42, 0.35, 0.25, 1)
+shader_parameter/cor_margem = Color(0.27, 0.18, 0.11, 1)

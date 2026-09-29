@@ -28,6 +28,7 @@ const ROTULOS := {
 	&"peso": "Peso (1 = normal)",
 	&"regiao": "Região",
 	&"bioma": "Bioma (texturas, céu, entorno)",
+	&"clima": "Clima (chuva, neve, vento)",
 	&"frio": "Frio (o cachorro precisa se esquentar)",
 	&"tempo_de_frio": "Segundos até gelar",
 }
@@ -73,6 +74,7 @@ func mostrar(alvo: Object) -> void:
 		_campo(&"nome")
 		_campo(&"regiao")
 		_campo(&"bioma")
+		_campo(&"clima")
 		_campo(&"objetivo")
 		_campo(&"raca")
 		_campo(&"raca_fixa")

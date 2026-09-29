@@ -11,6 +11,9 @@ class_name Voxel
 ## As malhas ficam em cache: cem árvores iguais usam a mesma malha.
 
 const MATERIAL := preload("res://assets/materiais/voxel.tres")
+## Mesmo material, balançando com o vento (árvores e capim; ver shaders/pixel_mundo.gdshader).
+const MATERIAL_ARVORE := preload("res://assets/materiais/voxel_balanco.tres")
+const MATERIAL_CAPIM := preload("res://assets/materiais/voxel_capim.tres")
 
 ## Brilho do vértice conforme quantos vizinhos cobrem o canto (0 a 3).
 const _AO := [1.0, 0.84, 0.7, 0.58]
@@ -207,7 +210,10 @@ static func arvore(tipo: TipoArvore, variante: int, nevada := false) -> ArrayMes
 		if nevada:
 			nevar(voxels, rng, 0.85)
 		# Voxel de 0,25 m; o tronco 2x2 fica centrado na origem.
-		_cache[chave] = malha(voxels, 0.25, Vector3(0.0, 0.0, 0.0))
+		var resultado := malha(voxels, 0.25, Vector3(0.0, 0.0, 0.0))
+		if resultado.get_surface_count() > 0:
+			resultado.surface_set_material(0, MATERIAL_ARVORE)
+		_cache[chave] = resultado
 	return _cache[chave]
 
 
@@ -336,7 +342,10 @@ static func flores(variante: int) -> ArrayMesh:
 				voxels[Vector3i(x, y, z)] = _VERDES_CAPIM[rng.randi() % _VERDES_CAPIM.size()]
 			if rng.randf() < 0.55:
 				voxels[Vector3i(x, altura, z)] = _CORES_FLORES[rng.randi() % _CORES_FLORES.size()]
-		_cache[chave] = malha(voxels, 0.125)
+		var resultado := malha(voxels, 0.125)
+		if resultado.get_surface_count() > 0:
+			resultado.surface_set_material(0, MATERIAL_CAPIM)
+		_cache[chave] = resultado
 	return _cache[chave]
 
 

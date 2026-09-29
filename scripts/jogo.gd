@@ -37,7 +37,7 @@ var _mirante: Mirante
 ## Fundo semitransparente do aviso (o rótulo `aviso` fica dentro dele).
 var aviso_painel := PanelContainer.new()
 ## Flocos caindo em volta do cachorro (biomas com neve).
-var _neve_caindo: CPUParticles3D
+var clima: Clima
 ## Termômetro (fases com frio), no canto de baixo à direita.
 var indicador_calor := IndicadorCalor.new()
 ## Fogueira → rótulo 2D em cima dela com os gravetos que faltam ("0 / 2"). Em 2D, no HUD: um
@@ -102,9 +102,7 @@ func _ready() -> void:
 	add_child(fase)
 	move_child(fase, 0)
 	Biomas.aplicar_ambiente($Ambiente, fase.bioma)
-	if Biomas.dados(fase.bioma).nevando:
-		_neve_caindo = Biomas.criar_neve_caindo()
-		add_child(_neve_caindo)
+	trocar_clima(Clima.efetivo(fase))
 	# Chão e floresta em volta, para monitores largos nunca mostrarem o fim do mundo.
 	var entorno := Entorno.new()
 	entorno.name = "Entorno"
@@ -216,10 +214,19 @@ func _unhandled_input(event: InputEvent) -> void:
 			Fases.jogar(_proxima_fase)
 
 
+
+## Troca o clima (ver Clima), com o céu e a luz do bioma de novo por baixo.
+func trocar_clima(tipo: int) -> void:
+	if clima:
+		remove_child(clima)
+		clima.queue_free()
+		Biomas.aplicar_ambiente($Ambiente, fase.bioma)
+	clima = Clima.new()
+	clima.name = "Clima"
+	add_child(clima)
+	clima.configurar(tipo, fase.bioma, $Ambiente, cachorro)
+
 func _process(delta: float) -> void:
-	if _neve_caindo:
-		_neve_caindo.global_position = Vector3(cachorro.global_position.x, cachorro.global_position.y + 12.0,
-			cachorro.global_position.z)
 	if objetivo and not concluida:
 		objetivo.processar(delta)
 	_atualizar_marcas()

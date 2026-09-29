@@ -41,11 +41,14 @@ const OBJETIVO_PASTOREIO := 1
 ## Região a que a fase pertence (id de assets/regioes/*.tres): o menu agrupa as fases por
 ## região, na ordem das regiões e, dentro de cada uma, pelo nome do arquivo.
 @export var regiao := &"floresta"
-## Bioma (ver Biomas): texturas dos tiles, céu, luz, entorno e neve caindo.
+## Bioma (ver Biomas): texturas dos tiles, céu, luz e entorno (e o clima padrão, ver `clima`).
 @export_enum("Floresta", "Neve") var bioma := Biomas.FLORESTA:
 	set(valor):
 		bioma = valor
 		_aplicar_bioma()
+## Clima (ver Clima): chuva, neve caindo, vento e tempestade. "Do bioma": neve no bioma de neve,
+## tempo bom nos outros.
+@export_enum("Do bioma", "Tempo bom", "Chuva", "Neve", "Ventania", "Tempestade") var clima := 0
 ## Frio: longe do fogo (fogueira acesa, celeiro) o cachorro perde calor; gelado demais, volta
 ## para perto do último fogo (ou do começo). Ver Dachshund.calor.
 @export var frio := false
