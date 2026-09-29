@@ -309,6 +309,14 @@ vento={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+alvo_visao={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+transparencia_na_frente={
+"type": "float",
+"value": 0.0
+}
 
 [rendering]
 

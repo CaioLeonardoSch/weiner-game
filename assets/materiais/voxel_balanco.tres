@@ -13,3 +13,4 @@ shader_parameter/texels_por_metro = 8.0
 shader_parameter/franja_texels = 0.0
 shader_parameter/usar_cor_vertice = true
 shader_parameter/balanco = 1.0
+shader_parameter/some_na_frente = true
