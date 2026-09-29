@@ -111,6 +111,10 @@ func reforcar(fonte: Object, vetor: Vector3) -> void:
 func _exit_tree() -> void:
 	RenderingServer.global_shader_parameter_set(&"chuva", 0.0)
 	RenderingServer.global_shader_parameter_set(&"vento", Vector3.ZERO)
+	# Laço tocando ao fechar o jogo: o playback (e o som gerado) ficaria preso no AudioServer.
+	for som in [_som_chuva, _som_vento]:
+		if som:
+			(som as AudioStreamPlayer).stop()
 
 
 func _process(delta: float) -> void:

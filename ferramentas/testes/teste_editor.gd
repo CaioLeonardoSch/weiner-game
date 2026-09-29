@@ -282,6 +282,38 @@ static func _alcance(editor, checar: Callable) -> void:
 	fase.habilidades = 0
 	checar.call("alcance: parede baixa sem Pular barra", alcance.call().contains("fora do alcance"))
 	parede.free()
+	# Muro de pedra com uma portinhola no vão (issue #32).
+	faixa.call(Tiles.PEDRA, 0)
+	terreno.set_cell_item(Vector3i(3, 0, -2), GridMap.INVALID_CELL_ITEM)
+	var portinhola := fase.adicionar_objeto(load("res://scenes/objetos/portinhola.tscn"), Vector3(3.5, 0, -1.5)) as Portinhola
+	portinhola.rotation.y = PI * 0.5
+	checar.call("alcance: passa pela portinhola", alcance.call().is_empty())
+	portinhola.comprimento_maximo = 0.1
+	checar.call("alcance: graveto comprido não volta pela portinhola", alcance.call().contains("voltar até o dono"))
+	portinhola.comprimento_maximo = 0.0
+	portinhola.largura = 3
+	terreno.set_cell_item(Vector3i(3, 0, -3), GridMap.INVALID_CELL_ITEM)
+	terreno.set_cell_item(Vector3i(3, 0, -1), GridMap.INVALID_CELL_ITEM)
+	checar.call("alcance: portinhola larga, passa pelo meio", alcance.call().is_empty())
+	terreno.set_cell_item(Vector3i(3, 0, -2), Tiles.PEDRA)
+	checar.call("alcance: as tábuas dos lados da portinhola barram", alcance.call().contains("fora do alcance"))
+	portinhola.free()
+	# Rio com uma comporta: a água do trecho baixa se algo aciona o canal (issue #32).
+	faixa.call(GridMap.INVALID_CELL_ITEM, 0)
+	faixa.call(Tiles.AGUA, -1)
+	var comporta := fase.adicionar_objeto(load("res://scenes/objetos/comporta.tscn"), Vector3(3.5, 0, -2.5)) as Comporta
+	comporta.canal = 2
+	comporta.largura = 1
+	comporta.comprimento = 1
+	checar.call("alcance: comporta sem acionador não baixa a água", alcance.call().contains("fora do alcance"))
+	var alavanca := fase.adicionar_objeto(load("res://scenes/objetos/alavanca.tscn"), Vector3(-2.5, 0, 1.5)) as Alavanca
+	alavanca.canal = 2
+	checar.call("alcance: comporta com alavanca baixa a água", alcance.call().is_empty())
+	comporta.encher = true
+	checar.call("alcance: comporta que enche não abre caminho", alcance.call().contains("fora do alcance"))
+	comporta.free()
+	alavanca.free()
+	faixa.call(Tiles.GRAMA, -1)
 	checar.call("alcance: pastoreio não valida o graveto", (func() -> bool:
 		fase.objetivo = Fase.OBJETIVO_PASTOREIO
 		var vazio := AlcanceEditor.avisos(fase).is_empty()

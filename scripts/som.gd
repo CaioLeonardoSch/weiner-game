@@ -8,6 +8,12 @@ const TAXA := 22050
 static var _cache := {}
 
 
+## Solta os sons guardados. Chamado ao fechar o jogo (depois de a fase sair da árvore): a
+## variável estática só seria limpa depois de o Godot conferir os vazamentos.
+static func limpar() -> void:
+	_cache.clear()
+
+
 ## Latido ("au!") em `posicao`. `tom`: 1 = médio; maior = cachorro pequeno (mais agudo).
 static func latido(pai: Node, posicao: Vector3, tom := 1.0) -> void:
 	var chave := "latido_%.2f" % tom

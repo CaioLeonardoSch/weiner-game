@@ -424,8 +424,8 @@ Fases de inverno em que andar já é um esforço e o caminho precisa ser aberto 
 - Ideias: editar um módulo direto (abrir como fase), pontos de encaixe nos módulos (para um
   gerador saber onde ligar uma peça na outra).
 - Mostrar no editor as habilidades liberadas e o comprimento do graveto (prévia de passagens).
-- ✅ Validação: o graveto é alcançável? (`AlcanceEditor`, busca de caminho pela grade). Ainda dá
-  falso aviso quando a passagem depende de um mecanismo (comporta, portinhola) — issue #32.
+- ✅ Validação: o graveto é alcançável? (`AlcanceEditor`, busca de caminho pela grade). A
+  portinhola deixa passar e a água que uma comporta acionável baixa conta como rasa (issue #32).
 - Preservar os IDs internos ao salvar para o diff no git ficar menor.
 
 ## Raças, skins, missões e temas (começou ✅)

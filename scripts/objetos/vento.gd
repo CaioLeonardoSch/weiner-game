@@ -118,6 +118,12 @@ func _sentido() -> Vector3:
 	return z.normalized()
 
 
+## Laço tocando ao fechar o jogo: o playback (e o som gerado) ficaria preso no AudioServer.
+func _exit_tree() -> void:
+	if _som:
+		_som.stop()
+
+
 func _process(delta: float) -> void:
 	_tempo += delta
 	if _biruta == null:
