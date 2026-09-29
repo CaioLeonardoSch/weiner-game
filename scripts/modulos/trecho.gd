@@ -149,6 +149,32 @@ func aplicar_em(fase: Fase, origem: Vector3i) -> Dictionary:
 	return {antes = antes, depois = depois, objetos = criados}
 
 
+## Um nó 3D só para ver o trecho, com o canto na origem: os blocos numa GridMap sem colisão e os
+## objetos parados. É a prévia da colagem no editor e a miniatura dos módulos na paleta.
+func montar_previa(biblioteca: MeshLibrary) -> Node3D:
+	var previa := Node3D.new()
+	var grade := GridMap.new()
+	grade.name = "Terreno"
+	grade.mesh_library = biblioteca
+	grade.cell_size = Vector3.ONE
+	grade.collision_layer = 0
+	grade.collision_mask = 0
+	previa.add_child(grade)
+	for dados in celulas:
+		grade.set_cell_item(dados[0], dados[1], grade.get_orthogonal_index_from_basis(dados[2]))
+	for dados in objetos:
+		var cena := load(dados.cena) as PackedScene
+		if cena == null:
+			continue
+		var objeto := cena.instantiate() as ObjetoFase
+		objeto.process_mode = Node.PROCESS_MODE_DISABLED
+		previa.add_child(objeto)
+		objeto.transform = dados.transform
+		for nome in dados.propriedades:
+			objeto.set(nome, dados.propriedades[nome])
+	return previa
+
+
 ## O trecho como uma fase pequena (para salvar como módulo), com o canto na origem.
 func para_fase(nome: String, bioma := Biomas.FLORESTA) -> Fase:
 	var fase := Fase.nova(nome)
