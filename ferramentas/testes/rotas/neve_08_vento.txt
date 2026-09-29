@@ -1,0 +1,17 @@
+# N08 — Vento forte: sopra contra a ida (para -X), em rajadas; parado no vento, o cachorro é
+# empurrado; atrás de uma pedra fica abrigado. Dá para chegar andando entre as rajadas.
+fase res://scenes/fases/neve_08_vento.tscn
+esperar 20
+checar obj("Vento").forca_em(Vector3(9.5, 0.25, -3.5)).x < 0.0
+# Parado no vento por 5 s (pega uma rajada): é levado para trás.
+ir 9.5 -3.5
+esperar 300
+checar jogo.cachorro.global_position.x < 9.0
+# Atrás da pedra (11, -5), a sotavento: abrigado.
+checar obj("Vento").forca_em(Vector3(10.5, 0.25, -4.5)) == Vector3.ZERO
+ir 14.5 -3.5 1500
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir -2.5 -3.0 1500
+esperar 60
+checar jogo.concluida

@@ -1,6 +1,6 @@
 # Etapa 4 — rampa lisa (com graveto pesado o cachorro escorrega e não sobe) e degrau alto
 # (0,72 m: só pulando, e com graveto na boca o pulo não chega).
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_movimento.gd preparar
 # Rampa lisa com graveto pesado: não sobe.

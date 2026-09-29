@@ -25,6 +25,8 @@ static func rodar(jogo: Node) -> String:
 	_regioes(checar)
 	_editor_2(editor, checar)
 	_testar_daqui(editor, checar)
+	_alcance(editor, checar)
+	_minimapa(editor, checar)
 	jogo.remove_child(editor)
 	editor.free()
 	jogo.set_meta(&"editor_ok", falhas.is_empty())
@@ -113,6 +115,14 @@ static func _modulos(editor, checar: Callable) -> void:
 	checar.call("módulo carregado igual", lido != null and lido.celulas.size() == trecho.celulas.size()
 		and lido.objetos.size() == trecho.objetos.size() and lido.largura == trecho.largura)
 	checar.call("nome do módulo", Modulos.nome(caminho) == "Módulo de teste")
+	var miniatura: Texture2D = editor._miniatura_do_modulo(caminho)
+	checar.call("miniatura do módulo (não o ícone genérico)", miniatura != null and miniatura != IconesDesenhados.textura("modulo"))
+	var previa := lido.montar_previa(editor.terreno.mesh_library)
+	editor.add_child(previa)
+	var caixa := GeradorIcones._caixa(previa)
+	checar.call("a miniatura enquadra os blocos do módulo", caixa.size.x >= float(trecho.largura) - 0.01
+		and caixa.size.z >= float(trecho.profundidade) - 0.01)
+	previa.free()
 	DirAccess.remove_absolute(caminho)
 	DirAccess.remove_absolute(PASTA_TESTE)
 
@@ -132,8 +142,10 @@ static func _bioma(editor, checar: Callable) -> void:
 static func _regioes(checar: Callable) -> void:
 	checar.call("regiões floresta e neve", Regioes.ids() == PackedStringArray(["floresta", "neve"]))
 	var lista := Fases.listar()
-	checar.call("fases da floresta em ordem", Fases.fases_da_regiao(&"floresta").size() == lista.size()
-		and lista[0].get_file() == "fase_01.tscn")
+	var floresta := Fases.fases_da_regiao(&"floresta")
+	var neve := Fases.fases_da_regiao(&"neve")
+	checar.call("fases por região, em ordem", floresta.size() + neve.size() == lista.size()
+		and lista[0].get_file() == "floresta_01_andar.tscn" and lista[floresta.size()].get_file() == "neve_01_neve_fofa.tscn")
 
 
 ## Pincel 3×3, linha de blocos (clique, clique), linha de objetos, teclas das ferramentas,
@@ -228,6 +240,76 @@ static func _testar_daqui(editor, checar: Callable) -> void:
 		editor._testar(true, true)
 		checar.call("F2 na água: não testa e avisa", Fases.inicio_do_teste == null and editor.aviso.visible
 			and (editor.aviso.text as String).begins_with("Água funda"))
+
+
+## Validação "o graveto é alcançável?" (AlcanceEditor) no gramado do modelo: o graveto a leste do
+## Início (x 8,5 e -3,5), e uma faixa em x = 3 que atravessa o gramado de ponta a ponta.
+static func _alcance(editor, checar: Callable) -> void:
+	editor._carregar(editor._fase_modelo("alcance"))
+	var fase: Fase = editor.fase
+	var terreno: GridMap = editor.terreno
+	var alcance := func() -> String: return "; ".join(AlcanceEditor.avisos(fase))
+	var faixa := func(tile: int, camada: int) -> void:
+		for z in range(-6, 4):
+			terreno.set_cell_item(Vector3i(3, camada, z), tile)
+	checar.call("alcance: gramado aberto", alcance.call().is_empty())
+	faixa.call(Tiles.PEDRA, 0)
+	checar.call("alcance: muro de pedra barra", alcance.call().contains("fora do alcance"))
+	faixa.call(Tiles.MEIO_BLOCO, 0)
+	checar.call("alcance: meio bloco sem Pular barra", alcance.call().contains("fora do alcance"))
+	fase.habilidades = Fase.HABILIDADE_PULAR
+	checar.call("alcance: meio bloco com Pular passa", alcance.call().is_empty())
+	faixa.call(Tiles.DEGRAU_ALTO, 0)
+	checar.call("alcance: degrau alto — vai, mas não volta com o graveto", alcance.call().contains("voltar até o dono"))
+	faixa.call(Tiles.TERRA_FOFA, 0)
+	checar.call("alcance: terra fofa sem Cavar barra", alcance.call().contains("fora do alcance"))
+	fase.habilidades = Fase.HABILIDADE_CAVAR
+	checar.call("alcance: terra fofa com Cavar passa", alcance.call().is_empty())
+	faixa.call(GridMap.INVALID_CELL_ITEM, 0)
+	faixa.call(Tiles.AGUA, -1)
+	checar.call("alcance: rio barra", alcance.call().contains("fora do alcance"))
+	var ponte := fase.adicionar_objeto(load("res://scenes/objetos/ponte.tscn"), Vector3(3.5, 0, -1.5))
+	ponte.set(&"tamanho", Vector3(1.0, 0.12, 10.0))
+	checar.call("alcance: a ponte atravessa o rio", alcance.call().is_empty())
+	ponte.free()
+	faixa.call(Tiles.GRAMA, -1)
+	var parede := fase.adicionar_objeto(load("res://scenes/objetos/parede_invisivel.tscn"), Vector3(4.0, 0, -1.5))
+	parede.set(&"tamanho", Vector3(0.2, 2.0, 10.0))
+	checar.call("alcance: parede fina entre duas células barra", alcance.call().contains("fora do alcance"))
+	parede.set(&"tamanho", Vector3(0.2, 0.5, 10.0))
+	fase.habilidades = Fase.HABILIDADE_PULAR
+	checar.call("alcance: parede baixa se pula", alcance.call().is_empty())
+	fase.habilidades = 0
+	checar.call("alcance: parede baixa sem Pular barra", alcance.call().contains("fora do alcance"))
+	parede.free()
+	checar.call("alcance: pastoreio não valida o graveto", (func() -> bool:
+		fase.objetivo = Fase.OBJETIVO_PASTOREIO
+		var vazio := AlcanceEditor.avisos(fase).is_empty()
+		fase.objetivo = Fase.OBJETIVO_GRAVETO
+		return vazio).call())
+	faixa.call(Tiles.PEDRA, 0)
+	checar.call("alcance: aparece na validação do editor", "; ".join(editor._validar().avisos).contains("fora do alcance"))
+
+
+## Minimapa: desenha o mapa (uma célula por pixel, com borda), leva a câmera no clique e some com M.
+static func _minimapa(editor, checar: Callable) -> void:
+	var minimapa: MinimapaEditor = editor.minimapa
+	minimapa.visible = true
+	minimapa._redesenhar_mapa()
+	# O modelo: gramado x -8..12, z -6..3 → 21 × 10 células, mais uma de borda de cada lado.
+	checar.call("minimapa: tamanho do mapa", minimapa._tamanho == Vector2i(23, 12) and minimapa._textura != null)
+	checar.call("minimapa: canto do mapa", minimapa._origem == Vector2i(-9, -7))
+	var ponto: Vector2 = minimapa._para_tela(Vector3(2.0, 0, -1.0))
+	minimapa._levar_camera(ponto)
+	var foco: Vector3 = editor.camera_editor.foco
+	checar.call("minimapa: clique leva a câmera", absf(foco.x - 2.0) < 0.01 and absf(foco.z + 1.0) < 0.01)
+	var tecla := InputEventAction.new()
+	tecla.action = &"editor_minimapa"
+	tecla.pressed = true
+	editor._unhandled_input(tecla)
+	checar.call("minimapa: M esconde", not minimapa.visible)
+	editor._unhandled_input(tecla)
+	checar.call("minimapa: M mostra de novo", minimapa.visible)
 
 
 ## O editor aberto com o tronco escolhido e uma linha de troncos-fantasma, vivos por alguns quadros

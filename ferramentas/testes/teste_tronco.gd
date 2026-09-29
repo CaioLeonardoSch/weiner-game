@@ -14,7 +14,7 @@ static func _tronco(jogo: Node, posicao: Vector3, yaw: float, comprimento: int) 
 	return tronco
 
 
-## Fase 11 (margem oeste até x = 4, correnteza em x 5-7): tira o tronco da fase e põe um de 2
+## No rio (cenas/rio.tscn; margem oeste até x = 4, correnteza em x 5-7): tira o tronco da fase e põe um de 2
 ## células ao longo de X (x 1 e 2, z = -3); o cachorro atrás dele (+Z), olhando para ele (-Z).
 static func preparar_tronco(jogo: Node) -> String:
 	var da_fase: Node = jogo.fase.get_node("Objetos").get_node("TroncoRolante")
@@ -43,7 +43,7 @@ static func preparar_encalhe(jogo: Node) -> String:
 	return "ok"
 
 
-## Fase 06: um bloco a 2 m do cachorro, e na boca um graveto comprido (1,4 m).
+## No campo (cenas/campo.tscn): um bloco a 2 m do cachorro, e na boca um graveto comprido (1,4 m).
 static func preparar_graveto_empurra(jogo: Node) -> String:
 	var bloco := _colocar(jogo, "bloco_empurravel", Vector3(4.5, 0, -1.5))
 	jogo.set_meta(&"bloco", bloco)
@@ -80,7 +80,7 @@ static func recuar_do_bloco(jogo: Node) -> String:
 	return "x = %.2f" % jogo.cachorro.global_position.x
 
 
-## Fase 08 (riacho fundo em x = 8): troca a ponte por uma que cede com o tempo e põe o cachorro
+## Na ponte velha (cenas/ponte_velha.tscn; riacho fundo em x = 8): troca a ponte por uma que cede com o tempo e põe o cachorro
 ## parado em cima dela.
 static func preparar_ponte_que_cede(jogo: Node) -> String:
 	var velha: Node = jogo.fase.get_node("Objetos").get_node("Ponte")
@@ -95,7 +95,7 @@ static func preparar_ponte_que_cede(jogo: Node) -> String:
 	return "ok"
 
 
-## Fase 06, num gramado livre: uma placa de pedra (32.5, 31.5) e uma de madeira (32.5, 34.5), cada
+## No campo (cenas/campo.tscn), num gramado livre: uma placa de pedra (32.5, 31.5) e uma de madeira (32.5, 34.5), cada
 ## uma com um tronco de 3 células ao longo de X deitado com o **meio** em cima (células x 31 a 33).
 static func preparar_tronco_na_placa(jogo: Node) -> String:
 	for dados in [["pedra", Placa.PEDRA, 31.5], ["madeira", Placa.MADEIRA, 34.5]]:

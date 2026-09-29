@@ -1,0 +1,29 @@
+# N07 — Graveto aceso: encosta a ponta do graveto comum na fogueira acesa (ele pega fogo) e leva
+# o fogo à fogueira apagada, que só acende com fogo; acesa, ela abre o portão (canal 0).
+fase res://scenes/fases/neve_07_graveto_aceso.tscn
+esperar 20
+checar obj("Fogueira").acesa
+checar not obj("Fogueira", 1).acesa
+checar not obj("Portao").aberto
+ir 2.5 -2.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 4.5 -4.4
+esperar 90
+checar jogo.cachorro.graveto.aceso
+ir 9.5 -4.4
+esperar 60
+checar obj("Fogueira", 1).acesa
+checar obj("Portao").aberto
+apertar largar_graveto
+esperar 90
+ir 11.0 -2.5
+ir 13.5 -2.5
+ir 15.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto and jogo.cachorro.graveto.lendario
+ir 13.5 -2.5
+ir 11.0 -2.5
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

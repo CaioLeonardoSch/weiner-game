@@ -1,0 +1,30 @@
+# F31 — Girar o tronco: ele está ao longo do riacho. Mordendo a ponta sul (F, de frente) e
+# andando para oeste, gira 90° em volta da outra ponta; aí, empurrado ao comprido, desliza até
+# atravessar o riacho e vira pinguela.
+# (Para leste não gira: o cachorro terminaria dentro do riacho — "Sem espaço para girar".)
+fase res://scenes/fases/floresta_31_tronco_gira.tscn
+esperar 20
+checar obj("TroncoRolante").celulas() == [Vector3i(8, 0, -6), Vector3i(8, 0, -5), Vector3i(8, 0, -4)]
+ir 8.5 -2.2
+ir 8.5 -2.5 60
+apertar acao 120
+rumo 6.5 -3.0 120
+esperar 150
+checar obj("TroncoRolante").celulas() == [Vector3i(8, 0, -6), Vector3i(7, 0, -6), Vector3i(6, 0, -6)]
+ir 4.5 -4.0
+ir 4.5 -5.5
+rumo 9.8 -5.5 900
+esperar 600
+checar obj("TroncoRolante").celulas() == [Vector3i(12, 0, -6), Vector3i(11, 0, -6), Vector3i(10, 0, -6)]
+checar obj("TroncoRolante").estado == 2
+ir 13.5 -5.5
+checar jogo.cachorro.global_position.x > 13.0
+ir 15.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 13.5 -5.5
+ir 9.0 -5.5
+checar jogo.cachorro.global_position.x < 10.0
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

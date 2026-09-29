@@ -1,0 +1,42 @@
+# F26 — O passarinho na placa: pousado, ele segura o portão (invertido) fechado; um latido e ele
+# voa por 5 s — dá para passar correndo. Na volta, larga o graveto para latir.
+fase res://scenes/fases/floresta_26_contrapeso.tscn
+esperar 20
+checar not obj("Portao").aberto
+ir 8.5 -4.0
+apertar latir
+esperar 20
+checar obj("Passaro").voou
+checar obj("Portao").aberto
+ir 8.5 -2.5
+ir 12.0 -2.5
+checar jogo.cachorro.global_position.x > 11.0
+ir 13.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+# O passarinho volta e fecha o portão.
+esperar 300
+checar not obj("Passaro").voou
+checar not obj("Portao").aberto
+ir 11.8 -2.5 200
+apertar latir
+esperar 20
+checar not obj("Passaro").voou
+apertar largar_graveto
+# (A câmera volta para a isométrica: 1,2 s sem controle.)
+esperar 90
+checar not jogo.cachorro.tem_graveto
+apertar latir
+esperar 20
+checar obj("Passaro").voou
+checar obj("Portao").aberto
+# O graveto caiu logo à frente: pega de novo passando por ele.
+ir 11.0 -2.5
+esperar 90
+checar jogo.cachorro.tem_graveto
+checar obj("Portao").aberto
+ir 8.0 -2.5
+checar jogo.cachorro.global_position.x < 9.5
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

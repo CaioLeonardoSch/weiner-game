@@ -1,0 +1,28 @@
+# F24 — Portinhola: o cachorro passa andando contra ela; o graveto, só ao comprido.
+fase res://scenes/fases/floresta_24_portinhola.tscn
+esperar 20
+ir 6.5 -2.5
+rumo 10.0 -2.5 150
+esperar 150
+checar jogo.cachorro.global_position.x > 9.0
+ir 12.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+# Atravessado, não passa (e avisa).
+ir 10.5 -2.5
+rumo 7.0 -2.5 60
+esperar 60
+checar jogo.cachorro.global_position.x > 8.5
+checar jogo.aviso.text.contains("ao comprido")
+ir 11.0 -2.5
+apertar virar_graveto
+esperar 30
+checar jogo.cachorro.graveto_ao_comprido
+# A volta ao comprido ainda não dá: a ponta do graveto bate nas tábuas antes de o cachorro
+# chegar à portinhola (issue #31). Quando for
+# corrigida, a rota continua assim:
+#   ir 7.0 -2.5 200
+#   checar jogo.cachorro.global_position.x < 8.0
+#   ir -2.5 -3.0
+#   esperar 60
+#   checar jogo.concluida

@@ -1,0 +1,24 @@
+# F28 — O cão vizinho: na volta (3D) um passarinho fecha o vão, onde não dá para largar o graveto;
+# passando com o graveto perto do vizinho, ele late de ciúme e o passarinho voa.
+fase res://scenes/fases/floresta_28_vizinho.tscn
+esperar 20
+ir 7.0 -2.5
+ir 12.0 -2.5
+checar jogo.cachorro.global_position.x > 11.0
+ir 13.5 -2.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+checar obj("Passaro").visible and not obj("Passaro").voou
+# Sem o vizinho, o passarinho barra o vão.
+ir 9.8 -2.5
+rumo 7.0 -2.5 60
+esperar 60
+checar jogo.cachorro.global_position.x > 8.5
+# Pertinho do vizinho, com o graveto: ciúme.
+ir 10.5 -3.2
+esperar 90
+checar obj("Passaro").voou
+ir 7.0 -2.5
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

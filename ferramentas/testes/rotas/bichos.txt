@@ -1,7 +1,7 @@
 # Bichos e latidos: o dono dormindo acorda com o latido; um cão vizinho ouve e late de volta,
 # e o latido dele espanta um passarinho longe do cachorro; o esquilo leva um graveto largado
 # para a porta da toca, guarda, e foge com um latido (e larga o que estava levando).
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_bichos.gd preparar_vizinho
 esperar 5
@@ -31,7 +31,7 @@ teleportar 5.1 0.05 -4.0
 esperar 20
 checar jogo.get_meta("graveto").ja_pego
 # Levando e ouve o latido: larga no caminho.
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_bichos.gd preparar_esquilo
 esperar 5
@@ -46,7 +46,7 @@ checar jogo.get_meta("graveto").com_bicho == null and not jogo.get_meta("graveto
 checar jogo.get_meta("graveto").global_position.distance_to(jogo.get_meta("esquilo").porta()) > 0.8
 # Cão vizinho com ciúme: passar perto dele com um graveto na boca faz ele latir (e o latido
 # dele acorda o dono).
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_bichos.gd preparar_vizinho
 chamar res://ferramentas/testes/teste_bichos.gd graveto_na_boca

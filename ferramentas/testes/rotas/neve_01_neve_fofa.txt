@@ -1,0 +1,24 @@
+# N01 — Neve fofa: o cachorro anda mais devagar, e demora a parar (na grama para na hora).
+fase res://scenes/fases/neve_01_neve_fofa.tscn
+esperar 20
+checar jogo.fase.bioma == 1
+checar jogo.fase.regiao == &"neve"
+# Na grama: 3,5 m/s, e para assim que solta a tecla.
+rumo 2.5 -3.5 30
+esperar 20
+checar jogo.cachorro.velocity.length() > 3.4
+esperar 13
+checar jogo.cachorro.velocity.length() < 0.1
+# Na neve fofa: mais devagar e, soltando, ainda escorrega um pouco.
+ir 4.0 -3.5
+rumo 9.0 -3.5 60
+esperar 40
+checar jogo.cachorro.velocity.length() < 2.8
+esperar 23
+checar jogo.cachorro.velocity.length() > 1.0
+ir 11.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

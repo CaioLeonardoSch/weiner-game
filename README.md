@@ -101,7 +101,7 @@ O progresso (fases concluídas e pelagens) fica em `progresso.cfg`, na pasta do 
   número, escreva a conversão em `Fases.migrar()` e ponha um save de exemplo da versão antiga
   em `ferramentas/testes/saves/` (o teste `save` carrega e confere). Um save de uma versão mais
   nova do jogo não é mexido.
-- **Cada fase tem um id** (`Fase.id`, ex.: `fase_01`) — é ele que vai para o save, não o nome
+- **Cada fase tem um id** (`Fase.id`, ex.: `floresta_01_andar`) — é ele que vai para o save, não o nome
   do arquivo. Renomear ou mover o arquivo (ex.: para pastas de região) não apaga o ✓. O editor
   dá um id novo ao **Salvar como** (fase nova); nunca reaproveite o id de outra fase. Se um id
   precisar mudar, anote o antigo → novo em `Fases.IDS_RENOMEADOS`.
@@ -117,7 +117,7 @@ A rota `save` testa a pasta do save, os ids das fases e a migração de saves an
 (`ferramentas/testes/teste_mecanismos.gd`); `editor` testa trechos, colar girado, módulos,
 balde, bioma, o F2 sem chão firme e o tronco escolhido no editor (`teste_editor.gd`); `neve` e `celeiro` montam fases de neve por código
 (`teste_neve.gd`) e testam frio, fogueira, gelo e o celeiro; `menu` escolhe a raça da região
-no menu e confere que ela vale no jogo, a raça fixa da Fase 05 e a tela *antes de jogar*
+no menu e confere que ela vale no jogo, a raça fixa do rebanho (N09) e a tela *antes de jogar*
 (`teste_menu.gd`); `passagens` testa toca de texugo, portinhola, alavanca, comporta, portão
 com atraso e lampadinhas e passarinhos que voltam (`teste_passagens.gd`); `clima` testa os
 climas da fase e os tiles de poças e lama (`teste_clima.gd`); `vento_gelo_fogo` testa gelo liso,
@@ -126,100 +126,74 @@ Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
 Os testes não mexem nos arquivos do jogador: usam as opções de fábrica e guardam o progresso
 só na memória (se o `progresso.cfg` real mudar durante um teste, o teste falha).
 
-## Fase 01 — "O Primeiro Graveto"
+## Esteira de fases de teste
 
-Ida em visão isométrica: a trilha é estreita, cercada por mato e floresta. O mato bloqueia o
-caminho, então o salsicha sobe a rampa, anda pelo barranco e pula lá de cima perto do graveto.
-Ao pegar o graveto a câmera vira 3D e revela o túnel no mato (as bocas ficam tampadas por
-folhagem "só isométrica") — o único caminho de volta, porque o barranco é de mão única.
+As fases de agora são uma **esteira de teste**: cada uma valida **uma mecânica**, numa trilha
+simples e igual para todas. O cachorro começa ao lado do dono, busca o graveto lendário no fim da
+trilha e volta. Cada fase tem uma rota em `ferramentas/testes/rotas/` com o mesmo nome, que
+joga a fase e confere a mecânica, não só o fim.
 
-## Fase 02 — "O Precipício"
+As cenas são geradas por `ferramentas/gerar_esteira.gd`, que tem um método por fase:
 
-O graveto agora é grande e pesado (1,4 m, peso 2). Uma escada de pedra sobe a um **platô** de
-2 m; lá embaixo corre o rio, e a única passagem até o outro platô é um **tronco** redondo — uma
-pinguela que **balança** mesmo sem graveto. Correndo, o cachorro cai; andando devagar (Shift),
-passa. Do outro lado, desce a escada e **pula** para o degrau do graveto. Na volta, com o graveto
-na boca, balança ainda mais: **Q** vira o graveto ao comprido (no alto do platô — na escada ao
-comprido ele bate nos degraus) e devagar pelo tronco.
+    godot --headless --path . --script res://ferramentas/gerar_esteira.gd [-- floresta_07_ponte ...]
 
-## Fase 03 — "O Monte e o Passarinho"
+Sem nomes, o gerador refaz todas as fases. **Atenção:** ele sobrescreve as cenas, então quem
+editar uma fase no editor deve levar a mudança para o gerador (ou parar de usá-lo para ela).
 
-Um monte de **terra fofa** fecha a trilha: o salsicha **cava** (C) um túnel através dele. Do
-outro lado do riacho (pela ponte velha), um **passarinho** está pousado no graveto e não deixa
-pegar — um **latido** (B) e ele voa. **Pegar o graveto derruba a ponte** (um *Gatilho* ligado a
-ela): as tábuas caem e a água leva. Para voltar, **empurre o bloco de pedra** para dentro do
-riacho; ele afunda e vira passagem (se o bloco ficar encurralado num canto, volta sozinho para o
-lugar). Com o graveto na boca não dá para cavar nem latir.
+**Floresta** (`scenes/fases/floresta_*.tscn`):
 
-## Fase 04 — "A Correnteza"
+| Fase | Mecânica |
+|---|---|
+| F01 Andar e pegar | andar, pegar o graveto, entregar ao dono |
+| F02 A outra perspectiva | a câmera vira 3D ao pegar; folhagem "só isométrica" esconde o túnel da volta |
+| F03 Pular | pular um vão e um degrau (a habilidade vem da fase) |
+| F04 Rampas e escadas | sem pular: sobe pela rampa, desce pela escada |
+| F05 Degrau alto | só pulando; com o graveto na boca o pulo não chega (a volta é descendo) |
+| F06 Rampa lisa | com um graveto pesado na boca, escorrega; a escada do lado é a saída |
+| F07 A ponte | ponte sobre água funda |
+| F08 Tábua e pinguela | passagem estreita: equilíbrio, andar devagar, graveto ao comprido |
+| F09 Correnteza e vau | a correnteza arrasta; o vau de água rasa só deixa mais lento |
+| F10 Cavar | túnel no monte de terra fofa; no chão, a terra fofa vira buraco |
+| F11 Debaixo da cerca | cavar sob a cerca; o graveto comprido só passa ao comprido |
+| F12 Graveto enterrado | cavar o montinho para desenterrar o graveto |
+| F13 Empurrar o bloco | bloco de pedra para dentro do riacho (vira passagem) |
+| F14 Puxar o bloco | F de frente para o bloco e andar para trás |
+| F15 Placa de madeira | qualquer coisa aciona; um graveto largado segura o portão |
+| F16 Placa de pedra | só algo pesado (o bloco) aciona; o cachorro não |
+| F17 Duas placas (regra E) | o portão só abre com as duas placas acionadas |
+| F18 Portão com atraso | o portão demora a fechar: dá para passar correndo |
+| F19 Alavanca | F na alavanca liga e desliga o canal |
+| F20 A ponte que cai | pegar o graveto derruba a ponte (gatilho) |
+| F21 A ponte que cede | a ponte fraca cai com alguém parado em cima |
+| F22 Comporta | a alavanca liga a comporta: a água funda baixa e dá pé |
+| F23 Toca de texugo | a toca leva à outra da mesma cor, por baixo da terra (volta: ver issue #31) |
+| F24 Portinhola | a portinhola só passa com o graveto ao comprido (volta: ver issue #31) |
+| F25 Passarinhos | o latido espanta o passarinho que guarda o graveto e o que fecha o vão |
+| F26 O passarinho na placa | o passarinho pousado segura o portão fechado; o latido o faz voar por um tempo |
+| F27 O esquilo | guarda o graveto; um latido e ele se esconde |
+| F28 O cão vizinho | late de ciúme quando o salsicha passa com o graveto e espanta o passarinho |
+| F29 O dono cochilou | largar o graveto, latir e entregar |
+| F30 O tronco rola | de lado rola; ao comprido desliza até virar pinguela sobre o riacho |
+| F31 Girar o tronco | mordendo a ponta e andando de lado, gira 90°; depois vira pinguela |
+| F32 O tronco no rio | na correnteza rasa o tronco boia; onde o rio fica fundo, afunda atravessado (pinguela) |
+| F33 Dia de tempestade | clima com chuva, vento e raios; poças e lama |
 
-Primeira fase sem habilidades extras. Um rio largo de **correnteza** corta a trilha: ela é mais
-forte que o passo do cachorro e leva quem entra para fora da trilha (e para a água funda). Na
-margem há um **bloco de pedra** e um **tronco** comprido. Empurrada para dentro do rio, a pedra
-fica de pé no leito; empurrado **ao comprido** (4 vezes), o tronco entra no rio, **boia** e a
-correnteza o leva rio abaixo — até **parar na pedra**. Aí é atravessar por cima dele, devagar
-(ele é redondo e balança). Depois, a ponte do canal, a escada e o graveto; a volta é pelo mesmo
-tronco. Sem a pedra, o tronco desce o rio e volta para o lugar.
+**Neve** (`scenes/fases/neve_*.tscn`, região Neve):
 
-## Fase 05 — "O Pastor"
+| Fase | Mecânica |
+|---|---|
+| N01 Neve fofa | mais devagar, e demora a parar |
+| N02 Gelo | soltando a tecla, continua deslizando |
+| N03 Gelo liso | desliza em linha reta (na grade) até bater |
+| N04 Monte de neve | cavar através do monte |
+| N05 Frio e fogueira | o calor cai longe do fogo; a fogueira acende com 2 gravetos; gelado, volta ao último lugar quente |
+| N06 O fogo derrete | a fogueira acesa derrete o monte de neve |
+| N07 Graveto aceso | leva o fogo de uma fogueira a outra; a acesa abre o portão |
+| N08 Vento forte | rajadas empurram; atrás das pedras fica abrigado |
+| N09 O rebanho | Border Collie: ovelhas ao cercado |
+| N10 O celeiro | com frio, ovelhas ao celeiro |
 
-Primeira fase com outra raça (**Border Collie**) e outro objetivo: **levar as ovelhas ao
-cercado**. As ovelhas fogem do cachorro que chega perto — é preciso ficar *atrás* delas em
-relação ao cercado para empurrar o rebanho. **Latir** (B, nativo da raça) espanta de vez. Elas
-não entram na água funda: o riacho só se atravessa pelo **vau** de água rasa. A porteira do
-cercado fica no lado oeste; dentro dele a ovelha se acalma e não sai mais.
-
-## Fase 06 — "O Portão"
-
-Uma cerca viva atravessa a trilha com um **portão amarelo**. A **placa de pressão amarela** é de
-**pedra**: só algo pesado segura o portão aberto — o cachorro sozinho não. A saída é **empurrar o
-bloco de pedra** para a placa.
-
-## Fase 07 — "A Chave e o Prêmio"
-
-O **graveto lendário** (dourado) está sobre uma placa azul, segurando o portão azul aberto. Pegou,
-o portão fecha — com o cachorro do lado de dentro. Qualquer placa da mesma cor segura o portão:
-antes, é preciso levar um **graveto comum** para a outra placa azul (de madeira: qualquer coisa
-aciona), lá fora — o cachorro não pode ficar em cima dela e passar pelo portão ao mesmo tempo.
-
-## Fase 08 — "A Ponte Velha"
-
-A ponte velha aguenta a ida — e **cai atrás do cachorro** logo depois (um *Gatilho* na margem de
-lá): as tábuas caem no riacho e a água leva. Para voltar, um **tronco** deitado ao lado do rio:
-**mordendo a ponta** (segure F de frente para ela) e andando **de lado**, o tronco **gira 90°**
-em volta da outra ponta; depois, empurrado **ao comprido**, ele avança até encaixar entre as duas
-margens — vira uma **pinguela** (redonda, balança). Aí é buscar o lendário e voltar devagar.
-
-## Fase 09 — "O Passeio Completo"
-
-Junta tudo: a **placa vermelha de pedra** (só algo pesado aciona — o bloco ou o tronco) segurando
-o portão vermelho; a ponte que **cai quando o graveto lendário é pego**; e o tronco que, girado
-e empurrado, vira a pinguela da volta. (Também dá para usar o tronco na placa e afundar o bloco
-no riacho.)
-
-## Fase 10 — "Debaixo da Cerca"
-
-Uma **cerca com terra fofa** embaixo atravessa a trilha: cavando (C) de frente para ela, o
-salsicha abre um vão por baixo. Depois, um **degrau alto** — só pulando, e com graveto na boca o
-pulo não chega (caminho de mão única). No platô, um **montinho de terra**: o graveto lendário
-está enterrado, é só cavar. Ele é comprido: na volta, pelo vão da cerca, só passa ao comprido (Q).
-
-## Fase 11 — "O Tronco no Rio"
-
-Não há ponte, e a correnteza larga leva quem entra. O **tronco** está deitado ao longo do rio:
-mordendo a ponta e andando de lado, ele **gira** e fica atravessado; empurrado ao comprido, entra
-na correnteza, **boia** e desce o rio (dá para ir em cima) até onde o rio **estreita** — ali ele
-encaixa entre as margens e vira pinguela. Se ele encalhar de outro jeito (entrou no rio ao
-comprido, por exemplo), volta para o lugar. Do outro lado, a **placa verde** (de madeira) abre o
-portão verde — e ele trava aberto.
-
-## Fase 12 — "O Vizinho"
-
-Um latido espanta o passarinho do vão do muro. O **esquilo** guarda o graveto lendário na porta da
-toca: um latido e ele se esconde por alguns segundos — corra. Na volta, com o graveto na boca,
-outro passarinho fecha o vão, e ali não dá para largar o graveto… mas o **cão vizinho** late de
-ciúme quando o salsicha passa com o graveto, e o latido dele espanta o passarinho. E o **dono
-cochilou**: larga o graveto, late, pega de novo e entrega.
+Bugs encontrados nas rotas viram issues no repositório (#27 a #33), e as rotas citam o número.
 
 ## Gravetos, placas e portões
 
@@ -345,13 +319,13 @@ cochilou**: larga o graveto, late, pega de novo e entrega.
 
 - **Regiões** (`assets/regioes/*.tres`, recurso `Regiao`: nome, descrição, ordem, bioma
   sugerido e **raças compatíveis**) agrupam as fases no menu
-  (**Regiões**). Cada fase diz a sua na propriedade *Região*. Hoje: **Floresta** (as Fases 01 a
-  12; salsicha ou pug) e **Neve** (vazia, esperando as fases; salsicha ou border collie).
+  (**Regiões**). Cada fase diz a sua na propriedade *Região*. Hoje: **Floresta** (F01 a F33 da
+  esteira; salsicha ou pug) e **Neve** (N01 a N10; salsicha ou border collie).
 - **Raça antes de jogar**: na tela da região (e na tela *antes de jogar*, que abre no
   *Continuar*, ao chegar numa região nova e em *Trocar de raça* na pausa) o jogador escolhe a
   raça entre as `racas` da região; a escolha fica guardada por região e vale em todas as fases
   dela. A lista de fases marca ✓ verde as feitas com a raça escolhida e ✓ apagado as feitas com
-  outra. Uma fase com **Sempre com esta raça** (`Fase.raca_fixa`, ex.: a Fase 05 do Border
+  outra. Uma fase com **Sempre com esta raça** (`Fase.raca_fixa`, ex.: o rebanho N09, do Border
   Collie) ignora a escolha. Testando no editor, vale a raça da fase. Toda fase da região precisa
   ter solução com cada raça compatível. A ordem do jogo (continuar, próxima fase) é a das regiões e, dentro de
   cada uma, a do nome do arquivo. Para uma região nova, duplique um `.tres` e mude `id`, `nome`
@@ -424,9 +398,9 @@ e clique; o **Cursor** (Esc) não coloca nada: seleciona e arrasta objetos, most
 propriedades à direita e, arrastando no vazio, gira a vista (com Shift, arrasta). A visão (V) alterna entre ver tudo, **isométrica** (o que o jogador vê na ida) e **3D**
 (a volta). **Salvar** (Ctrl+S) grava por cima do arquivo da fase. Para criar uma fase nova:
 **Nova** (parte de um modelo) ou abra uma fase existente, mude o nome e use **Salvar como** — o
-arquivo novo leva o nome da fase (`Fase 02 — A ponte` → `scenes/fases/fase_02_a_ponte.tscn`).
+arquivo novo leva o nome da fase (`Floresta 34 — A ponte` → `scenes/fases/floresta_34_a_ponte.tscn`).
 As fases são jogadas na ordem das regiões e, dentro de cada região, pelo nome do arquivo — então
-comece o nome com "Fase 02", "Fase 03"... (ou "Neve 01", "Neve 02"...).
+comece o nome pelo número ("Floresta 34", "Floresta 35"... ou "Neve 11", "Neve 12"...).
 Num jogo exportado as fases salvas vão para `user://fases/`.
 
 **Pelo editor do Godot** — também funciona: pinte o GridMap `Terreno` com a biblioteca de tiles e
@@ -460,7 +434,7 @@ na fase, frio sem fogueira...).
 
 Nas propriedades da fase (nada selecionado) ficam a **região**, o **bioma**, o **objetivo**, a
 **raça** do cachorro (a do teste no editor; pelo menu vale a escolhida entre as da região, a
-não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir) — a Fase 01 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
+não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir) — a F02 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
 objetivo pede alguns objetos:
 
 | Objetivo | Precisa de |
@@ -528,7 +502,7 @@ esconde a boca de um túnel); "só 3D" só aparecem depois (ex.: árvores na fre
 tapariam a visão isométrica). Use a *Zona sem largar* onde largar o graveto deixaria o cachorro
 preso quando as tampas voltarem, e a *Zona de dica* (texto mostrado quando o cachorro entra
 nela) para explicar a virada: com visibilidade "Só 3D" ela só vale na volta — ex.: "A ponte
-sumiu! Empurre a pedra para dentro do riacho". As Fases 02, 03 e 04 usam uma assim.
+sumiu! Empurre a pedra para dentro do riacho".
 
 Cuidado com a câmera isométrica (inclinação de 55°): um bloco de altura *h* esconde uns
 0,7 × *h* metros de chão logo atrás dele. Um muro de 2 m esconde por inteiro uma passagem de 1 m

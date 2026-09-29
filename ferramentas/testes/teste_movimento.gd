@@ -2,7 +2,7 @@ extends RefCounted
 ## Ajudantes da rota ferramentas/testes/rotas/movimento.txt (Etapa 4: rampa lisa, degrau alto).
 
 
-## Na Fase 06: rampa lisa baixa subindo para +X em (2, 0, -5) até um meio bloco em x = 3; e um
+## No campo (cenas/campo.tscn): rampa lisa baixa subindo para +X em (2, 0, -5) até um meio bloco em x = 3; e um
 ## degrau alto em (2, 0, -2).
 static func preparar(jogo: Node) -> String:
 	var terreno: GridMap = jogo.fase.terreno

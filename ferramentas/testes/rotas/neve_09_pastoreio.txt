@@ -1,0 +1,7 @@
+# N09 — O rebanho (Border Collie): leva as três ovelhas ao cercado (piloto automático de teste).
+fase res://scenes/fases/neve_09_pastoreio.tscn
+esperar 20
+checar jogo.cachorro.raca.id == "border_collie"
+chamar res://ferramentas/testes/piloto_pastoreio.gd iniciar
+esperar 9000
+checar jogo.concluida

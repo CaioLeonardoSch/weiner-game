@@ -32,9 +32,11 @@ static func rodar(jogo: Node) -> String:
 	checar.call("formato 1 → atual: migrou", fases.migrar(cfg))
 	checar.call("versão gravada", int(cfg.get_value("save", "versao", 0)) == fases.VERSAO_PROGRESSO)
 	fases.progresso = cfg
+	# (As fases antigas não existem mais: confere os ids gravados.)
+	var concluidas: PackedStringArray = cfg.get_value("fases", "concluidas", PackedStringArray())
 	for numero in ["01", "02", "05"]:
-		checar.call("fase_%s continua concluída" % numero, fases.concluida("res://scenes/fases/fase_%s.tscn" % numero))
-	checar.call("fase_03 continua não concluída", not fases.concluida("res://scenes/fases/fase_03.tscn"))
+		checar.call("fase_%s continua concluída" % numero, "fase_%s" % numero in concluidas)
+	checar.call("fase_03 continua não concluída", not "fase_03" in concluidas)
 	checar.call("pelagens ficaram", cfg.get_value("pelagens", "salsicha", -1) == 2
 		and cfg.get_value("pelagens", "border_collie", -1) == 1)
 	checar.call("migrar de novo não muda nada", not fases.migrar(cfg))

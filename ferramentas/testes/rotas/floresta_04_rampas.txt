@@ -1,0 +1,23 @@
+# F04 — Rampas e escadas: sem pular, o platô (1 m) barra; sobe pela rampa (oeste), desce pela
+# escada (leste), pega o graveto e faz o caminho de volta com ele na boca.
+fase res://scenes/fases/floresta_04_rampas.tscn
+esperar 20
+ir 5.0 -2.0
+ir 7.0 -2.0 90
+checar jogo.cachorro.global_position.x < 6.0
+ir 3.0 -5.0
+ir 8.0 -5.0
+checar jogo.cachorro.global_position.y > 0.9
+ir 11.3 -2.0
+ir 14.5 -2.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+checar jogo.cachorro.global_position.y < 0.3
+ir 11.0 -2.0
+checar jogo.cachorro.global_position.y > 0.9
+ir 6.5 -5.0
+ir 3.0 -5.0
+checar jogo.cachorro.global_position.y < 0.3
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

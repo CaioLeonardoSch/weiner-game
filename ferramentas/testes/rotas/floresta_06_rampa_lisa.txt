@@ -1,0 +1,22 @@
+# F06 — Rampa lisa: sem carga (ou com graveto leve) ela sobe; com o graveto pesado (1,6) o
+# cachorro escorrega — a volta é pela escada.
+fase res://scenes/fases/floresta_06_rampa_lisa.tscn
+esperar 20
+ir 4.0 -3.5
+ir 9.0 -3.5
+checar jogo.cachorro.global_position.y > 0.9
+ir 13.5 -5.0
+checar jogo.cachorro.global_position.y < 0.3
+ir 14.5 -4.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+# Subir a rampa lisa com o graveto pesado: escorrega.
+ir 10.0 -5.0 240
+checar jogo.cachorro.global_position.y < 0.6
+ir 13.5 -2.0
+ir 10.0 -2.0
+checar jogo.cachorro.global_position.y > 0.9
+ir 4.0 -2.0
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

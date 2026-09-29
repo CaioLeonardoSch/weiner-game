@@ -6,7 +6,7 @@ static func _colocar(jogo: Node, nome: String, posicao: Vector3, yaw := 0.0) -> 
 	return jogo.fase.adicionar_objeto(load("res://scenes/objetos/%s.tscn" % nome), posicao, yaw)
 
 
-## Na Fase 06: graveto comum enterrado, terra fofa no chão e uma cerca com terra fofa.
+## No campo (cenas/campo.tscn): graveto comum enterrado, terra fofa no chão e uma cerca com terra fofa.
 static func preparar(jogo: Node) -> String:
 	jogo.cachorro.pode_cavar = true
 	var graveto := _colocar(jogo, "graveto_comum", Vector3(2.5, 0.08, -2.5)) as Graveto

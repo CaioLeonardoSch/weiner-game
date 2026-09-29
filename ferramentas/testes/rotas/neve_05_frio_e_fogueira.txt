@@ -1,0 +1,44 @@
+# N05 — Frio e fogueira: longe do fogo o calor cai; a fogueira acende com 2 gravetos comuns
+# (F perto dela, com o graveto na boca) e aquece. Gelado, o cachorro volta para o último lugar
+# quente.
+fase res://scenes/fases/neve_05_frio_e_fogueira.tscn
+esperar 20
+checar jogo.cachorro.sente_frio
+checar not obj("Fogueira").acesa
+ir 4.5 -5.5
+esperar 10
+checar jogo.cachorro.tem_graveto and not jogo.cachorro.graveto.lendario
+checar jogo.cachorro.calor < 1.0
+ir 7.5 -3.5
+apertar acao
+esperar 30
+checar obj("Fogueira").gravetos == 1
+checar not obj("Fogueira").acesa
+ir 5.5 -1.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 7.5 -3.5
+apertar acao
+esperar 30
+checar obj("Fogueira").acesa
+esperar 60
+checar jogo.cachorro.aquecendo
+checar jogo.cachorro.calor > 0.99
+# Longe do fogo por mais de 30 s: gela e volta para o último lugar quente (na beira do calor).
+ir 7.5 -1.5
+ir 14.0 -1.5
+esperar 1500
+checar jogo.cachorro.calor < 0.35
+esperar 400
+checar jogo.cachorro.global_position.x < 10.5 and jogo.cachorro.aquecendo
+checar jogo.cachorro.calor > 0.9
+ir 7.5 -1.5
+ir 10.0 -1.5
+ir 17.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto and jogo.cachorro.graveto.lendario
+ir 10.0 -1.5
+ir 7.5 -1.5
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

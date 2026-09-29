@@ -1,5 +1,5 @@
 # Save do jogador: pasta fixa, ids das fases e migração de saves antigos (ver teste_save.gd).
-fase res://scenes/fases/fase_01.tscn
+fase res://scenes/fases/floresta_01_andar.tscn
 esperar 5
 chamar res://ferramentas/testes/teste_save.gd rodar
 checar jogo.get_meta("save_ok", false)

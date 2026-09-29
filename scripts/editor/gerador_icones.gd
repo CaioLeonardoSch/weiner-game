@@ -60,4 +60,12 @@ static func _caixa(no: Node3D) -> AABB:
 		var local := no.global_transform.affine_inverse() * visual.global_transform * visual.get_aabb()
 		caixa = local if primeira else caixa.merge(local)
 		primeira = false
+	# Blocos de uma GridMap (a miniatura de um módulo): a GridMap não é um VisualInstance3D.
+	for filho in no.find_children("*", "GridMap", true, false):
+		var grade := filho as GridMap
+		var para_o_no := no.global_transform.affine_inverse() * grade.global_transform
+		for celula in grade.get_used_cells():
+			var bloco := para_o_no * AABB(grade.map_to_local(celula) - grade.cell_size * 0.5, grade.cell_size)
+			caixa = bloco if primeira else caixa.merge(bloco)
+			primeira = false
 	return caixa if not primeira else AABB(Vector3(-0.5, 0.0, -0.5), Vector3.ONE)

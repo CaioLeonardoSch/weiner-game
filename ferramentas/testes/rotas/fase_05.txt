@@ -1,6 +1,0 @@
-# Fase 05 — O Pastor: piloto automático de pastoreio (as ovelhas têm aleatoriedade).
-fase res://scenes/fases/fase_05.tscn
-esperar 30
-chamar res://ferramentas/testes/piloto_fase_05.gd iniciar
-esperar 36000
-checar jogo.concluida

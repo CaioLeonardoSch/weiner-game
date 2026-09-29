@@ -17,7 +17,9 @@ extends Node3D
 ## Módulos salvos (scenes/modulos/) aparecem na paleta e colam do mesmo jeito — ver Trecho e
 ## Modulos. Alt + clique no terreno é o balde (troca uma mancha inteira de blocos iguais).
 ## Tudo passa pelo desfazer/refazer (Ctrl+Z / Ctrl+Y). Ctrl+S salva em scenes/fases/.
-## F1 testa a fase como está (sem salvar) e volta para cá no mesmo ponto.
+## F1 testa a fase como está (sem salvar) e volta para cá no mesmo ponto. Antes de testar (e de
+## salvar), a validação confere a fase — inclusive se o graveto parece alcançável (AlcanceEditor).
+## M mostra/esconde o minimapa (MinimapaEditor): clicar nele leva a câmera.
 
 enum Modo { SELECAO, TERRENO, OBJETO, LIGAR, TRECHO, COLAR }
 ## Ferramentas do terreno.
@@ -155,6 +157,7 @@ var _rotulo_tamanho: Label
 var _secoes: Array[Dictionary] = []
 var _recolhidas := {}
 var _secao_recentes: Dictionary
+var minimapa: MinimapaEditor
 
 @onready var camera_editor: CameraEditor = $CameraEditor
 @onready var camera: Camera3D = $CameraEditor/Camera3D
@@ -205,6 +208,13 @@ func _ready() -> void:
 	_catalogo = Catalogo.objetos()
 	_montar_paleta()
 	_montar_barra_ferramentas()
+	minimapa = MinimapaEditor.new()
+	minimapa.name = "Minimapa"
+	minimapa.editor = self
+	minimapa.painel_direito = $UI/PainelInspetor
+	minimapa.barra_de_baixo = $UI/BarraStatus
+	$UI.add_child(minimapa)
+	$UI.move_child(minimapa, ajuda.get_index())
 
 	var cena := Fases.cena_atual()
 	caminho = Fases.caminho_atual
@@ -250,6 +260,8 @@ func _carregar(nova: Fase) -> void:
 	_selecionar(null)
 	var inicio := fase.primeiro(InicioCachorro)
 	camera_editor.foco = inicio.global_position if inicio else Vector3.ZERO
+	if minimapa:
+		minimapa.marcar_desatualizado()
 
 
 ## Fase nova: um gramado com o início, o dono, o graveto e algumas árvores.
@@ -447,6 +459,7 @@ func _validar() -> Dictionary:
 		if absf(fposmod(local.x, 1.0) - 0.5) > 0.05 or absf(fposmod(local.z, 1.0) - 0.5) > 0.05:
 			avisos.append("Bloco empurrável fora do centro da célula (ele anda de célula em célula).")
 			break
+	avisos.append_array(AlcanceEditor.avisos(fase))
 	return {graves = graves, avisos = avisos}
 
 
@@ -633,12 +646,22 @@ func _montar_modulos() -> void:
 		secao.itens.append(dica)
 		_itens_modulos.append(dica)
 	for caminho in lista:
-		var botao := _botao_paleta(Modulos.nome(caminho), IconesDesenhados.textura("modulo"))
+		var botao := _botao_paleta(Modulos.nome(caminho), _miniatura_do_modulo(caminho))
 		botao.set_meta(&"ferramenta", "modulo:" + caminho)
 		botao.tooltip_text = caminho
 		botao.pressed.connect(_colar_modulo.bind(caminho))
 		_itens_modulos.append(botao)
 	_filtrar_paleta(_texto_busca())
+
+
+## Miniatura do módulo (os blocos e objetos dele, com as texturas do bioma da fase aberta), ou o
+## ícone genérico se ele não carregar.
+func _miniatura_do_modulo(caminho: String) -> Texture2D:
+	var trecho := Modulos.carregar(caminho)
+	if trecho == null or trecho.vazio():
+		return IconesDesenhados.textura("modulo")
+	var biblioteca: MeshLibrary = load(Tiles.biblioteca_do_bioma(fase.bioma if fase else Biomas.FLORESTA))
+	return icones.icone(trecho.montar_previa(biblioteca))
 
 
 ## "Recentes": os últimos itens usados (tiles, objetos, módulos), para voltar a eles rápido —
@@ -917,6 +940,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		ajuda.visible = not ajuda.visible
 	elif event.is_action_pressed("editor_perspectiva"):
 		_proxima_visao()
+	elif event.is_action_pressed("editor_minimapa"):
+		minimapa.visible = not minimapa.visible
+		minimapa.marcar_desatualizado()
 	elif event.is_action_pressed("editor_conta_gotas"):
 		_conta_gotas()
 	elif event.is_action_pressed("editor_ligar"):
@@ -2026,27 +2052,9 @@ func _preparar_colagem() -> void:
 	colagem = _colagem_base.girado(_giro_colagem)
 	if _previa:
 		_previa.queue_free()
-	_previa = Node3D.new()
+	_previa = colagem.montar_previa(terreno.mesh_library)
 	_previa.name = "PreviaColagem"
 	add_child(_previa)
-	var grade := GridMap.new()
-	grade.mesh_library = terreno.mesh_library
-	grade.cell_size = terreno.cell_size
-	grade.collision_layer = 0
-	grade.collision_mask = 0
-	_previa.add_child(grade)
-	for dados in colagem.celulas:
-		grade.set_cell_item(dados[0], dados[1], grade.get_orthogonal_index_from_basis(dados[2]))
-	for dados in colagem.objetos:
-		var cena := load(dados.cena) as PackedScene
-		if cena == null:
-			continue
-		var fantasma_objeto := cena.instantiate() as ObjetoFase
-		fantasma_objeto.process_mode = Node.PROCESS_MODE_DISABLED
-		_previa.add_child(fantasma_objeto)
-		fantasma_objeto.transform = dados.transform
-		for nome in dados.propriedades:
-			fantasma_objeto.set(nome, dados.propriedades[nome])
 	_previa.visible = false
 
 
@@ -2317,10 +2325,14 @@ func _atualizar_icones_dos_tiles() -> void:
 	var biblioteca: MeshLibrary = load(Tiles.biblioteca_do_bioma(fase.bioma))
 	for id: int in _botoes_tile:
 		(_botoes_tile[id] as Button).icon = icones.icone_tile(biblioteca, id)
+	for item in _itens_modulos:
+		if item is Button and item.has_meta(&"ferramenta"):
+			(item as Button).icon = _miniatura_do_modulo((item.get_meta(&"ferramenta") as String).trim_prefix("modulo:"))
 
 
 func _on_versao_mudou() -> void:
 	modificado = true
+	minimapa.marcar_desatualizado()
 	_aplicar_ambiente()
 	_caixas.clear()
 	inspetor.atualizar_valores()

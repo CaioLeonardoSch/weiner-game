@@ -1,7 +1,7 @@
 # HUD e controles (issue #13): barra de equilíbrio escondida no começo; mirante sai com um
 # Esc e aceita R; puxar vira até agarrar e avisa por que não puxou; a correnteza não leva o
 # cachorro parado à força.
-fase res://scenes/fases/fase_08.tscn
+fase res://ferramentas/testes/cenas/ponte_velha.tscn
 checar not jogo.indicador_equilibrio.visible
 esperar 20
 # Mirante: F morde; um Esc só já sai.
@@ -27,7 +27,7 @@ esperar 30
 checar jogo._mirante == null and jogo.fase != null
 # Puxar contra o portão: vira para o bloco segurando F (chegando de lado) e avisa que não tem
 # espaço atrás.
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 20
 chamar res://ferramentas/testes/teste_hud.gd puxar_contra_o_portao
 esperar 5
@@ -40,7 +40,7 @@ esperar 15
 checar jogo.aviso_painel.visible and jogo.aviso.text.begins_with("Sem espaço")
 esperar 30
 # Correnteza (Fase 04): parado à força, a água não leva o cachorro.
-fase res://scenes/fases/fase_04.tscn
+fase res://ferramentas/testes/cenas/riacho.tscn
 esperar 20
 teleportar 4.5 0.3 -10.5
 esperar 10

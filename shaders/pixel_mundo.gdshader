@@ -15,6 +15,10 @@
 // Vento: com `balanco` > 0 (árvores, capim), o modelo balança com o vento global `vento`
 // (direção × força, em XZ). O ponto de cima balança mais; a base fica parada. A textura acompanha
 // o modelo (os texels vêm da posição de antes do balanço).
+//
+// Transparência na frente (árvores): o que fica entre a câmera e o cachorro (global `alvo_visao`)
+// some em pontilhado (dither) num cilindro em volta da linha de visão, para a árvore não tapar o
+// cachorro. `transparencia_na_frente` (0 a 1) é ligada pelo jogo (0 no editor e no menu).
 shader_type spatial;
 render_mode diffuse_lambert, specular_disabled;
 
@@ -43,10 +47,15 @@ uniform bool pocas_congeladas = false;
 uniform bool reflexos = false;
 // Quanto o modelo balança com o vento (0 = parado). Árvores ~1; capim baixo, mais.
 uniform float balanco = 0.0;
+// Este material fica pontilhado quando tapa o cachorro (ver acima).
+uniform bool some_na_frente = false;
 
 // Clima (ver scripts/clima.gd): intensidade da chuva (0 a 1) e vento (XZ = direção × força).
 global uniform float chuva;
 global uniform vec3 vento;
+// Onde está o cachorro e quanto a árvore na frente dele some (0 = nada).
+global uniform vec3 alvo_visao;
+global uniform float transparencia_na_frente;
 
 varying vec3 pos_mundo;
 varying vec3 normal_mundo;
@@ -138,7 +147,35 @@ vec3 desenhar_pocas(vec3 cor, float suavizar) {
 	return cor;
 }
 
+// Raio (m) do cilindro em volta da linha câmera → cachorro onde a árvore some; na borda, some menos.
+const float RAIO_VISAO = 1.1;
+const float BORDA_VISAO = 0.5;
+
+// Limiar do pontilhado ordenado 4×4 (Bayer) no pixel da tela: 0 a 1.
+float bayer4(vec2 pixel) {
+	int x = int(mod(pixel.x, 4.0));
+	int y = int(mod(pixel.y, 4.0));
+	int indice = x + y * 4;
+	int matriz[16] = int[](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
+	return (float(matriz[indice]) + 0.5) / 16.0;
+}
+
 void fragment() {
+	if (some_na_frente && transparencia_na_frente > 0.0) {
+		// Para a câmera: na ortogonal, a direção da vista; na perspectiva, rumo à câmera.
+		bool ortogonal = PROJECTION_MATRIX[3][3] == 1.0;
+		vec3 para_camera = ortogonal ? normalize(INV_VIEW_MATRIX[2].xyz)
+			: normalize(CAMERA_POSITION_WORLD - alvo_visao);
+		vec3 relativo = pos_mundo - alvo_visao;
+		float adiante = dot(relativo, para_camera);
+		float distancia = length(relativo - para_camera * adiante);
+		// Só o que está na frente do cachorro (do lado da câmera), não atrás.
+		float quanto = smoothstep(RAIO_VISAO + BORDA_VISAO, RAIO_VISAO, distancia)
+			* smoothstep(0.2, 0.8, adiante) * transparencia_na_frente;
+		if (quanto * 0.8 > bayer4(FRAGCOORD.xy)) {
+			discard;
+		}
+	}
 	vec3 n = normalize(normal_mundo);
 	// Texel "dentro" da superfície (meio texel para trás na direção da normal): estável na face.
 	vec3 texel = floor(pos_mundo * texels_por_metro - n * 0.5);

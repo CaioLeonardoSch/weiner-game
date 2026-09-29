@@ -229,9 +229,17 @@ func trocar_clima(tipo: int) -> void:
 	add_child(clima)
 	clima.configurar(tipo, fase.bioma, $Ambiente, cachorro)
 
+
+func _exit_tree() -> void:
+	RenderingServer.global_shader_parameter_set(&"transparencia_na_frente", 0.0)
+
+
 func _process(delta: float) -> void:
 	if objetivo and not concluida:
 		objetivo.processar(delta)
+	# As árvores entre a câmera e o cachorro ficam pontilhadas (shaders/pixel_mundo.gdshader).
+	RenderingServer.global_shader_parameter_set(&"alvo_visao", cachorro.global_position + Vector3.UP * 0.35)
+	RenderingServer.global_shader_parameter_set(&"transparencia_na_frente", 1.0)
 	_atualizar_marcas()
 	_atualizar_rotulo_acao()
 	# Graveto grande emperrado num vão: lembra que dá para virar (uma vez por fase).

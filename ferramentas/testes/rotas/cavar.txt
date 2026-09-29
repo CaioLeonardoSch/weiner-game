@@ -1,6 +1,6 @@
 # Etapa 5 — cavar: desenterrar um graveto, cavar um buraco no chão de terra fofa (o cachorro
 # entra e sai escalando) e cavar por baixo de uma cerca (passagem baixa).
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 chamar res://ferramentas/testes/teste_cavar.gd preparar
 checar jogo.get_meta("enterrado").enterrado

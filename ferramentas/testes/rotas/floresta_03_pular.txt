@@ -1,0 +1,29 @@
+# F03 — Pular: sem pulo, o meio bloco já barra; pulando, sobe o meio bloco e depois o bloco
+# inteiro; do outro lado desce e pega o graveto; a volta pulando de novo (com o graveto na
+# boca o pulo é mais baixo, mas meio bloco por vez ainda dá).
+fase res://scenes/fases/floresta_03_pular.tscn
+esperar 20
+checar jogo.cachorro.pode_pular
+ir 7.0 -3.5 150
+checar jogo.cachorro.global_position.x < 5.2
+rumo 7.0 -3.5
+apertar pular 4
+esperar 40
+checar jogo.cachorro.global_position.y > 0.4
+apertar pular 4
+esperar 40
+checar jogo.cachorro.global_position.y > 0.9
+ir 10.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+rumo 7.0 -3.5
+esperar 20
+apertar pular 4
+esperar 40
+checar jogo.cachorro.global_position.y > 0.4
+apertar pular 4
+esperar 40
+checar jogo.cachorro.global_position.y > 0.9
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

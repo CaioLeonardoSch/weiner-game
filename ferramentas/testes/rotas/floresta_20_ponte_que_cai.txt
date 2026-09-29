@@ -1,0 +1,20 @@
+# F20 — A ponte que cai: pegar o graveto (Gatilho "graveto pego") derruba a ponte, com aviso; a
+# volta é empurrando o bloco para dentro do riacho (empurrar com o graveto na boca).
+fase res://scenes/fases/floresta_20_ponte_que_cai.tscn
+esperar 20
+ir 6.5 -4.5
+ir 10.0 -4.5
+checar not obj("Ponte").quebrada
+ir 14.5 -3.5
+esperar 30
+checar jogo.cachorro.tem_graveto
+checar obj("Ponte").quebrada
+# (O aviso da ponte some sob o "Nova perspectiva!" — issue #29.)
+ir 12.8 -2.5
+ir 11.7 -2.5
+ir 7.0 -2.5
+checar obj("Empurravel").afundado
+checar jogo.cachorro.global_position.x < 7.5
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

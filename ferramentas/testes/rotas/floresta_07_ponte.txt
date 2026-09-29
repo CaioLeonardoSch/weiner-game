@@ -1,0 +1,20 @@
+# F07 — A ponte: água funda não dá pé (volta ao ponto seguro); a ponte atravessa.
+fase res://scenes/fases/floresta_07_ponte.tscn
+esperar 20
+ir 5.3 -5.5
+ir 7.0 -5.5 90
+esperar 90
+checar jogo.cachorro.global_position.x < 6.0
+checar jogo.cachorro.global_position.y > -0.1
+ir 5.0 -3.5
+ir 9.0 -3.5
+checar jogo.cachorro.global_position.x > 8.5
+ir 10.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir 9.0 -3.5
+ir 4.5 -3.5
+checar jogo.cachorro.tem_graveto
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

@@ -2,7 +2,7 @@
 # cachorro desliza até bater e o bloco também; o vento empurra, atrás de um bloco fica abrigado e
 # o graveto na boca vira vela; a ponta do graveto pega fogo na fogueira, derrete o monte de neve,
 # acende a fogueira que só acende com fogo e, com a chama no fim, apaga.
-fase res://scenes/fases/fase_06.tscn
+fase res://ferramentas/testes/cenas/campo.tscn
 esperar 10
 # Gelo liso: um toque para a direita e o cachorro vai sozinho até o bloco no fim da fileira.
 chamar res://ferramentas/testes/teste_etapa11.gd preparar_gelo

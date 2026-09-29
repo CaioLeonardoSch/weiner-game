@@ -1,0 +1,24 @@
+# F29 — O dono cochilou: com ele dormindo não dá para entregar; larga o graveto, late, e entrega.
+fase res://scenes/fases/floresta_29_dono_dormindo.tscn
+esperar 20
+ir 8.5 -3.5
+esperar 10
+checar jogo.cachorro.tem_graveto
+ir -2.2 -3.0
+esperar 60
+checar not jogo.concluida
+checar obj("Dono").dormindo
+apertar largar_graveto
+# (A câmera volta para a isométrica: 1,2 s sem controle.)
+esperar 90
+checar not jogo.cachorro.tem_graveto
+apertar latir
+esperar 30
+checar not obj("Dono").dormindo
+ir 0.5 -3.0
+ir -1.0 -3.0 200
+esperar 10
+ir -2.5 -3.0
+# Pegou de novo já do lado do dono: entrega no fim da transição da câmera.
+esperar 120
+checar jogo.concluida
