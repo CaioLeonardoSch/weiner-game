@@ -23,12 +23,21 @@ const ROTULOS := {
 	&"position": "Posição",
 	&"habilidades": "Habilidades do cachorro",
 	&"raca": "Raça do cachorro",
+	&"raca_fixa": "Sempre com esta raça",
 	&"objetivo": "Objetivo",
 	&"peso": "Peso (1 = normal)",
 	&"regiao": "Região",
 	&"bioma": "Bioma (texturas, céu, entorno)",
+	&"clima": "Clima (chuva, neve, vento)",
 	&"frio": "Frio (o cachorro precisa se esquentar)",
 	&"tempo_de_frio": "Segundos até gelar",
+	&"largura": "Largura (m)",
+	&"forca": "Vento de sempre (m/s)",
+	&"forca_rajada": "Rajada (m/s)",
+	&"intervalo": "Segundos entre rajadas",
+	&"duracao_rajada": "Duração da rajada (s)",
+	&"defasagem": "Atraso do ciclo (s)",
+	&"acende_com_fogo": "Só acende com graveto aceso",
 }
 const NOMES_VISIBILIDADE := ["Sempre", "Só isométrico", "Só 3D"]
 
@@ -72,10 +81,12 @@ func mostrar(alvo: Object) -> void:
 		_campo(&"nome")
 		_campo(&"regiao")
 		_campo(&"bioma")
+		_campo(&"clima")
 		_campo(&"objetivo")
 		_campo(&"raca")
+		_campo(&"raca_fixa")
+		_dica_raca_no_menu(alvo as Fase)
 		_campo(&"habilidades")
-		_dica_habilidades_da_raca(alvo as Fase)
 		_campo(&"desvio_camera_3d")
 		_campo(&"frio")
 		if (alvo as Fase).frio:
@@ -255,15 +266,14 @@ func _campo(propriedade: StringName) -> void:
 	_atualizadores[propriedade].call()
 
 
-func _dica_habilidades_da_raca(fase: Fase) -> void:
-	var raca := Racas.por_id(fase.raca)
-	if raca == null or raca.habilidades_nativas == 0:
+## Jogando pelo menu, a raça é a que o jogador escolheu entre as da região (se não for fixa).
+func _dica_raca_no_menu(fase: Fase) -> void:
+	var regiao := Regioes.por_id(fase.regiao)
+	if fase.raca_fixa or regiao == null:
 		return
-	var nomes: PackedStringArray = []
-	for i in 3:
-		if raca.habilidades_nativas & (1 << i):
-			nomes.append(["Pular", "Cavar", "Latir"][i])
-	_dica("%s já sabe: %s (vale sempre)." % [raca.nome, ", ".join(nomes)])
+	var nomes := regiao.racas_compativeis().map(func(r: Raca) -> String: return r.nome)
+	_dica("No menu, o jogador escolhe: %s (raças da região). Teste com cada uma." % ", ".join(nomes))
+
 
 
 func _nome_de_opcao(propriedade: StringName, texto: String) -> String:

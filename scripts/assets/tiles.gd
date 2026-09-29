@@ -14,7 +14,8 @@ const BIBLIOTECAS := ["res://assets/tiles/tiles.tres", "res://assets/tiles/tiles
 ## Materiais que cada bioma troca: na neve, a grama vira grama coberta de neve, a pedra ganha
 ## neve em cima etc. O resto (água, madeira, terra fofa, tiles de neve) fica igual.
 const MATERIAIS_POR_BIOMA := {
-	1: {"grama": "neve", "mato": "mato_nevado", "terra": "terra_gelada", "pedra": "pedra_nevada"},
+	1: {"grama": "neve", "mato": "mato_nevado", "terra": "terra_gelada", "pedra": "pedra_nevada",
+		"grama_pocas": "neve_pocas"},
 }
 
 const GRAMA := 0
@@ -43,6 +44,9 @@ const DEGRAU_ALTO := 22
 const NEVE_FOFA := 23
 const MONTE_DE_NEVE := 24
 const GELO := 25
+const GRAMA_COM_POCAS := 26
+const LAMA := 27
+const GELO_LISO := 28
 
 ## Quanto (m) a malha VISUAL de cada tile passa da célula em X e Z, para os vizinhos se
 ## sobreporem um fio. Sem isso, na emenda entre dois blocos de 8×8 células do GridMap (os
@@ -90,7 +94,9 @@ const _TABUA := [Vector2(-0.5, -0.58), Vector2(0.5, -0.58), Vector2(0.5, -0.5), 
 ## `rasa`: água rasa, dá para atravessar a pé; `lentidao` multiplica a velocidade e
 ## `correnteza` (m/s) arrasta o cachorro no sentido +X do tile (gire no editor com Q/E).
 ## `aderencia` (0 a 1, padrão 1): com menos, o cachorro demora a arrancar e a parar (neve fofa)
-## ou desliza (gelo). `derrete_em`: o fogo aceso por perto troca o tile por este (-1 = some).
+## ou desliza (gelo). `deslizante`: gelo liso — o cachorro e os blocos empurrados deslizam em
+## linha reta, sem controle, até bater em algo ou sair do gelo. `lama`: chão de lama (por enquanto só a aparência; no futuro, suja o
+## cachorro). As poças da grama e da lama são só visuais (o material desenha). `derrete_em`: o fogo aceso por perto troca o tile por este (-1 = some).
 ## Colisão: "perfil" (o formato), "bloco" (cubo cheio) ou "nenhuma"; `colisao_perfil` usa
 ## outro perfil para a colisão (escadas colidem como rampa).
 ## Cantos de rampa (`forma` "canto_externo"/"canto_interno", `base` = altura de onde a rampa
@@ -123,6 +129,9 @@ static func definicoes() -> Array[Dictionary]:
 		{id = NEVE_FOFA, nome = "Neve fofa", perfil = _BLOCO, material = "neve_fofa", lentidao = 0.7, aderencia = 0.25, derrete_em = TERRA, cor = Color("f2f5fb")},
 		{id = MONTE_DE_NEVE, nome = "Monte de neve", perfil = _BLOCO, material = "monte_neve", cavavel = true, derrete_em = -1, cor = Color("dde6f2")},
 		{id = GELO, nome = "Gelo", perfil = _BLOCO, material = "gelo", aderencia = 0.06, cor = Color("a6d4f0")},
+		{id = GRAMA_COM_POCAS, nome = "Grama com poças", perfil = _BLOCO, material = "grama_pocas", cor = Color("4f9a5a")},
+		{id = LAMA, nome = "Lama", perfil = _BLOCO, material = "lama", lama = true, cor = Color("5e4028")},
+		{id = GELO_LISO, nome = "Gelo liso", perfil = _BLOCO, material = "gelo_liso", deslizante = true, cor = Color("c4e6fa")},
 	]
 
 
@@ -149,8 +158,17 @@ static func eh_buraco(id: int) -> bool:
 	return definicao(id).get("buraco", false)
 
 
+static func eh_lama(id: int) -> bool:
+	return definicao(id).get("lama", false)
+
+
 static func eh_escorregadia(id: int) -> bool:
 	return definicao(id).get("escorregadia", false)
+
+
+## Gelo liso (o "gelo de puzzle"): quem pisa desliza em linha reta até bater em algo.
+static func eh_deslizante(id: int) -> bool:
+	return definicao(id).get("deslizante", false)
 
 
 ## O fogo derrete este tile?

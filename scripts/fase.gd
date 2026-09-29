@@ -31,17 +31,24 @@ const OBJETIVO_PASTOREIO := 1
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
 @export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)") var objetivo := OBJETIVO_GRAVETO
-## Raça do cachorro nesta fase (id de assets/racas/*.tres). A raça soma habilidades próprias
-## às da fase (ex.: o Border Collie sempre late).
+## Raça do cachorro nesta fase (id de assets/racas/*.tres): só muda o tamanho. Jogando pelo
+## menu, vale a raça que o jogador escolheu para a região (Regiao.racas); esta é a do teste no
+## editor — e a de sempre, com `raca_fixa`.
 @export var raca := &"salsicha"
+## A fase é sempre jogada com a `raca` acima, qualquer que seja a escolhida para a região (ex.:
+## o pastoreio da Fase 05 é do Border Collie).
+@export var raca_fixa := false
 ## Região a que a fase pertence (id de assets/regioes/*.tres): o menu agrupa as fases por
 ## região, na ordem das regiões e, dentro de cada uma, pelo nome do arquivo.
 @export var regiao := &"floresta"
-## Bioma (ver Biomas): texturas dos tiles, céu, luz, entorno e neve caindo.
+## Bioma (ver Biomas): texturas dos tiles, céu, luz e entorno (e o clima padrão, ver `clima`).
 @export_enum("Floresta", "Neve") var bioma := Biomas.FLORESTA:
 	set(valor):
 		bioma = valor
 		_aplicar_bioma()
+## Clima (ver Clima): chuva, neve caindo, vento e tempestade. "Do bioma": neve no bioma de neve,
+## tempo bom nos outros.
+@export_enum("Do bioma", "Tempo bom", "Chuva", "Neve", "Ventania", "Tempestade") var clima := 0
 ## Frio: longe do fogo (fogueira acesa, celeiro) o cachorro perde calor; gelado demais, volta
 ## para perto do último fogo (ou do começo). Ver Dachshund.calor.
 @export var frio := false
@@ -126,6 +133,14 @@ func canal_completo(canal: int) -> bool:
 		and not (_fontes[canal] as Dictionary).values().has(false)
 
 
+## Quantas fontes do canal estão acionadas (x) de quantas existem (y).
+func fontes_do_canal(canal: int) -> Vector2i:
+	if not _fontes.has(canal):
+		return Vector2i.ZERO
+	var estados: Array = (_fontes[canal] as Dictionary).values()
+	return Vector2i(estados.count(true), estados.size())
+
+
 ## O canal liga quem reage? `todas`: regra E; senão, regra OU.
 func canal_ligado(canal: int, todas: bool) -> bool:
 	return canal_completo(canal) if todas else canal_ativo(canal)
@@ -141,10 +156,9 @@ func espalhar_latido(origem: Vector3, quem: Node) -> void:
 			objeto.ao_ouvir_latido(origem)
 
 
-## Habilidades da fase somadas às nativas da raça.
+## Habilidades que o cachorro tem nesta fase (iguais para todas as raças).
 func habilidades_efetivas() -> int:
-	var dados_raca := Racas.por_id(raca)
-	return habilidades | (dados_raca.habilidades_nativas if dados_raca else 0)
+	return habilidades
 
 
 func lista_objetos() -> Array[ObjetoFase]:

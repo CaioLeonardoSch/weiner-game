@@ -11,6 +11,9 @@ uniform float velocidade = 1.5;
 // Correnteza: > 0 faz as faixas andarem no sentido +X do tile (girado no editor).
 uniform float velocidade_fluxo = 0.0;
 
+// Clima (ver scripts/clima.gd): com chuva, pingos abrem anéis na superfície.
+global uniform float chuva;
+
 varying vec3 pos_mundo;
 varying vec3 normal_mundo;
 varying vec2 fluxo;
@@ -44,6 +47,20 @@ void fragment() {
 	float pisca = hash(texel + floor(TIME * 2.0 + fase * 8.0));
 	if (n.y > 0.5 && pisca > 0.97) {
 		cor = cor_brilho;
+	}
+	// Pingos: em cada meio metro, um anel que abre e some.
+	if (n.y > 0.5 && chuva > 0.0) {
+		vec2 pixel = (floor(pos_mundo.xz * texels_por_metro * 2.0) + 0.5) / (texels_por_metro * 2.0);
+		vec2 celula = floor(pixel * 2.0);
+		vec2 local = fract(pixel * 2.0);
+		float t = TIME * 1.1 + hash(vec3(celula.x, 3.3, celula.y));
+		float ciclo = floor(t);
+		float passo = fract(t);
+		vec2 onde = 0.3 + 0.4 * vec2(hash(vec3(celula.x, ciclo, 1.7)), hash(vec3(ciclo, celula.y, 5.9)));
+		float anel = 0.03 + passo * 0.3;
+		if (abs(length(local - onde) - anel) < 0.07 && hash(vec3(celula, ciclo + 0.5)) < chuva) {
+			cor = mix(cor, cor_brilho, (1.0 - passo) * 0.8);
+		}
 	}
 	ALBEDO = cor;
 	ROUGHNESS = 0.4;

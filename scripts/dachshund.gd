@@ -83,6 +83,11 @@ var _embalo := Vector3.ZERO
 ## Aceleração (m/s²) com aderência 1; a do chão é esta vezes a aderência dele.
 const ACELERACAO_MAXIMA := 30.0
 
+## Gelo liso: direção em que o cachorro está deslizando (±X ou ±Z; zero = parado/andando).
+var deslizando := Vector3.ZERO
+var _no_gelo_liso := false
+const VELOCIDADE_DESLIZE := 5.0
+
 ## Fase com frio (Fase.frio): o calor cai longe do fogo. O jogo liga isto.
 var sente_frio := false
 ## Segundos, bem aquecido, até gelar (Fase.tempo_de_frio).
@@ -106,6 +111,8 @@ var _sentido_puxar := Vector3.ZERO
 var _tronco_girando: TroncoRolante
 var _ponta_girando := -1
 var _tempo_empurrando := 0.0
+## Atravessando uma passagem (toca, portinhola): quem conduz é `atravessar`; a física fica parada.
+var atravessando := false
 
 @onready var modelo: Node3D = $Modelo
 @onready var boca: Marker3D = $Modelo/Boca
@@ -149,6 +156,9 @@ func posicionar(posicao: Vector3, yaw: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if atravessando:
+		velocity = Vector3.ZERO
+		return
 	if not is_on_floor():
 		velocity.y -= _gravidade * delta
 	elif pode_pular and not entrada_bloqueada and Input.is_action_just_pressed("pular"):
@@ -180,12 +190,22 @@ func _physics_process(delta: float) -> void:
 	# embora sem ele poder reagir.
 	if entrada_bloqueada:
 		arrasto = Vector3.ZERO
+	var vento := _efeito_do_vento()
 	horizontal *= _lentidao_piso * _fator_do_frio()
 	horizontal = _com_aderencia(horizontal, delta)
+	horizontal = _deslizar_no_gelo(horizontal, vento)
+	# Deslizando no gelo liso o vento não tira o cachorro da linha.
+	if deslizando == Vector3.ZERO:
+		arrasto += vento
 	velocity.x = horizontal.x + arrasto.x
 	velocity.z = horizontal.z + arrasto.z
 
 	move_and_slide()
+	# Bateu em algo (ou foi parado): o deslize termina.
+	if deslizando != Vector3.ZERO and is_on_floor() \
+			and get_real_velocity().dot(deslizando) < VELOCIDADE_DESLIZE * 0.3:
+		deslizando = Vector3.ZERO
+		_embalo = Vector3.ZERO
 	if is_on_wall():
 		# Deslizando contra uma parede, o embalo não continua empurrando para dentro dela.
 		var parede := get_wall_normal()
@@ -252,6 +272,76 @@ func virar_graveto() -> bool:
 	_tween_graveto.tween_property(graveto, "transform", _transform_visual_graveto(graveto_ao_comprido), 0.2) \
 		.set_trans(Tween.TRANS_SINE)
 	return true
+
+
+# --- Passagens ---------------------------------------------------------------------------
+
+## Atravessa uma passagem (portinhola, toca) sozinho: segue os `pontos` em `duracao` segundos,
+## sem colisão e sem o jogador controlar, olhando para `yaw` (radianos; 0 = +X). Com
+## `esconder`, some no começo (entrou na toca). Aguarde com `await`.
+func atravessar(pontos: PackedVector3Array, duracao: float, yaw: float, esconder := false) -> void:
+	atravessando = true
+	velocity = Vector3.ZERO
+	_embalo = Vector3.ZERO
+	($Colisao as CollisionShape3D).set_deferred("disabled", true)
+	colisao_graveto.set_deferred("disabled", true)
+	_yaw_alvo = yaw
+	modelo.rotation.y = yaw
+	var total := 0.0
+	var anterior := global_position
+	for ponto in pontos:
+		total += anterior.distance_to(ponto)
+		anterior = ponto
+	voxel.velocidade = total / maxf(duracao, 0.01)
+	voxel.no_chao = true
+	var tween := create_tween()
+	anterior = global_position
+	for ponto in pontos:
+		var parte := anterior.distance_to(ponto) / total if total > 0.001 else 1.0 / pontos.size()
+		tween.tween_property(self, "global_position", ponto, duracao * parte)
+		anterior = ponto
+	if esconder:
+		tween.parallel().tween_callback(hide).set_delay(duracao * 0.6)
+	await tween.finished
+	voxel.velocidade = 0.0
+
+
+## Fim da travessia: colisão de volta e o novo lugar vira o ponto seguro.
+func terminar_travessia() -> void:
+	show()
+	($Colisao as CollisionShape3D).disabled = false
+	colisao_graveto.disabled = not tem_graveto
+	if tem_graveto:
+		_atualizar_colisao_graveto()
+	velocity = Vector3.ZERO
+	_embalo = Vector3.ZERO
+	_pontos_seguros.clear()
+	_guardar_ponto_seguro()
+	atravessando = false
+
+
+## Direção (no chão, normalizada) para onde o jogador está mandando andar, ou zero.
+func direcao_desejada() -> Vector3:
+	if entrada_bloqueada or atravessando or camera_referencia == null:
+		return Vector3.ZERO
+	var entrada := Input.get_vector("mover_esquerda", "mover_direita", "mover_frente", "mover_tras")
+	if entrada == Vector2.ZERO:
+		return Vector3.ZERO
+	var frente := -camera_referencia.global_basis.z
+	frente.y = 0.0
+	var direita := camera_referencia.global_basis.x
+	direita.y = 0.0
+	return (direita.normalized() * entrada.x - frente.normalized() * entrada.y).normalized()
+
+
+## O graveto da boca cabe numa passagem? `so_ao_comprido`: atravessado não entra;
+## `comprimento_maximo` (m, 0 = qualquer). Sem graveto, cabe sempre.
+func graveto_passa(so_ao_comprido: bool, comprimento_maximo: float) -> bool:
+	if not tem_graveto or graveto == null:
+		return true
+	if so_ao_comprido and not graveto_ao_comprido:
+		return false
+	return comprimento_maximo <= 0.0 or graveto.comprimento <= comprimento_maximo + 0.001
 
 
 # --- Cavar, latir, empurrar ---------------------------------------------------------------
@@ -378,7 +468,7 @@ func latir() -> String:
 ## Objeto com ação do botão F (`ObjetoFase.acao_da_boca`) à frente do focinho: o mais perto
 ## até 1,2 m, dentro de ~60° da direção em que o cachorro olha. Null se não houver.
 func objeto_da_acao() -> ObjetoFase:
-	if fase == null or entrada_bloqueada:
+	if fase == null or entrada_bloqueada or atravessando:
 		return null
 	var frente := Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))
 	var melhor: ObjetoFase = null
@@ -547,8 +637,6 @@ func _velocidade_entrada() -> Vector3:
 	var direcao := direita * entrada.x - frente * entrada.y
 	_yaw_alvo = atan2(-direcao.z, direcao.x)
 	var fator := graveto.fator_velocidade() if tem_graveto and graveto else 1.0
-	if raca:
-		fator *= raca.fator_velocidade
 	if Input.is_action_pressed("andar_devagar"):
 		fator *= fator_devagar
 	return direcao * velocidade * fator
@@ -775,6 +863,9 @@ func _efeito_do_piso() -> Vector3:
 	_lentidao_piso = 1.0
 	em_correnteza = false
 	_na_agua_rasa = false
+	# No ar, continua valendo o último chão (quem pula deslizando cai deslizando).
+	if is_on_floor():
+		_no_gelo_liso = false
 	if fase == null or not is_on_floor() or not _pisando_no_terreno():
 		return Vector3.ZERO
 	var terreno := fase.terreno
@@ -783,6 +874,7 @@ func _efeito_do_piso() -> Vector3:
 	_lentidao_piso = definicao.get("lentidao", 1.0)
 	_aderencia = definicao.get("aderencia", 1.0)
 	_na_agua_rasa = definicao.get("rasa", false)
+	_no_gelo_liso = definicao.get("deslizante", false)
 	if not _na_agua_rasa:
 		return Vector3.ZERO
 	var forca: float = definicao.get("correnteza", 0.0)
@@ -810,6 +902,57 @@ func _com_aderencia(desejo: Vector3, delta: float) -> Vector3:
 		return desejo
 	_embalo = _embalo.move_toward(desejo, ACELERACAO_MAXIMA * _aderencia * delta)
 	return _embalo
+
+
+## Gelo liso (o gelo dos puzzles clássicos): pisando nele o cachorro sai deslizando em linha
+## reta, na direção da grade mais próxima de onde andava, e só para ao bater em algo ou ao sair
+## do gelo — no meio do caminho não dá para virar nem frear. Parado no gelo, uma rajada de
+## vento também põe o cachorro para deslizar.
+func _deslizar_no_gelo(horizontal: Vector3, vento: Vector3) -> Vector3:
+	if fase == null or entrada_bloqueada or _tempo_puxando > 0.0 or (is_on_floor() and not _no_gelo_liso):
+		deslizando = Vector3.ZERO
+		return horizontal
+	if deslizando == Vector3.ZERO:
+		if not is_on_floor():
+			return horizontal
+		var impulso := horizontal
+		if impulso.length_squared() < 0.25:
+			impulso = vento if vento.length() > 1.5 else Vector3.ZERO
+		if impulso == Vector3.ZERO:
+			return Vector3.ZERO
+		var direcao := Vector3(_na_grade(impulso))
+		if test_move(global_transform, direcao * 0.1):
+			# Encostado em algo nessa direção: não desliza, só força contra (empurra um bloco).
+			_yaw_alvo = atan2(-direcao.z, direcao.x)
+			return direcao * velocidade
+		deslizando = direcao
+	_yaw_alvo = atan2(-deslizando.z, deslizando.x)
+	# Puxa o cachorro para o meio da fileira de células (o deslize fica certinho na grade).
+	var terreno := fase.terreno
+	var centro := terreno.to_global(terreno.map_to_local(terreno.local_to_map(terreno.to_local(global_position))))
+	var lado := centro - global_position
+	lado.y = 0.0
+	lado -= deslizando * lado.dot(deslizando)
+	_embalo = deslizando * VELOCIDADE_DESLIZE + (lado * 8.0).limit_length(2.0)
+	return _embalo
+
+
+# --- Vento ---------------------------------------------------------------------------------
+
+## Empurrão do vento (ver Vento). O graveto na boca pega vento como uma vela: quanto mais
+## comprido e mais atravessado ao vento, mais empurra; o peso segura o cachorro no lugar.
+func _efeito_do_vento() -> Vector3:
+	if fase == null or entrada_bloqueada:
+		return Vector3.ZERO
+	var forca := Vento.total_em(self, global_position + Vector3.UP * 0.25)
+	if forca == Vector3.ZERO or not (tem_graveto and graveto):
+		return forca
+	# Eixo do graveto: atravessado fica de lado no focinho; ao comprido, para a frente.
+	var yaw := modelo.rotation.y
+	var eixo := Vector3(cos(yaw), 0.0, -sin(yaw)) if graveto_ao_comprido else Vector3(sin(yaw), 0.0, cos(yaw))
+	var exposicao := absf(eixo.cross(forca.normalized()).y)
+	var fator := 1.0 + 0.35 * graveto.comprimento * exposicao
+	return forca * fator / (1.0 + maxf(graveto.peso - 1.0, 0.0) * 0.6)
 
 
 # --- Frio ----------------------------------------------------------------------------------

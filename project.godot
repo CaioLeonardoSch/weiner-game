@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Weiner Game"
+config/name="The Weiner and the Legendary Sticks"
 config/version="0.1"
 run/main_scene="res://scenes/menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
@@ -298,6 +298,17 @@ editor_mod_alt={
 [physics]
 
 3d/physics_engine="Jolt Physics"
+
+[shader_globals]
+
+chuva={
+"type": "float",
+"value": 0.0
+}
+vento={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
 
 [rendering]
 

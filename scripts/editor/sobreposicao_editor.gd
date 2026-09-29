@@ -135,6 +135,14 @@ func _desenhar_canais() -> void:
 		if (fontes > 1 or todas) and em_foco:
 			var topo := alvo.global_position + Vector3.UP * (editor.caixa_local(alvo).end.y + 0.35)
 			_texto(topo, "E (todas)" if todas else "OU (qualquer)", cor)
+	# Tocas de texugo da mesma cor: a entrada de uma é a saída da outra.
+	var tocas: Array[ObjetoFase] = editor.fase.todos(Toca)
+	for i in tocas.size():
+		for j in range(i + 1, tocas.size()):
+			var a := tocas[i] as Toca
+			var b := tocas[j] as Toca
+			if a.canal == b.canal and a.visible and b.visible:
+				_tracejada(a.global_position + Vector3.UP * 0.9, b.global_position + Vector3.UP * 0.9, Canais.cor(a.canal))
 	if editor.modo != EditorFase.Modo.LIGAR:
 		return
 	for objeto in acionam + reagem:

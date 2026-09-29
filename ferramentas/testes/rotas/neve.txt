@@ -8,7 +8,7 @@ checar jogo.indicador_calor.visible
 esperar 60
 checar jogo.cachorro.calor < 0.99
 checar jogo.cachorro._lentidao_piso < 0.8 and jogo.cachorro._aderencia < 0.5
-checar jogo.get_node("NeveCaindo") != null
+checar jogo.get_node("Clima/NeveCaindo") != null
 
 # Primeiro graveto: vai para a fogueira (ainda apagada).
 teleportar -1.5 0.1 -2.5

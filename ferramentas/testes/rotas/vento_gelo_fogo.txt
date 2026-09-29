@@ -1,0 +1,47 @@
+# Etapa 11 — vento forte, gelo liso e graveto aceso (ver teste_etapa11.gd): no gelo liso o
+# cachorro desliza até bater e o bloco também; o vento empurra, atrás de um bloco fica abrigado e
+# o graveto na boca vira vela; a ponta do graveto pega fogo na fogueira, derrete o monte de neve,
+# acende a fogueira que só acende com fogo e, com a chama no fim, apaga.
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+# Gelo liso: um toque para a direita e o cachorro vai sozinho até o bloco no fim da fileira.
+chamar res://ferramentas/testes/teste_etapa11.gd preparar_gelo
+esperar 5
+apertar mover_direita 12
+esperar 30
+checar jogo.cachorro.deslizando.x > 0.5
+esperar 60
+checar jogo.cachorro.deslizando == Vector3.ZERO
+checar jogo.cachorro.global_position.x > 3.3 and jogo.cachorro.global_position.x < 4.0
+checar absf(jogo.cachorro.global_position.z + 2.5) < 0.15
+# O bloco empurrado uma vez no gelo segue até sair dele.
+chamar res://ferramentas/testes/teste_etapa11.gd empurrar_bloco
+esperar 150
+checar jogo.get_meta("bloco").global_position.x > 5.3
+# Vento: abrigado atrás do bloco, fica; no corredor aberto, é levado.
+chamar res://ferramentas/testes/teste_etapa11.gd preparar_vento
+esperar 60
+checar absf(jogo.cachorro.global_position.x - 4.45) < 0.2
+chamar res://ferramentas/testes/teste_etapa11.gd cachorro_no_vento
+esperar 30
+checar jogo.cachorro.global_position.x > 0.0
+chamar res://ferramentas/testes/teste_etapa11.gd medir_vela
+checar jogo.get_meta("vela") > 1.2
+# Graveto aceso.
+chamar res://ferramentas/testes/teste_etapa11.gd preparar_fogo
+esperar 5
+checar not jogo.get_meta("fogueira_apagada").acesa
+checar jogo.get_meta("fogueira_apagada").precisa_de_fogo()
+esperar 60
+checar jogo.get_meta("graveto").aceso
+chamar res://ferramentas/testes/teste_etapa11.gd ir_ao_monte
+esperar 60
+chamar res://ferramentas/testes/teste_etapa11.gd celula_monte
+checar jogo.get_meta("monte") == -1
+checar jogo.get_meta("graveto").chama < 0.8
+chamar res://ferramentas/testes/teste_etapa11.gd ir_a_fogueira_apagada
+esperar 30
+checar jogo.get_meta("fogueira_apagada").acesa
+chamar res://ferramentas/testes/teste_etapa11.gd quase_apagar
+esperar 30
+checar not jogo.get_meta("graveto").aceso

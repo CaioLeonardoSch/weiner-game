@@ -1,0 +1,47 @@
+# Clima (ver teste_clima.gd e scripts/clima.gd): grama com poças e lama são só visuais (o
+# cachorro anda por cima); cada clima monta o que tem (chuva com respingos, folhas, neve) e
+# manda a chuva e o vento para os shaders; tempo bom zera a chuva.
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+checar jogo.clima.tipo == 1
+chamar res://ferramentas/testes/teste_clima.gd pintar_chao
+esperar 5
+apertar mover_direita 40
+esperar 45
+checar jogo.cachorro.global_position.x > 3.0
+checar jogo.cachorro.is_on_floor()
+# Chuva: a intensidade sobe devagar até 0,8; os respingos acham o chão.
+chamar res://ferramentas/testes/teste_clima.gd chuva
+esperar 150
+chamar res://ferramentas/testes/teste_clima.gd medir
+checar jogo.get_meta("chuva_global") > 0.75
+checar jogo.get_meta("vento_global") > 0.3
+checar jogo.get_meta("respingos") > 100
+checar jogo.clima.get_node("Chuva").emitting
+checar jogo.clima.get_node_or_null("Folhas") == null
+# Ventania: folhas voando, sem chuva.
+chamar res://ferramentas/testes/teste_clima.gd ventania
+esperar 30
+chamar res://ferramentas/testes/teste_clima.gd medir
+checar jogo.get_meta("chuva_global") < 0.1
+checar jogo.get_meta("vento_global") > 1.5
+checar jogo.clima.get_node("Folhas") != null
+# Tempestade: chuva, folhas e raio (o sol pisca e volta).
+chamar res://ferramentas/testes/teste_clima.gd tempestade
+esperar 60
+chamar res://ferramentas/testes/teste_clima.gd raio
+esperar 3
+checar jogo.get_node("Ambiente/Sol").light_energy > 1.2
+esperar 200
+chamar res://ferramentas/testes/teste_clima.gd medir
+checar jogo.get_meta("chuva_global") > 0.9
+checar jogo.get_node("Ambiente/Sol").light_energy < 0.8
+# Neve e tempo bom.
+chamar res://ferramentas/testes/teste_clima.gd neve
+esperar 10
+checar jogo.clima.get_node("NeveCaindo") != null
+chamar res://ferramentas/testes/teste_clima.gd tempo_bom
+esperar 10
+chamar res://ferramentas/testes/teste_clima.gd medir
+checar jogo.get_meta("chuva_global") == 0.0
+checar jogo.get_node("Ambiente/Sol").light_energy > 0.9

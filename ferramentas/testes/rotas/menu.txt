@@ -1,0 +1,42 @@
+# Menu: a raça se escolhe por região (entre as compatíveis) antes de jogar e vale no jogo; a
+# fase de raça fixa (05, Border Collie) ignora a escolha; concluir guarda a raça; a pausa e a
+# região nova levam à tela "antes de jogar".
+esperar 30
+checar jogo.get_node("/root/Fases").raca_da_regiao(&"floresta").id == &"salsicha"
+chamar res://ferramentas/testes/teste_menu.gd abrir_floresta
+esperar 5
+checar jogo._titulo_tela.text == "Floresta"
+checar jogo._tela.find_child("Raca_pug", true, false) != null
+checar jogo._tela.find_child("Raca_border_collie", true, false) == null
+chamar res://ferramentas/testes/teste_menu.gd escolher_pug
+esperar 5
+checar jogo.get_node("/root/Fases").raca_da_regiao(&"floresta").id == &"pug"
+checar jogo._cachorro.raca.id == &"pug"
+checar jogo._tela.find_child("Raca_pug", true, false).text.begins_with("✓")
+# Jogar a Fase 01 pela lista: o cachorro é o pug.
+chamar res://ferramentas/testes/teste_menu.gd jogar_fase_01
+esperar 30
+checar jogo.fase.raca == &"pug"
+checar jogo.cachorro.raca.id == &"pug"
+checar jogo.get_node("/root/Fases").pode_escolher_raca(jogo.get_node("/root/Fases").caminho_atual)
+# Concluir guarda com que raça.
+eval jogo.concluir()
+checar jogo.get_node("/root/Fases").concluida_com("res://scenes/fases/fase_01.tscn", &"pug")
+checar not jogo.get_node("/root/Fases").concluida_com("res://scenes/fases/fase_01.tscn", &"salsicha")
+# A Fase 05 é sempre do Border Collie.
+fase res://scenes/fases/fase_05.tscn
+esperar 30
+checar jogo.cachorro.raca.id == &"border_collie"
+checar not jogo.get_node("/root/Fases").pode_escolher_raca("res://scenes/fases/fase_05.tscn")
+# "Trocar de raça" (pausa) / região nova: o menu abre na tela antes de jogar.
+chamar res://ferramentas/testes/teste_menu.gd antes_da_fase_03
+esperar 30
+checar jogo._titulo_tela.text == "Floresta"
+checar jogo._tela.find_child("Jogar", true, false) != null
+chamar res://ferramentas/testes/teste_menu.gd escolher_salsicha
+esperar 5
+checar jogo.get_node("/root/Fases").raca_da_regiao(&"floresta").id == &"salsicha"
+chamar res://ferramentas/testes/teste_menu.gd jogar
+esperar 30
+checar jogo.get_node("/root/Fases").caminho_atual == "res://scenes/fases/fase_03.tscn"
+checar jogo.cachorro.raca.id == &"salsicha"

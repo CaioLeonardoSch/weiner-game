@@ -9,3 +9,4 @@ nome = "Floresta"
 descricao = "Um cão e seu dono passeiam pela floresta, e o cãozinho vai juntando os gravetos favoritos. Cada fase é um dia de passeio."
 ordem = 0
 bioma = 0
+racas = Array[StringName]([&"salsicha", &"pug"])

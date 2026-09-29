@@ -428,11 +428,15 @@ func _validar() -> Dictionary:
 	var pedidos := 0
 	for fogueira in fase.todos(Fogueira):
 		pedidos += (fogueira as Fogueira).gravetos_para_acender
+	var com_fogo := fase.todos(Fogueira).filter(func(f: ObjetoFase) -> bool: return (f as Fogueira).acende_com_fogo)
+	if not com_fogo.is_empty() and com_fogo.size() == fase.todos(Fogueira).size():
+		avisos.append("Todas as fogueiras precisam de graveto aceso, mas nenhuma acende sozinha para dar o fogo.")
 	if pedidos > comuns:
 		avisos.append("As fogueiras pedem %d graveto(s) para acender, mas a fase só tem %d graveto(s) comum(ns)." % [pedidos, comuns])
 	var tem_neve := not terreno.get_used_cells_by_item(Tiles.NEVE_FOFA).is_empty() \
 		or not terreno.get_used_cells_by_item(Tiles.MONTE_DE_NEVE).is_empty() \
-		or not terreno.get_used_cells_by_item(Tiles.GELO).is_empty()
+		or not terreno.get_used_cells_by_item(Tiles.GELO).is_empty() \
+		or not terreno.get_used_cells_by_item(Tiles.GELO_LISO).is_empty()
 	if tem_neve and fase.bioma != Biomas.NEVE:
 		avisos.append("Há neve ou gelo no terreno, mas o bioma da fase é Floresta.")
 	for bloco in fase.todos(Empurravel):
@@ -1857,7 +1861,7 @@ func _alterar_propriedade(alvo: Object, propriedade: StringName, valor: Variant)
 	undo.commit_action()
 	if alvo == fase and propriedade == &"nome":
 		campo_nome.text = fase.nome
-	elif alvo == fase and propriedade in [&"raca", &"frio"]:
+	elif alvo == fase and propriedade in [&"raca", &"raca_fixa", &"regiao", &"frio"]:
 		# A dica das habilidades nativas depende da raça (e o frio mostra mais campos): remonta.
 		inspetor.mostrar.call_deferred(fase)
 
@@ -2237,6 +2241,15 @@ func _avisos_de_mecanismos() -> PackedStringArray:
 					avisos.append("%s (%s) pede todas as placas (E), mas só há uma." % [
 						objeto.nome_no_editor(), Canais.nome(canal).to_lower()])
 					break
+	var tocas := {}
+	for toca: ObjetoFase in fase.todos(Toca):
+		var canal: int = (toca as Toca).canal
+		tocas[canal] = tocas.get(canal, 0) + 1
+	for canal: int in tocas:
+		if tocas[canal] == 1:
+			avisos.append("Toca de texugo (%s) sem par: ponha outra da mesma cor para ser a saída." % Canais.nome(canal).to_lower())
+		elif tocas[canal] > 2:
+			avisos.append("%d tocas de texugo (%s): cada cor liga só duas." % [tocas[canal], Canais.nome(canal).to_lower()])
 	return avisos
 
 

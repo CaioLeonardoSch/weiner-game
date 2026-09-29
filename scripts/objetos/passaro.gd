@@ -3,7 +3,8 @@ class_name Passaro
 extends ObjetoFase
 ## Passarinho. Pousado perto do graveto (até 1 m), não deixa o cachorro pegar; com
 ## `bloqueia_passagem`, fica no caminho e não deixa passar. Um latido por perto e ele voa
-## embora para sempre (até reiniciar a fase).
+## embora — para sempre (até reiniciar a fase) ou, com `volta_depois`, volta para o mesmo
+## lugar depois de uns segundos (pousado numa placa, é um contrapeso que vai e volta).
 
 const DISTANCIA_GUARDA := 1.0
 
@@ -11,6 +12,8 @@ const DISTANCIA_GUARDA := 1.0
 	set(valor):
 		bloqueia_passagem = valor
 		_atualizar()
+## Segundos até voltar para o mesmo lugar depois de voar (0 = não volta).
+@export_range(0.0, 60.0, 0.5) var volta_depois := 0.0
 
 var voou := false
 var _tempo := 0.0
@@ -27,7 +30,7 @@ func categoria_no_editor() -> String:
 
 
 func propriedades_editaveis() -> Array[StringName]:
-	return [&"bloqueia_passagem"]
+	return [&"bloqueia_passagem", &"volta_depois"]
 
 
 func ao_colocar_no_editor(rng: RandomNumberGenerator) -> void:
@@ -70,6 +73,7 @@ func ao_ouvir_latido(origem: Vector3) -> void:
 	if voou:
 		return
 	voou = true
+	var poleiro := global_transform
 	remove_from_group(&"passaros")
 	($Corpo/Colisao as CollisionShape3D).set_deferred("disabled", true)
 	var fuga := global_position - origem
@@ -84,3 +88,27 @@ func ao_ouvir_latido(origem: Vector3) -> void:
 	asas.tween_property(modelo, "scale:y", 0.6, 0.1)
 	asas.tween_property(modelo, "scale:y", 1.0, 0.1)
 	tween.chain().tween_callback(hide)
+	if volta_depois > 0.0:
+		var de_onde := global_position + fuga * 7.0 + Vector3.UP * 5.0
+		tween.chain().tween_interval(volta_depois)
+		tween.chain().tween_callback(_voltar.bind(poleiro, de_onde))
+
+
+## Volta voando de `de_onde` e pousa no `poleiro` de antes, guardando/pesando de novo.
+func _voltar(poleiro: Transform3D, de_onde: Vector3) -> void:
+	global_position = de_onde
+	var chegada := poleiro.origin - de_onde
+	rotation.y = atan2(-chegada.z, chegada.x)
+	show()
+	var asas := create_tween().set_loops(7)
+	asas.tween_property(modelo, "scale:y", 0.6, 0.1)
+	asas.tween_property(modelo, "scale:y", 1.0, 0.1)
+	var tween := create_tween()
+	tween.tween_property(self, "global_position", poleiro.origin, 1.4) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await tween.finished
+	global_transform = poleiro
+	modelo.scale = Vector3.ONE
+	voou = false
+	add_to_group(&"passaros")
+	_atualizar()

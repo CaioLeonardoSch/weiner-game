@@ -1,0 +1,77 @@
+# Etapa 10 — passagens e mecanismos (ver teste_passagens.gd): a toca de texugo leva à outra da
+# mesma cor; a portinhola deixa passar (e na mão única, só num sentido); a alavanca fica como
+# está; o portão E mostra lampadinhas e o portão com atraso demora a fechar; a comporta baixa a
+# água e ela volta; o pássaro com "volta depois" pousa de novo no mesmo lugar.
+fase res://scenes/fases/fase_06.tscn
+esperar 10
+# Toca: andando para dentro do buraco, sai do outro lado da cerca.
+chamar res://ferramentas/testes/teste_passagens.gd preparar_tocas
+esperar 5
+apertar mover_direita 40
+esperar 40
+checar jogo.cachorro.atravessando
+esperar 120
+checar not jogo.cachorro.atravessando
+checar jogo.cachorro.visible
+checar jogo.cachorro.global_position.z > 3.0
+checar jogo.cachorro.global_position.distance_to(jogo.get_meta("toca_b").ponto_de_saida()) < 0.6
+# Portinhola: passa para o outro lado e volta; na mão única, não volta mais.
+chamar res://ferramentas/testes/teste_passagens.gd preparar_portinhola
+esperar 5
+apertar mover_direita 40
+esperar 60
+checar jogo.cachorro.global_position.x > 3.8
+apertar mover_esquerda 40
+esperar 60
+checar jogo.cachorro.global_position.x < 3.2
+chamar res://ferramentas/testes/teste_passagens.gd mao_unica
+apertar mover_direita 40
+esperar 60
+checar jogo.cachorro.global_position.x < 3.2
+# Alavancas e portões.
+chamar res://ferramentas/testes/teste_passagens.gd preparar_alavancas
+esperar 5
+checar jogo.get_meta("portao_e")._luzes.size() == 2
+checar not jogo.fase.canal_ativo(4)
+chamar res://ferramentas/testes/teste_passagens.gd puxar_a
+esperar 5
+checar jogo.get_meta("alavanca_a").ligada
+checar jogo.get_meta("portao_ou").aberto and not jogo.get_meta("portao_e").aberto
+chamar res://ferramentas/testes/teste_passagens.gd contar
+checar jogo.get_meta("lampadas") == 1
+chamar res://ferramentas/testes/teste_passagens.gd puxar_b
+esperar 5
+checar jogo.get_meta("portao_e").aberto
+chamar res://ferramentas/testes/teste_passagens.gd contar
+checar jogo.get_meta("lampadas") == 2
+chamar res://ferramentas/testes/teste_passagens.gd puxar_a
+chamar res://ferramentas/testes/teste_passagens.gd puxar_b
+esperar 60
+checar not jogo.fase.canal_ativo(4)
+checar jogo.get_meta("portao_ou").aberto
+checar not jogo.get_meta("portao_e").aberto
+esperar 180
+checar not jogo.get_meta("portao_ou").aberto
+# Comporta: a água funda do trecho vira rasa com o canal ligado e volta ao desligar.
+chamar res://ferramentas/testes/teste_passagens.gd preparar_comporta
+esperar 5
+chamar res://ferramentas/testes/teste_passagens.gd contar
+checar jogo.get_meta("agua_funda") == 12
+chamar res://ferramentas/testes/teste_passagens.gd puxar_comporta
+esperar 60
+checar jogo.get_meta("comporta").aberta
+chamar res://ferramentas/testes/teste_passagens.gd contar
+checar jogo.get_meta("agua_rasa") == 12
+chamar res://ferramentas/testes/teste_passagens.gd puxar_comporta
+esperar 60
+checar not jogo.get_meta("comporta").aberta
+chamar res://ferramentas/testes/teste_passagens.gd contar
+checar jogo.get_meta("agua_funda") == 12
+# Pássaro que volta.
+chamar res://ferramentas/testes/teste_passagens.gd preparar_passaro
+esperar 30
+checar jogo.get_meta("passaro").voou
+esperar 280
+checar not jogo.get_meta("passaro").voou
+checar jogo.get_meta("passaro").visible
+checar absf(jogo.get_meta("passaro").rotation.y - jogo.get_meta("passaro_giro")) < 0.01

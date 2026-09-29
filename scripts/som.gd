@@ -172,6 +172,113 @@ static func _gerar_estalo() -> AudioStreamWAV:
 	return _wav(dados)
 
 
+
+## Laços do clima (ver scripts/clima.gd): tocam sem parar, sem posição, com o volume pela
+## intensidade. Chiado da chuva: ruído agudo com pingos soltos.
+static func chuva_laco() -> AudioStreamWAV:
+	if not _cache.has("chuva"):
+		_cache["chuva"] = _gerar_laco(_amostra_chuva, 3.0, 21)
+	return _cache["chuva"]
+
+
+## Vento: ruído grave que sobe e desce devagar (o uivo vem do filtro que muda).
+static func vento_laco() -> AudioStreamWAV:
+	if not _cache.has("vento"):
+		_cache["vento"] = _gerar_laco(_amostra_vento, 4.0, 22)
+	return _cache["vento"]
+
+
+## Trovão ao longe: um estouro abafado e um ronco que rola por uns segundos.
+static func trovao(pai: Node, volume_db := 0.0) -> void:
+	if not _cache.has("trovao"):
+		_cache["trovao"] = _gerar_trovao()
+	var jogador := AudioStreamPlayer.new()
+	jogador.stream = _cache["trovao"]
+	jogador.bus = &"Efeitos"
+	jogador.volume_db = volume_db
+	jogador.pitch_scale = randf_range(0.85, 1.1)
+	pai.add_child(jogador)
+	jogador.play()
+	jogador.finished.connect(jogador.queue_free)
+
+
+## Monta um laço de `duracao` segundos com `amostra(t, rng, estado)`: o fim se funde no começo
+## (0,3 s de mistura), então a emenda não estala.
+static func _gerar_laco(amostra: Callable, duracao: float, semente: int) -> AudioStreamWAV:
+	var total := int(TAXA * duracao)
+	var mistura := int(TAXA * 0.3)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = semente
+	var estado := {}
+	var bruto := PackedFloat32Array()
+	bruto.resize(total + mistura)
+	for i in total + mistura:
+		bruto[i] = amostra.call(float(i) / TAXA, rng, estado)
+	var dados := PackedByteArray()
+	dados.resize(total * 2)
+	for i in total:
+		var valor := bruto[i]
+		if i < mistura:
+			var peso := float(i) / mistura
+			valor = lerpf(bruto[total + i], valor, peso)
+		dados.encode_s16(i * 2, int(clampf(valor, -1.0, 1.0) * 32767.0))
+	var som := _wav(dados)
+	som.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	som.loop_begin = 0
+	som.loop_end = total
+	return som
+
+
+static func _amostra_chuva(t: float, rng: RandomNumberGenerator, estado: Dictionary) -> float:
+	var ruido := rng.randf_range(-1.0, 1.0)
+	var grave: float = lerpf(estado.get("grave", 0.0), ruido, 0.08)
+	estado["grave"] = grave
+	var chiado: float = lerpf(estado.get("chiado", 0.0), ruido - grave, 0.5)
+	estado["chiado"] = chiado
+	# Pingos: de vez em quando um "tic" curto que some rápido.
+	var pingo: float = estado.get("pingo", 0.0) * 0.992
+	if rng.randf() < 0.0012:
+		pingo = rng.randf_range(0.3, 0.8)
+		estado["tom"] = rng.randf_range(1800.0, 2600.0)
+	estado["pingo"] = pingo
+	var tic := sin(t * TAU * float(estado.get("tom", 2000.0))) * pingo * 0.25
+	return chiado * (0.28 + 0.04 * sin(t * TAU * 0.5)) + tic
+
+
+static func _amostra_vento(t: float, rng: RandomNumberGenerator, estado: Dictionary) -> float:
+	var ruido := rng.randf_range(-1.0, 1.0)
+	# Força que sobe e desce (ciclos inteiros no laço de 4 s, para a emenda casar).
+	var forca := 0.55 + 0.3 * sin(t * TAU * 0.25) + 0.15 * sin(t * TAU * 0.75 + 1.0)
+	var corte := 0.01 + 0.03 * forca
+	var um: float = lerpf(estado.get("um", 0.0), ruido, corte)
+	var dois: float = lerpf(estado.get("dois", 0.0), um, corte)
+	estado["um"] = um
+	estado["dois"] = dois
+	return dois * 9.0 * forca
+
+
+static func _gerar_trovao() -> AudioStreamWAV:
+	var duracao := 3.2
+	var total := int(TAXA * duracao)
+	var dados := PackedByteArray()
+	dados.resize(total * 2)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 23
+	var um := 0.0
+	var dois := 0.0
+	for i in total:
+		var t := float(i) / TAXA
+		var ruido := rng.randf_range(-1.0, 1.0)
+		um = lerpf(um, ruido, 0.05)
+		dois = lerpf(dois, um, 0.05)
+		# Estouro no começo e roncos que rolam e somem.
+		var envelope := minf(t / 0.04, 1.0) * (exp(-t * 3.0) * 0.8 + 0.5 * exp(-t * 0.9) \
+			* (0.6 + 0.4 * sin(t * TAU * 1.7) * sin(t * TAU * 0.6)))
+		envelope *= clampf((duracao - t) / 0.5, 0.0, 1.0)
+		var amostra := tanh(dois * 14.0 * envelope) * 0.8
+		dados.encode_s16(i * 2, int(amostra * 32767.0))
+	return _wav(dados)
+
 static func _wav(dados: PackedByteArray) -> AudioStreamWAV:
 	var som := AudioStreamWAV.new()
 	som.format = AudioStreamWAV.FORMAT_16_BITS

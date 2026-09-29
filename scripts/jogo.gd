@@ -37,12 +37,14 @@ var _mirante: Mirante
 ## Fundo semitransparente do aviso (o rótulo `aviso` fica dentro dele).
 var aviso_painel := PanelContainer.new()
 ## Flocos caindo em volta do cachorro (biomas com neve).
-var _neve_caindo: CPUParticles3D
+var clima: Clima
 ## Termômetro (fases com frio), no canto de baixo à direita.
 var indicador_calor := IndicadorCalor.new()
 ## Fogueira → rótulo 2D em cima dela com os gravetos que faltam ("0 / 2"). Em 2D, no HUD: um
 ## texto 3D passaria pelo pixelado e ficaria ilegível (ainda mais sobre a neve).
 var marcas_fogueira := {}
+## Tela preta por cima de tudo (entrar numa toca), ver `escurecer`.
+var _escuro := ColorRect.new()
 
 ## Avisos: largura máxima e tamanhos de letra (curto e de uma linha = grande; senão, menor).
 const AVISO_LARGURA_MAXIMA := 720.0
@@ -82,6 +84,11 @@ func _ready() -> void:
 	indicador_calor.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	indicador_calor.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	$HUD/Area.add_child(indicador_calor)
+	_escuro.color = Color(0.02, 0.015, 0.01, 0.0)
+	_escuro.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_escuro.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_escuro.hide()
+	$HUD.add_child(_escuro)
 	_atualizar_dica()
 
 	var cena := Fases.cena_atual()
@@ -95,15 +102,16 @@ func _ready() -> void:
 	add_child(fase)
 	move_child(fase, 0)
 	Biomas.aplicar_ambiente($Ambiente, fase.bioma)
-	if Biomas.dados(fase.bioma).nevando:
-		_neve_caindo = Biomas.criar_neve_caindo()
-		add_child(_neve_caindo)
+	trocar_clima(Clima.efetivo(fase))
 	# Chão e floresta em volta, para monitores largos nunca mostrarem o fim do mundo.
 	var entorno := Entorno.new()
 	entorno.name = "Entorno"
 	add_child(entorno)
 	entorno.montar(fase)
 	cachorro.fase = fase
+	# Pelo menu, a raça é a que o jogador escolheu para a região; testando no editor, a da fase.
+	if not Fases.testando and not Fases.caminho_atual.is_empty():
+		fase.raca = Fases.raca_para_jogar(Fases.caminho_atual).id
 	var raca := Racas.por_id(fase.raca)
 	if raca:
 		cachorro.aplicar_raca(raca, Racas.pelagem_escolhida(raca))
@@ -165,7 +173,10 @@ func _preparar_objetivo() -> void:
 		fogueira.acendeu.connect(mostrar_aviso.bind("A fogueira acendeu! Perto do fogo é quentinho", 3.0))
 		fogueira.cresceu.connect(mostrar_aviso.bind("O fogo cresceu!"))
 		fogueira.recebeu.connect(func(_gravetos: int, faltam: int) -> void:
-			mostrar_aviso("Mais %d graveto%s para acender a fogueira" % [faltam, "" if faltam == 1 else "s"]))
+			if faltam <= 0:
+				mostrar_aviso("Lenha pronta! Falta o fogo: encoste um graveto aceso", 3.0)
+			else:
+				mostrar_aviso("Mais %d graveto%s para acender a fogueira" % [faltam, "" if faltam == 1 else "s"]))
 	objetivo.preparar(self)
 
 
@@ -199,14 +210,26 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif concluida and fase and not Fases.testando and event.is_action_pressed("ui_accept"):
 		if _proxima_fase.is_empty():
 			Fases.abrir_menu()
+		elif _muda_de_regiao():
+			# Região nova: antes, a história dela e a escolha da raça.
+			Fases.antes_de_jogar(_proxima_fase)
 		else:
 			Fases.jogar(_proxima_fase)
 
 
+
+## Troca o clima (ver Clima), com o céu e a luz do bioma de novo por baixo.
+func trocar_clima(tipo: int) -> void:
+	if clima:
+		remove_child(clima)
+		clima.queue_free()
+		Biomas.aplicar_ambiente($Ambiente, fase.bioma)
+	clima = Clima.new()
+	clima.name = "Clima"
+	add_child(clima)
+	clima.configurar(tipo, fase.bioma, $Ambiente, cachorro)
+
 func _process(delta: float) -> void:
-	if _neve_caindo:
-		_neve_caindo.global_position = Vector3(cachorro.global_position.x, cachorro.global_position.y + 12.0,
-			cachorro.global_position.z)
 	if objetivo and not concluida:
 		objetivo.processar(delta)
 	_atualizar_marcas()
@@ -425,7 +448,7 @@ func _on_puxar_falhou(motivo: String) -> void:
 
 func _on_cachorro_voltou(motivo: String) -> void:
 	if motivo == "agua":
-		mostrar_aviso("Splash! Salsicha não nada...")
+		mostrar_aviso("Splash! %s não nada..." % (cachorro.raca.nome if cachorro.raca else "Salsicha"))
 	elif motivo == "queda":
 		mostrar_aviso("Opa! Caiu...")
 
@@ -443,14 +466,22 @@ func concluir() -> void:
 	if Fases.testando:
 		texto += "%s: voltar ao editor    %s: jogar de novo" % [Teclas.nome(&"alternar_editor"), Teclas.nome(&"reiniciar")]
 	else:
-		Fases.marcar_concluida(Fases.caminho_atual)
+		Fases.marcar_concluida(Fases.caminho_atual, fase.raca)
 		_proxima_fase = Fases.proxima()
 		if _proxima_fase.is_empty():
 			texto += "Última fase! Enter: menu    %s: jogar de novo" % Teclas.nome(&"reiniciar")
+		elif _muda_de_regiao():
+			var regiao := Regioes.por_id(Fases.regiao_da_fase(_proxima_fase))
+			texto += "Enter: próxima região (%s)    %s: jogar de novo    Esc: pausa" % [
+				regiao.nome if regiao else "?", Teclas.nome(&"reiniciar")]
 		else:
 			texto += "Enter: próxima fase    %s: jogar de novo    Esc: pausa" % Teclas.nome(&"reiniciar")
 	mensagem.text = texto
 	mensagem.show()
+
+
+func _muda_de_regiao() -> bool:
+	return Fases.regiao_da_fase(_proxima_fase) != Fases.regiao_da_fase(Fases.caminho_atual)
 
 
 func _mostrar_erro(texto: String) -> void:
@@ -584,6 +615,21 @@ func _atualizar_rotulo_acao() -> void:
 		return
 	rotulo_acao.text = "%s: %s" % [Teclas.nome(&"acao"), alvo.acao_da_boca(cachorro)]
 	rotulo_acao.show()
+
+
+## Escurece (ou clareia) a tela em `duracao` segundos. Aguarde com `await`.
+func escurecer(ligar: bool, duracao: float) -> void:
+	_escuro.show()
+	var tween := create_tween()
+	tween.tween_property(_escuro, "color:a", 1.0 if ligar else 0.0, duracao)
+	if not ligar:
+		tween.tween_callback(_escuro.hide)
+	await tween.finished
+
+
+## O cachorro foi de um lugar para outro de uma vez (saiu pela outra toca): a câmera vai junto.
+func cachorro_mudou_de_lugar() -> void:
+	camera_controller.recentralizar()
 
 
 # --- Mirante -------------------------------------------------------------------------------

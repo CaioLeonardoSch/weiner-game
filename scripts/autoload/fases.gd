@@ -17,6 +17,8 @@ const ARQUIVO_PROGRESSO := "user://progresso.cfg"
 ## `migrar()`, e acrescente um save de exemplo da versão antiga em ferramentas/testes/saves/.
 ##   1 — sem chave de versão; fases concluídas pelo nome do arquivo ("fase_01.tscn").
 ##   2 — [save] versao; fases concluídas pelo id da fase (Fase.id, ex.: "fase_01").
+## Seções novas que só se somam (quem não conhece ignora; save antigo = seção vazia) não mudam
+## a versão: [racas] raça escolhida por região; [racas_concluidas] fase → raças que a fizeram.
 const VERSAO_PROGRESSO := 2
 ## Fases cujo id mudou: id antigo → id novo (o ✓ passa para o novo). Renomear ou mover o
 ## arquivo NÃO muda o id; só anote aqui se o próprio id for trocado.
@@ -39,6 +41,8 @@ var area_transferencia: RefCounted
 var progresso := ConfigFile.new()
 ## Progresso só na memória, sem ler nem gravar o save do jogador (testes automáticos).
 var _so_memoria := false
+## Fase para a qual o menu abre direto na tela "antes de jogar" (raça), ou "".
+var antes_de_jogar_pendente := ""
 ## caminho da fase → id (ver id_da_fase).
 var _ids := {}
 ## [caminho, propriedade] → valor (ver propriedade_da_fase).
@@ -131,6 +135,7 @@ func proxima() -> String:
 
 func jogar(caminho: String) -> void:
 	caminho_atual = caminho
+	antes_de_jogar_pendente = ""
 	inicio_do_teste = null
 	rascunho = null
 	rascunho_modificado = false
@@ -194,13 +199,79 @@ func concluida(caminho: String) -> bool:
 	return id_da_fase(caminho) in progresso.get_value("fases", "concluidas", PackedStringArray())
 
 
-func marcar_concluida(caminho: String) -> void:
-	if caminho.is_empty() or concluida(caminho):
+## Marca a fase como concluída (e, com `raca`, que essa raça a fez).
+func marcar_concluida(caminho: String, raca := &"") -> void:
+	if caminho.is_empty():
 		return
-	var lista: PackedStringArray = progresso.get_value("fases", "concluidas", PackedStringArray())
-	lista.append(id_da_fase(caminho))
-	progresso.set_value("fases", "concluidas", lista)
+	var mudou := false
+	if not concluida(caminho):
+		var lista: PackedStringArray = progresso.get_value("fases", "concluidas", PackedStringArray())
+		lista.append(id_da_fase(caminho))
+		progresso.set_value("fases", "concluidas", lista)
+		mudou = true
+	if not raca.is_empty() and not concluida_com(caminho, raca):
+		var racas := racas_que_concluiram(caminho)
+		racas.append(String(raca))
+		progresso.set_value("racas_concluidas", id_da_fase(caminho), racas)
+		mudou = true
+	if mudou:
+		salvar_progresso()
+
+
+## Ids das raças que já concluíram a fase (saves antigos não sabem a raça: lista vazia).
+func racas_que_concluiram(caminho: String) -> PackedStringArray:
+	return PackedStringArray(progresso.get_value("racas_concluidas", id_da_fase(caminho), PackedStringArray()))
+
+
+func concluida_com(caminho: String, raca: StringName) -> bool:
+	return String(raca) in racas_que_concluiram(caminho)
+
+
+# --- Raça ------------------------------------------------------------------------------------
+
+## A raça que o jogador escolheu para a região (se ainda for compatível; senão a primeira
+## compatível).
+func raca_da_regiao(regiao: StringName) -> Raca:
+	var dados := Regioes.por_id(regiao)
+	if dados == null:
+		return Racas.por_id(Racas.PADRAO)
+	var compativeis := dados.racas_compativeis()
+	var escolhida := StringName(str(progresso.get_value("racas", String(regiao), "")))
+	for raca in compativeis:
+		if raca.id == escolhida:
+			return raca
+	return compativeis[0]
+
+
+func escolher_raca(regiao: StringName, raca: StringName) -> void:
+	progresso.set_value("racas", String(regiao), String(raca))
 	salvar_progresso()
+
+
+## A fase sempre usa a sua raça (Fase.raca_fixa)?
+func raca_fixa(caminho: String) -> bool:
+	return bool(propriedade_da_fase(caminho, &"raca_fixa", false))
+
+
+## Com que raça a fase vai ser jogada pelo menu: a fixa da fase ou a escolhida para a região.
+func raca_para_jogar(caminho: String) -> Raca:
+	if raca_fixa(caminho):
+		return Racas.por_id(StringName(str(propriedade_da_fase(caminho, &"raca", Racas.PADRAO))))
+	return raca_da_regiao(regiao_da_fase(caminho))
+
+
+## Dá para escolher a raça desta fase (não é fixa e a região tem mais de uma)?
+func pode_escolher_raca(caminho: String) -> bool:
+	if raca_fixa(caminho):
+		return false
+	var regiao := Regioes.por_id(regiao_da_fase(caminho))
+	return regiao != null and regiao.racas_compativeis().size() > 1
+
+
+## Volta ao menu na tela "antes de jogar" desta fase (escolher a raça, ler a história da região).
+func antes_de_jogar(caminho: String) -> void:
+	abrir_menu()
+	antes_de_jogar_pendente = caminho
 
 
 ## Converte um progresso de versão antiga para o formato atual (VERSAO_PROGRESSO) e aplica os

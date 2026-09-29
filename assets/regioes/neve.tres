@@ -9,3 +9,4 @@ nome = "Neve"
 descricao = "Inverno: gravetos para a fogueira, neve para derreter e um rebanho para levar em segurança até o celeiro."
 ordem = 1
 bioma = 1
+racas = Array[StringName]([&"salsicha", &"border_collie"])
