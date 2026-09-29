@@ -15,16 +15,19 @@ rumo 11.0 -3.5 60
 esperar 60
 checar jogo.cachorro.global_position.x > 11.5
 checar jogo.aviso.text.contains("ao comprido")
-ir 13.0 -3.5
+# Já olhando para a toca, longe o bastante para virar o graveto.
+ir 14.5 -3.5
+ir 13.5 -3.5
+esperar 30
+checar absf(absf(jogo.cachorro.modelo.rotation.y) - PI) < 0.2
 apertar virar_graveto
 esperar 30
 checar jogo.cachorro.graveto_ao_comprido
-# A volta pela toca, ao comprido, ainda não dá: a ponta do graveto bate no monte antes de o
-# cachorro chegar à boca (issue #31). Quando for
-# corrigida, a rota continua assim:
-#   ir 11.0 -3.5 150
-#   esperar 90
-#   checar jogo.cachorro.global_position.x < 5.5
-#   ir -2.5 -3.0
-#   esperar 60
-#   checar jogo.concluida
+# Ao comprido entra: a ponta do graveto bate no monte, mas a toca conta a partir dela (issue #31).
+ir 11.0 -3.5 150
+esperar 90
+checar jogo.cachorro.global_position.x < 5.5
+checar jogo.cachorro.tem_graveto
+ir -2.5 -3.0
+esperar 60
+checar jogo.concluida

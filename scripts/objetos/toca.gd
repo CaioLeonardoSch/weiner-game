@@ -88,7 +88,13 @@ func executar_acao(cachorro: Dachshund) -> void:
 
 func _na_frente(cachorro: Dachshund) -> bool:
 	var local := to_local(cachorro.global_position)
-	return absf(local.x) < 0.4 and local.z > 0.15 and local.z < ALCANCE + 0.3 and absf(local.y) < 0.6
+	return absf(local.x) < 0.4 and local.z > 0.15 and local.z < _alcance(cachorro) + 0.3 and absf(local.y) < 0.6
+
+
+## Até onde o buraco chama este cachorro: com o graveto ao comprido apontado para a toca, a ponta
+## bate no monte antes, então conta a partir dela.
+func _alcance(cachorro: Dachshund) -> float:
+	return ALCANCE + cachorro.alcance_extra_do_graveto(-global_basis.z)
 
 
 func _physics_process(_delta: float) -> void:
@@ -98,7 +104,7 @@ func _physics_process(_delta: float) -> void:
 		var cachorro := no as Dachshund
 		if cachorro == null or cachorro.atravessando or not _na_frente(cachorro):
 			continue
-		if to_local(cachorro.global_position).z > ALCANCE:
+		if to_local(cachorro.global_position).z > _alcance(cachorro):
 			continue
 		# Andando para dentro do buraco (contra o monte).
 		var para_dentro := -global_basis.z

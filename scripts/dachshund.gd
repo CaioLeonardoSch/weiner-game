@@ -375,6 +375,21 @@ func graveto_passa(so_ao_comprido: bool, comprimento_maximo: float) -> bool:
 	return comprimento_maximo <= 0.0 or graveto.comprimento <= comprimento_maximo + 0.001
 
 
+## Quanto o graveto ao comprido passa da frente do corpo, com o cachorro olhando para `direcao`
+## (no chão): a ponta bate antes na toca ou na portinhola, e elas contam a distância a partir
+## dela. 0 sem graveto ao comprido ou olhando para outro lado.
+func alcance_extra_do_graveto(direcao: Vector3) -> float:
+	if not tem_graveto or graveto == null or not graveto_ao_comprido:
+		return 0.0
+	var frente := modelo.global_basis.x
+	frente.y = 0.0
+	direcao.y = 0.0
+	if frente.normalized().dot(direcao.normalized()) < 0.7:
+		return 0.0
+	var raio := raca.raio_colisao if raca else 0.28
+	return maxf(boca.position.x + graveto.comprimento - 0.1 - raio, 0.0)
+
+
 # --- Cavar, latir, empurrar ---------------------------------------------------------------
 
 ## Cava na frente do focinho, nesta ordem: um graveto enterrado (desenterra), a terra fofa
