@@ -251,6 +251,8 @@ func _process(delta: float) -> void:
 	_atualizar_rotulo_acao()
 	_atualizar_balao(delta)
 	_pilula_objetivo.visible = not contador.text.is_empty() and not concluida and _mirante == null
+	# No cartão de fase concluída, as teclas do cartão bastam.
+	controles.visible = not concluida
 	# Graveto grande emperrado num vão: lembra que dá para virar (uma vez por fase).
 	_tempo_travado = _tempo_travado + delta if cachorro.graveto_travado else 0.0
 	if _tempo_travado > 0.8 and not _dica_virar_mostrada and not cachorro.graveto_ao_comprido:
