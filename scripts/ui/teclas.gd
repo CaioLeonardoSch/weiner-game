@@ -13,6 +13,7 @@ const REMAPEAVEIS := [
 	[&"largar_graveto", "Largar o graveto"],
 	[&"virar_graveto", "Virar o graveto"],
 	[&"andar_devagar", "Andar devagar"],
+	[&"correr", "Correr"],
 	[&"cavar", "Cavar"],
 	[&"latir", "Latir"],
 	[&"reiniciar", "Reiniciar a fase"],

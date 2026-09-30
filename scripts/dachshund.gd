@@ -15,6 +15,8 @@ extends CharacterBody3D
 signal voltou_ao_ponto_seguro(motivo: String)
 ## Tentou puxar um bloco e não deu ("boca_cheia", "sem_espaco"); uma vez por aperto de F.
 signal puxar_falhou(motivo: String)
+## Não pulou ("agua": água funda logo à frente — o salsicha não pula na água).
+signal pulo_recusado(motivo: String)
 ## Gelou (fase com frio, calor chegou a zero) e voltou para perto do último fogo.
 signal gelou
 
@@ -32,8 +34,13 @@ const GIRO_MINIMO_OUTRO_LADO := PI * 0.5
 @export var velocidade_giro := 10.0
 ## Multiplicador da velocidade segurando `andar_devagar`.
 @export var fator_devagar := 0.4
+## Multiplicador da velocidade segurando `correr`.
+@export var fator_corrida := 1.7
 ## Altura do pulo (m) sem graveto. Passa de meio bloco (0,5 m), não de um bloco inteiro.
 @export var altura_pulo := 0.65
+## Velocidade horizontal máxima no ar depois de um pulo (m/s): o salsicha pula para subir, não
+## para saltar longe (nem correndo).
+@export var velocidade_no_pulo := 1.4
 
 @export_group("Equilíbrio")
 ## Carga (peso × comprimento do graveto) que ainda não desequilibra. O graveto padrão
@@ -58,6 +65,8 @@ var entrada_bloqueada := false
 var pode_pular := false
 var pode_cavar := false
 var pode_latir := false
+## No ar depois de um pulo (a velocidade horizontal fica limitada; ver velocidade_no_pulo).
+var pulando := false
 ## Balanço atual, de -1 a 1 (para o HUD). Só muda em passagens estreitas.
 var balanco := 0.0
 var em_passagem_estreita := false
@@ -189,8 +198,14 @@ func _physics_process(delta: float) -> void:
 		return
 	if not is_on_floor():
 		velocity.y -= _gravidade * delta
-	elif pode_pular and not entrada_bloqueada and Input.is_action_just_pressed("pular"):
-		velocity.y = sqrt(2.0 * _gravidade * altura_pulo_atual())
+	else:
+		pulando = false
+		if pode_pular and not entrada_bloqueada and Input.is_action_just_pressed("pular"):
+			if _agua_funda_na_frente():
+				pulo_recusado.emit("agua")
+			else:
+				velocity.y = sqrt(2.0 * _gravidade * altura_pulo_atual())
+				pulando = true
 
 	_espera_latido = maxf(_espera_latido - delta, 0.0)
 	var horizontal := Vector3.ZERO if entrada_bloqueada or _cavando else _velocidade_entrada()
@@ -225,6 +240,8 @@ func _physics_process(delta: float) -> void:
 	horizontal *= _lentidao_piso * _fator_do_frio()
 	horizontal = _com_aderencia(horizontal, delta)
 	horizontal = _deslizar_no_gelo(horizontal, vento)
+	if pulando:
+		horizontal = horizontal.limit_length(velocidade_no_pulo)
 	# Deslizando no gelo liso o vento não tira o cachorro da linha.
 	if deslizando == Vector3.ZERO:
 		arrasto += vento
@@ -251,6 +268,12 @@ func _physics_process(delta: float) -> void:
 	_empurrar(delta, horizontal)
 	_girar_modelo(delta)
 	_checar_queda(delta)
+
+
+## Segurando `correr` (e andando): o cachorro corre.
+func correndo() -> bool:
+	return not entrada_bloqueada and Input.is_action_pressed("correr") \
+		and not Input.is_action_pressed("andar_devagar")
 
 
 ## Altura do pulo agora: o peso do graveto puxa para baixo.
@@ -685,6 +708,8 @@ func _velocidade_entrada() -> Vector3:
 	var fator := graveto.fator_velocidade() if tem_graveto and graveto else 1.0
 	if Input.is_action_pressed("andar_devagar"):
 		fator *= fator_devagar
+	elif correndo():
+		fator *= fator_corrida
 	return direcao * velocidade * fator
 
 
@@ -811,6 +836,10 @@ func _desvio_de_encaixe(horizontal: Vector3, delta: float) -> Vector3:
 	# Só quando quem bate é o graveto (o corpo passaria).
 	graveto_travado = false
 	if _graveto_cabe(yaw, graveto_ao_comprido, passo):
+		return Vector3.ZERO
+	# Subindo rampa ou escada, o graveto só encosta no chão que sobe (e o corpo sobe junto):
+	# não é quina, e desviar jogaria o cachorro para fora da escada.
+	if is_on_floor() and _graveto_cabe(yaw, graveto_ao_comprido, passo + Vector3.UP * passo.length()):
 		return Vector3.ZERO
 	# Ao comprido, contra algo empurrável (bloco, tronco), a ponta empurra: nada de desviar.
 	if graveto_ao_comprido and _graveto_bate_em_empurravel(yaw, passo):
@@ -1084,7 +1113,7 @@ func _fator_do_frio() -> float:
 # --- Quedas ------------------------------------------------------------------------------
 
 func _checar_queda(delta: float) -> void:
-	if fase and (fase.dentro_da_agua(global_position) or _na_beira_da_agua()):
+	if fase and (fase.dentro_da_agua(global_position) or _na_beira_da_agua() or _caindo_na_agua()):
 		_voltar_ao_ponto_seguro("agua")
 	elif global_position.y < (fase.limite_de_queda if fase else -10.0):
 		_voltar_ao_ponto_seguro("queda")
@@ -1102,6 +1131,30 @@ func _checar_queda(delta: float) -> void:
 			_tempo_ponto_seguro += delta
 			if _tempo_ponto_seguro >= 0.25:
 				_guardar_ponto_seguro()
+
+
+## Saiu da beirada e já está abaixo dela, por cima de água funda: caiu (correndo, sem isto, a
+## cápsula passaria "quicando" por cima de um riacho estreito).
+func _caindo_na_agua() -> bool:
+	return not is_on_floor() and global_position.y < -0.02 \
+		and Tiles.eh_agua(fase.tile_em(global_position + Vector3.DOWN * 0.1))
+
+
+## Água funda logo à frente (para onde o cachorro olha): ele não pula — assim riacho estreito
+## continua sendo obstáculo, e a travessia é pela ponte, bloco, tronco...
+func _agua_funda_na_frente() -> bool:
+	if fase == null:
+		return false
+	var sentidos: Array[Vector3] = [Vector3(cos(modelo.rotation.y), 0.0, -sin(modelo.rotation.y))]
+	var andando := Vector3(velocity.x, 0.0, velocity.z)
+	if andando.length() > 0.3:
+		sentidos.append(andando.normalized())
+	for frente in sentidos:
+		for distancia in [0.35, 0.7, 1.05]:
+			var ponto: Vector3 = global_position + frente * distancia + Vector3.DOWN * 0.1
+			if Tiles.eh_agua(fase.tile_em(ponto)):
+				return true
+	return false
 
 
 ## O centro do corpo já está sobre água funda, sem nada embaixo, mas a cápsula ainda se

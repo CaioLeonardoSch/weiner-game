@@ -195,6 +195,17 @@ func propriedade_da_fase(caminho: String, propriedade: StringName, padrao: Varia
 	return valor
 
 
+## Progressão: as habilidades que as fases antes desta (na ordem de `listar`) ensinam. Aprendeu
+## a pular numa fase, pula em todas as seguintes. Fase fora da lista (nova) → 0.
+func habilidades_anteriores(id_fase: String) -> int:
+	var total := 0
+	for caminho in listar():
+		if id_da_fase(caminho) == id_fase:
+			return total
+		total |= int(propriedade_da_fase(caminho, &"habilidades", 0))
+	return 0
+
+
 func concluida(caminho: String) -> bool:
 	return id_da_fase(caminho) in progresso.get_value("fases", "concluidas", PackedStringArray())
 

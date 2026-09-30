@@ -47,6 +47,7 @@ const GELO := 25
 const GRAMA_COM_POCAS := 26
 const LAMA := 27
 const GELO_LISO := 28
+const BLOCO_DE_GELO := 29
 
 ## Quanto (m) a malha VISUAL de cada tile passa da célula em X e Z, para os vizinhos se
 ## sobreporem um fio. Sem isso, na emenda entre dois blocos de 8×8 células do GridMap (os
@@ -132,6 +133,8 @@ static func definicoes() -> Array[Dictionary]:
 		{id = GRAMA_COM_POCAS, nome = "Grama com poças", perfil = _BLOCO, material = "grama_pocas", cor = Color("4f9a5a")},
 		{id = LAMA, nome = "Lama", perfil = _BLOCO, material = "lama", lama = true, cor = Color("5e4028")},
 		{id = GELO_LISO, nome = "Gelo liso", perfil = _BLOCO, material = "gelo_liso", deslizante = true, cor = Color("c4e6fa")},
+		# Parede de gelo: não se cava (as garras escorregam); só o fogo derrete.
+		{id = BLOCO_DE_GELO, nome = "Bloco de gelo", perfil = _BLOCO, material = "gelo", derrete_em = -1, cor = Color("8fc3e6")},
 	]
 
 

@@ -173,6 +173,10 @@ var minimapa: MinimapaEditor
 @onready var ajuda: Control = %Ajuda
 @onready var aviso: Label = %Aviso
 
+## Tab escondeu os painéis (e se o minimapa estava aberto antes).
+var _paineis_escondidos := false
+var _minimapa_antes := true
+
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -197,6 +201,7 @@ func _ready() -> void:
 	%BotaoSalvarComo.pressed.connect(_salvar_como)
 	%BotaoTestar.pressed.connect(_testar)
 	%BotaoAjuda.pressed.connect(func() -> void: ajuda.visible = not ajuda.visible)
+	%BotaoPaineis.pressed.connect(_alternar_paineis)
 	botao_visao.pressed.connect(_proxima_visao)
 	menu_abrir.about_to_popup.connect(_preencher_menu_abrir)
 	menu_abrir.get_popup().id_pressed.connect(_on_menu_abrir)
@@ -451,7 +456,8 @@ func _validar() -> Dictionary:
 	var tem_neve := not terreno.get_used_cells_by_item(Tiles.NEVE_FOFA).is_empty() \
 		or not terreno.get_used_cells_by_item(Tiles.MONTE_DE_NEVE).is_empty() \
 		or not terreno.get_used_cells_by_item(Tiles.GELO).is_empty() \
-		or not terreno.get_used_cells_by_item(Tiles.GELO_LISO).is_empty()
+		or not terreno.get_used_cells_by_item(Tiles.GELO_LISO).is_empty() \
+		or not terreno.get_used_cells_by_item(Tiles.BLOCO_DE_GELO).is_empty()
 	if tem_neve and fase.bioma != Biomas.NEVE:
 		avisos.append("Há neve ou gelo no terreno, mas o bioma da fase é Floresta.")
 	for bloco in fase.todos(Empurravel):
@@ -943,6 +949,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("editor_minimapa"):
 		minimapa.visible = not minimapa.visible
 		minimapa.marcar_desatualizado()
+	elif event.is_action_pressed("editor_paineis"):
+		_alternar_paineis()
 	elif event.is_action_pressed("editor_conta_gotas"):
 		_conta_gotas()
 	elif event.is_action_pressed("editor_ligar"):
@@ -1725,6 +1733,21 @@ func _montar_barra_ferramentas() -> void:
 	get_viewport().size_changed.connect(_posicionar_barra_ferramentas)
 	_posicionar_barra_ferramentas.call_deferred()
 	_atualizar_barra_ferramentas()
+
+
+## Tab: esconde (ou mostra de volta) a paleta, o painel da direita, a barra de baixo e o
+## minimapa, para ver o mapa inteiro. A barra do topo fica (o botão Painéis volta).
+func _alternar_paineis() -> void:
+	_paineis_escondidos = not _paineis_escondidos
+	for painel: Control in [$UI/PainelPaleta, $UI/PainelInspetor, $UI/BarraStatus]:
+		painel.visible = not _paineis_escondidos
+	if _paineis_escondidos:
+		_minimapa_antes = minimapa.visible
+		minimapa.hide()
+	elif _minimapa_antes:
+		minimapa.show()
+		minimapa.marcar_desatualizado()
+	%BotaoPaineis.text = "Mostrar painéis (Tab)" if _paineis_escondidos else "Esconder painéis (Tab)"
 
 
 ## A barra fica no meio da vista 3D, entre a paleta e o painel da direita, logo abaixo do topo.

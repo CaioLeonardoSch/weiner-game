@@ -31,6 +31,7 @@ func avisos(fase: Fase) -> PackedStringArray:
 
 func preparar(novo_jogo: Node) -> void:
 	super(novo_jogo)
+	jogo.contador.text = "Ache o graveto dourado"
 	dono = jogo.fase.primeiro(Dono) as Dono
 	dono.cachorro_chegou.connect(func(corpo: Node3D) -> void:
 		if corpo == jogo.cachorro:
@@ -41,7 +42,9 @@ func preparar(novo_jogo: Node) -> void:
 			_conferir())
 
 
-func ao_pegar_graveto(_graveto: Graveto) -> void:
+func ao_pegar_graveto(pego: Graveto) -> void:
+	if pego.lendario:
+		jogo.contador.text = "Leve o graveto ao dono"
 	# Pegou (de novo) já do lado do dono.
 	if dono.contem(jogo.cachorro):
 		_conferir()

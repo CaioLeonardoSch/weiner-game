@@ -21,7 +21,7 @@ checar jogo.cachorro.global_position.y < 0.3
 rumo 8.5 -3.5 200
 esperar 8
 apertar pular 4
-esperar 60
+esperar 75
 checar jogo.cachorro.global_position.y < 0.1
 esperar 40
 checar jogo.cachorro.global_position.x < 6.0

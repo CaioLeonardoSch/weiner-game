@@ -75,6 +75,14 @@ func _ready() -> void:
 	aplicar_tudo()
 
 
+## F11 (em qualquer tela): alterna entre janela e tela cheia, e guarda a escolha nas opções.
+func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("tela_cheia") and not event.is_echo():
+		var cheia := String(valor("tela", "modo")) != "janela"
+		definir("tela", "modo", "janela" if cheia else "tela_cheia")
+		get_viewport().set_input_as_handled()
+
+
 ## Opções de fábrica, sem ler nem gravar o arquivo (usado pelos testes automáticos).
 func usar_padrao_sem_salvar() -> void:
 	_so_memoria = true

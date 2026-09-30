@@ -28,6 +28,9 @@ const OBJETIVO_PASTOREIO := 1
 ## Nome mostrado no jogo e no editor.
 @export var nome := "Nova fase"
 @export_flags("Pular", "Cavar", "Latir") var habilidades := 0
+## Habilidades aprendidas nas fases anteriores (ver Fases.habilidades_anteriores); -1 = ainda
+## não calculadas (pelo id da fase).
+var habilidades_herdadas := -1
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
 @export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)") var objetivo := OBJETIVO_GRAVETO
@@ -156,9 +159,16 @@ func espalhar_latido(origem: Vector3, quem: Node) -> void:
 			objeto.ao_ouvir_latido(origem)
 
 
-## Habilidades que o cachorro tem nesta fase (iguais para todas as raças).
+## Habilidades que o cachorro tem nesta fase (iguais para todas as raças): as da fase e as que
+## ele aprendeu nas fases anteriores.
 func habilidades_efetivas() -> int:
-	return habilidades
+	if habilidades_herdadas < 0:
+		habilidades_herdadas = 0
+		var arvore := Engine.get_main_loop() as SceneTree
+		var fases: Node = arvore.root.get_node_or_null(^"Fases") if arvore else null
+		if fases and not Engine.is_editor_hint() and not id.is_empty():
+			habilidades_herdadas = fases.habilidades_anteriores(id)
+	return habilidades | habilidades_herdadas
 
 
 func lista_objetos() -> Array[ObjetoFase]:

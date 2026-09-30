@@ -12,7 +12,6 @@ extends Node3D
 @onready var camera_controller: CameraController = $CameraController
 @onready var aviso: Label = $HUD/Area/Aviso
 @onready var mensagem: Label = $HUD/Area/Mensagem
-@onready var dica: Label = $HUD/Area/Dica
 @onready var indicador_equilibrio: Control = $HUD/Area/Equilibrio
 
 var fase: Fase
@@ -37,10 +36,21 @@ var _dica_virar_mostrada := false
 var _tempo_sem_girar := 0.0
 var _dica_girar_mostrada := false
 var _pausa := MenuPausa.new()
-## Contador do objetivo (ex.: ovelhas no cercado), no canto de baixo.
-var contador := Label.new()
-## Ação disponível no botão F ("F: morder o mirante"), embaixo, no centro.
-var rotulo_acao := Label.new()
+## O objetivo da fase ("Leve o graveto ao dono", "Ovelhas no celeiro: 1 / 2"), numa pílula com
+## a plaquinha no canto de cima à esquerda. Sem texto, a pílula some.
+var contador := Coleira.rotulo("", 18)
+var _pilula_objetivo := Coleira.pilula_com_peca()
+## Controles que valem agora (tecla + o que faz), no canto de baixo à direita.
+var controles := VBoxContainer.new()
+var _texto_controles := ""
+## Ação disponível no botão F ("[F] morder o mirante"), embaixo, no centro.
+var rotulo_acao := Coleira.linha_tecla("F", "", 18)
+var _pilula_acao := Coleira.pilula_com_peca()
+## Balão curto em cima do cachorro ("Brrr!", "Splash!").
+var _balao := Coleira.pilula(Coleira.CREME, 12.0, 2.0)
+var _tempo_balao := 0.0
+## Fim da fase: a plaquinha grande, o título e as opções (pílulas com a tecla).
+var _cartao_fim := VBoxContainer.new()
 ## Mirante sendo usado (a câmera gira em volta dele, mostrando a fase da volta).
 var _mirante: Mirante
 ## Fundo semitransparente do aviso (o rótulo `aviso` fica dentro dele).
@@ -55,10 +65,11 @@ var marcas_fogueira := {}
 ## Tela preta por cima de tudo (entrar numa toca), ver `escurecer`.
 var _escuro := ColorRect.new()
 
-## Avisos: largura máxima e tamanhos de letra (curto e de uma linha = grande; senão, menor).
-const AVISO_LARGURA_MAXIMA := 720.0
+## Avisos: largura máxima e tamanhos de letra (curto e de uma linha = grande, na faixa
+## vermelha; senão, menor, na pílula creme).
+const AVISO_LARGURA_MAXIMA := 640.0
 const AVISO_FONTE_GRANDE := 34
-const AVISO_FONTE_PEQUENA := 22
+const AVISO_FONTE_PEQUENA := 19
 const AVISO_CURTO := 40
 ## Um aviso importante interrompido volta por pelo menos isto (s), para dar tempo de ler.
 const AVISO_VOLTA_MINIMO := 2.0
@@ -67,34 +78,12 @@ const AVISO_VOLTA_MINIMO := 2.0
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_montar_aviso()
-	# Com teclas de nome comprido (ex.: "Mouse esq.") a dica quebra em duas linhas, sem sair da
-	# tela; o tamanho da área muda com a janela.
-	dica.resized.connect(_atualizar_dica)
+	_montar_hud()
 	mensagem.hide()
 	cachorro.camera_referencia = camera_controller.camera
 	indicador_equilibrio.cachorro = cachorro
 	add_child(_pausa)
-	contador.hide()
-	contador.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT, Control.PRESET_MODE_MINSIZE, 16)
-	contador.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	contador.add_theme_font_size_override("font_size", 24)
-	contador.add_theme_color_override("font_outline_color", Color.BLACK)
-	contador.add_theme_constant_override("outline_size", 8)
-	$HUD/Area.add_child(contador)
-	rotulo_acao.hide()
-	rotulo_acao.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 110)
-	rotulo_acao.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	rotulo_acao.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	rotulo_acao.add_theme_font_size_override("font_size", 26)
-	rotulo_acao.add_theme_color_override("font_color", TemaUI.COR_DESTAQUE)
-	rotulo_acao.add_theme_color_override("font_outline_color", Color.BLACK)
-	rotulo_acao.add_theme_constant_override("outline_size", 8)
-	$HUD/Area.add_child(rotulo_acao)
 	indicador_calor.cachorro = cachorro
-	indicador_calor.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 24)
-	indicador_calor.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	indicador_calor.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	$HUD/Area.add_child(indicador_calor)
 	_escuro.color = Color(0.02, 0.015, 0.01, 0.0)
 	_escuro.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_escuro.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -126,6 +115,10 @@ func _ready() -> void:
 	var raca := Racas.por_id(fase.raca)
 	if raca:
 		cachorro.aplicar_raca(raca, Racas.pelagem_escolhida(raca))
+	# Progressão: as habilidades das fases anteriores. Testando no editor, vale o id da fase
+	# (fase nova, sem id, fica só com as dela).
+	if not Fases.testando and not Fases.caminho_atual.is_empty():
+		fase.habilidades_herdadas = Fases.habilidades_anteriores(Fases.id_da_fase(Fases.caminho_atual))
 	var habilidades := fase.habilidades_efetivas()
 	cachorro.pode_pular = habilidades & Fase.HABILIDADE_PULAR != 0
 	cachorro.pode_cavar = habilidades & Fase.HABILIDADE_CAVAR != 0
@@ -149,7 +142,10 @@ func _ready() -> void:
 	camera_controller.configurar(cachorro)
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
 	cachorro.puxar_falhou.connect(_on_puxar_falhou)
-	cachorro.gelou.connect(func() -> void: mostrar_aviso("Brrr! Frio demais — de volta para perto do fogo", 3.0))
+	cachorro.gelou.connect(func() -> void:
+		mostrar_balao("Brrr!")
+		mostrar_aviso("Brrr! Frio demais — de volta para perto do fogo", 3.0))
+	cachorro.pulo_recusado.connect(func(_motivo: String) -> void: mostrar_aviso("Água funda: salsicha não pula na água", 2.0))
 	for bloco in fase.todos(Empurravel):
 		(bloco as Empurravel).voltou_ao_inicio.connect(
 			mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
@@ -253,6 +249,10 @@ func _process(delta: float) -> void:
 	RenderingServer.global_shader_parameter_set(&"transparencia_na_frente", 1.0)
 	_atualizar_marcas()
 	_atualizar_rotulo_acao()
+	_atualizar_balao(delta)
+	_pilula_objetivo.visible = not contador.text.is_empty() and not concluida and _mirante == null
+	# No cartão de fase concluída, as teclas do cartão bastam.
+	controles.visible = not concluida
 	# Graveto grande emperrado num vão: lembra que dá para virar (uma vez por fase).
 	_tempo_travado = _tempo_travado + delta if cachorro.graveto_travado else 0.0
 	if _tempo_travado > 0.8 and not _dica_virar_mostrada and not cachorro.graveto_ao_comprido:
@@ -388,38 +388,56 @@ func _avisar_motivo(motivo: String, acao: String, sem_alvo: String) -> void:
 				mostrar_aviso(sem_alvo)
 
 
-## Dica do topo: só o que vale agora (reiniciar e editor ficam na pausa, com as teclas).
+## Controles do canto: só o que vale agora (reiniciar e editor ficam na pausa, com as teclas).
 func _atualizar_dica() -> void:
 	var t := Teclas.nome
 	if _mirante:
-		_mostrar_dicas(["Mouse: olhar", "%s ou Esc: sair do mirante" % t.call(&"acao")])
+		_mostrar_controles([["Mouse", "olhar"], ["%s / Esc" % t.call(&"acao"), "sair do mirante"]])
 		return
 	var andar := "%s%s%s%s" % [t.call(&"mover_frente"), t.call(&"mover_esquerda"), t.call(&"mover_tras"), t.call(&"mover_direita")]
-	var partes: PackedStringArray = ["%s / ←↑↓→: andar" % andar]
+	var partes: Array = [[andar, "andar"], [t.call(&"correr"), "correr"]]
 	var em_3d := cachorro.tem_graveto
 	if em_3d:
-		partes.append("Mouse: câmera")
+		partes.append(["Mouse", "câmera"])
 	if cachorro.pode_pular:
-		partes.append("%s: pular" % t.call(&"pular"))
+		partes.append([t.call(&"pular"), "pular"])
 	if cachorro.pode_cavar and not cachorro.tem_graveto:
-		partes.append("%s: cavar" % t.call(&"cavar"))
+		partes.append([t.call(&"cavar"), "cavar"])
 	if cachorro.pode_latir and not cachorro.tem_graveto:
-		partes.append("%s: latir" % t.call(&"latir"))
+		partes.append([t.call(&"latir"), "latir"])
 	if not cachorro.tem_graveto and fase and not fase.todos(Empurravel).is_empty():
-		partes.append("%s + trás: puxar bloco" % t.call(&"acao"))
+		partes.append([t.call(&"acao"), "+ trás: puxar bloco"])
 	if not cachorro.tem_graveto and fase and not fase.todos(TroncoRolante).is_empty():
-		partes.append("%s na ponta do tronco + lado: girar" % t.call(&"acao"))
+		partes.append([t.call(&"acao"), "na ponta do tronco + lado: girar"])
 	if em_3d:
-		partes.append_array(["%s: virar graveto" % t.call(&"virar_graveto"),
-			"%s: devagar" % t.call(&"andar_devagar"), "%s: largar" % t.call(&"largar_graveto")])
-	partes.append("Esc: pausa")
-	_mostrar_dicas(partes)
+		partes.append_array([[t.call(&"virar_graveto"), "virar graveto"],
+			[t.call(&"andar_devagar"), "devagar"], [t.call(&"largar_graveto"), "largar"]])
+	partes.append(["Esc", "pausa"])
+	_mostrar_controles(partes)
 
 
-## Dicas separadas por espaço largo; se não couberem numa linha, quebram entre uma dica e outra.
-func _mostrar_dicas(partes: PackedStringArray) -> void:
-	var tamanho := dica.get_theme_font_size(&"font_size")
-	dica.text = _quebrar_linhas(partes, "    ", dica.get_theme_font(&"font"), tamanho, dica.size.x)
+## Uma linha "[tecla] o que faz" para cada par [tecla, texto], alinhadas à direita.
+func _mostrar_controles(pares: Array) -> void:
+	var textos: PackedStringArray = []
+	for i in pares.size():
+		var linha: HBoxContainer
+		if i < controles.get_child_count():
+			linha = controles.get_child(i) as HBoxContainer
+		else:
+			linha = Coleira.linha_tecla("", "", 15, Color.WHITE, 6)
+			linha.size_flags_horizontal = Control.SIZE_SHRINK_END
+			controles.add_child(linha)
+		Coleira.mudar_linha(linha, pares[i][0], pares[i][1])
+		linha.show()
+		textos.append("%s: %s" % pares[i])
+	for i in range(pares.size(), controles.get_child_count()):
+		controles.get_child(i).hide()
+	_texto_controles = "    ".join(textos)
+
+
+## Os controles do canto num texto só ("W: andar    Espaço: pular").
+func texto_dos_controles() -> String:
+	return _texto_controles
 
 
 ## Ponto do chão logo abaixo de `posicao` (até 0,6 m), ou null.
@@ -470,6 +488,7 @@ func _on_puxar_falhou(motivo: String) -> void:
 
 func _on_cachorro_voltou(motivo: String) -> void:
 	if motivo == "agua":
+		mostrar_balao("Splash!")
 		mostrar_aviso("Splash! %s não nada..." % (cachorro.raca.nome if cachorro.raca else "Salsicha"))
 	elif motivo == "queda":
 		mostrar_aviso("Opa! Caiu...")
@@ -484,26 +503,61 @@ func concluir() -> void:
 	# Senão um clique na tela de "fase concluída" prenderia o mouse de novo.
 	camera_controller.set_process_unhandled_input(false)
 	_limpar_avisos()
-	var texto := "Fase concluída! 🦴\n"
+	var subtitulo := fase.nome
+	var opcoes: Array = []
 	if Fases.testando:
-		texto += "%s: voltar ao editor    %s: jogar de novo" % [Teclas.nome(&"alternar_editor"), Teclas.nome(&"reiniciar")]
+		opcoes = [[Teclas.nome(&"alternar_editor"), "Voltar ao editor"], [Teclas.nome(&"reiniciar"), "Jogar de novo"]]
 	else:
 		Fases.marcar_concluida(Fases.caminho_atual, fase.raca)
 		_proxima_fase = Fases.proxima()
 		if _proxima_fase.is_empty():
-			texto += "Última fase! Enter: menu    %s: jogar de novo" % Teclas.nome(&"reiniciar")
+			subtitulo += " · última fase!"
+			opcoes = [["Enter", "Menu"], [Teclas.nome(&"reiniciar"), "Jogar de novo"]]
 		elif _muda_de_regiao():
 			var regiao := Regioes.por_id(Fases.regiao_da_fase(_proxima_fase))
-			texto += "Enter: próxima região (%s)    %s: jogar de novo    Esc: pausa" % [
-				regiao.nome if regiao else "?", Teclas.nome(&"reiniciar")]
+			subtitulo += " · próxima região: %s" % (regiao.nome if regiao else "?")
+			opcoes = [["Enter", "Próxima região"], [Teclas.nome(&"reiniciar"), "Jogar de novo"], ["Esc", "Pausa"]]
 		else:
-			texto += "Enter: próxima fase    %s: jogar de novo    Esc: pausa" % Teclas.nome(&"reiniciar")
-	mensagem.text = texto
-	mensagem.show()
+			opcoes = [["Enter", "Próxima fase"], [Teclas.nome(&"reiniciar"), "Jogar de novo"], ["Esc", "Pausa"]]
+	_mostrar_cartao_fim("Fase concluída!", subtitulo, opcoes)
 
 
 func _muda_de_regiao() -> bool:
 	return Fases.regiao_da_fase(_proxima_fase) != Fases.regiao_da_fase(Fases.caminho_atual)
+
+
+## Cartão do fim: a plaquinha grande, o título contornado, o nome da fase e as opções (a
+## primeira dourada).
+func _mostrar_cartao_fim(titulo: String, subtitulo: String, opcoes: Array) -> void:
+	for filho in _cartao_fim.get_children():
+		filho.queue_free()
+	var plaquinha := Coleira.Plaquinha.new(96.0)
+	plaquinha.rotation = deg_to_rad(-8.0)
+	plaquinha.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_cartao_fim.add_child(plaquinha)
+	var rotulo_titulo := Coleira.rotulo(titulo, 56, Color.WHITE, true, 16)
+	rotulo_titulo.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cartao_fim.add_child(rotulo_titulo)
+	var rotulo_nome := Coleira.rotulo(subtitulo, 19, Color.WHITE, false, 7)
+	rotulo_nome.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cartao_fim.add_child(rotulo_nome)
+	var linha := HBoxContainer.new()
+	linha.alignment = BoxContainer.ALIGNMENT_CENTER
+	linha.add_theme_constant_override(&"separation", 14)
+	linha.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for i in opcoes.size():
+		var pilula := Coleira.pilula_com_peca(Coleira.DOURADO if i == 0 else Coleira.CREME)
+		var conteudo := Coleira.linha_tecla(opcoes[i][0], opcoes[i][1], 17)
+		pilula.add_child(conteudo)
+		linha.add_child(pilula)
+	_cartao_fim.add_child(linha)
+	_cartao_fim.show()
+	# A plaquinha cai girando, e o resto aparece junto.
+	_cartao_fim.modulate.a = 0.0
+	plaquinha.scale = Vector2.ONE * 1.6
+	var tween := create_tween().set_parallel()
+	tween.tween_property(_cartao_fim, "modulate:a", 1.0, 0.25)
+	tween.tween_property(plaquinha, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _mostrar_erro(texto: String) -> void:
@@ -524,16 +578,9 @@ func _agendar(segundos: float, acao: Callable) -> void:
 	tween.tween_callback(acao)
 
 
-## O rótulo do aviso vai para dentro de um painel semitransparente, centralizado no topo.
+## O rótulo do aviso vai para dentro de um painel centralizado no topo (a faixa vermelha ou a
+## pílula creme, ver `_exibir_aviso`).
 func _montar_aviso() -> void:
-	var fundo := StyleBoxFlat.new()
-	fundo.bg_color = Color(0, 0, 0, 0.5)
-	fundo.set_corner_radius_all(6)
-	fundo.content_margin_left = 18
-	fundo.content_margin_right = 18
-	fundo.content_margin_top = 6
-	fundo.content_margin_bottom = 8
-	aviso_painel.add_theme_stylebox_override("panel", fundo)
 	aviso_painel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	aviso_painel.name = "AvisoPainel"
 	var area := aviso.get_parent()
@@ -541,6 +588,7 @@ func _montar_aviso() -> void:
 	area.move_child(aviso_painel, aviso.get_index())
 	aviso.reparent(aviso_painel, false)
 	aviso.autowrap_mode = TextServer.AUTOWRAP_OFF
+	aviso.add_theme_constant_override(&"outline_size", 0)
 	aviso_painel.hide()
 
 
@@ -575,16 +623,25 @@ func _exibir_aviso(texto: String, segundos: float, importante: bool) -> void:
 	_segundos_aviso = segundos
 	var curto := texto.length() <= AVISO_CURTO and not "\n" in texto
 	var tamanho := AVISO_FONTE_GRANDE if curto else AVISO_FONTE_PEQUENA
-	aviso.add_theme_font_size_override("font_size", tamanho)
-	aviso.add_theme_constant_override("outline_size", 8 if curto else 6)
+	# Curto: faixa vermelha torta, letra de título branca. Comprido: pílula creme, texto escuro.
+	var fonte := Coleira.fonte_titulo() if curto else Coleira.fonte_texto()
+	aviso.add_theme_font_override(&"font", fonte)
+	aviso.add_theme_font_size_override(&"font_size", tamanho)
+	aviso.add_theme_color_override(&"font_color", Color.WHITE if curto else Coleira.CONTORNO)
+	aviso.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	aviso_painel.add_theme_stylebox_override(&"panel", Coleira.caixa(
+		Coleira.VERMELHO if curto else Coleira.CREME, 12 if curto else 16, 3, 4, 26.0 if curto else 22.0,
+		4.0 if curto else 8.0))
 	var linhas: PackedStringArray = []
 	for paragrafo in texto.split("\n"):
-		linhas.append(_quebrar_linhas(paragrafo.split(" "), " ", aviso.get_theme_font(&"font"), tamanho, AVISO_LARGURA_MAXIMA))
+		linhas.append(_quebrar_linhas(paragrafo.split(" "), " ", fonte, tamanho, AVISO_LARGURA_MAXIMA))
 	aviso.text = "\n".join(linhas)
 	aviso_painel.show()
 	# Encolhe para o texto novo e centraliza no topo.
 	aviso_painel.reset_size()
-	aviso_painel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 72)
+	aviso_painel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP, Control.PRESET_MODE_MINSIZE, 64)
+	aviso_painel.pivot_offset = aviso_painel.size * 0.5
+	aviso_painel.rotation = deg_to_rad(-1.5) if curto else 0.0
 	if _tween_aviso:
 		_tween_aviso.kill()
 	_tween_aviso = create_tween()
@@ -633,24 +690,11 @@ func _com_teclas(texto: String) -> String:
 	return resultado
 
 
-## Rótulo com fundo escuro, letra grande e contorno: legível sobre neve clara e em 720p.
+## Pílula creme com contorno escuro: legível sobre neve clara e em 720p.
 func _criar_marca() -> PanelContainer:
-	var painel := PanelContainer.new()
-	var fundo := StyleBoxFlat.new()
-	fundo.bg_color = Color(0.08, 0.06, 0.05, 0.72)
-	fundo.set_corner_radius_all(6)
-	fundo.content_margin_left = 10
-	fundo.content_margin_right = 10
-	fundo.content_margin_top = 2
-	fundo.content_margin_bottom = 4
-	painel.add_theme_stylebox_override("panel", fundo)
-	painel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var rotulo := Label.new()
+	var painel := Coleira.pilula(Coleira.CREME, 12.0, 2.0)
+	var rotulo := Coleira.rotulo("", 22, Coleira.CONTORNO, true)
 	rotulo.name = "Texto"
-	rotulo.add_theme_font_size_override("font_size", 26)
-	rotulo.add_theme_color_override("font_color", TemaUI.COR_DESTAQUE)
-	rotulo.add_theme_color_override("font_outline_color", Color.BLACK)
-	rotulo.add_theme_constant_override("outline_size", 6)
 	painel.add_child(rotulo)
 	painel.hide()
 	$HUD.add_child(painel)
@@ -678,10 +722,15 @@ func _atualizar_marcas() -> void:
 func _atualizar_rotulo_acao() -> void:
 	var alvo := cachorro.objeto_da_acao() if fase and not concluida else null
 	if alvo == null:
-		rotulo_acao.hide()
+		_pilula_acao.hide()
 		return
-	rotulo_acao.text = "%s: %s" % [Teclas.nome(&"acao"), alvo.acao_da_boca(cachorro)]
-	rotulo_acao.show()
+	var texto: String = alvo.acao_da_boca(cachorro)
+	var rotulo_texto := rotulo_acao.get_node(^"Texto") as Label
+	if rotulo_texto.text != texto or not _pilula_acao.visible:
+		Coleira.mudar_linha(rotulo_acao, Teclas.nome(&"acao"), texto)
+		_pilula_acao.reset_size()
+		_pilula_acao.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE, 96)
+	_pilula_acao.show()
 
 
 ## Escurece (ou clareia) a tela em `duracao` segundos. Aguarde com `await`.
@@ -697,6 +746,91 @@ func escurecer(ligar: bool, duracao: float) -> void:
 ## O cachorro foi de um lugar para outro de uma vez (saiu pela outra toca): a câmera vai junto.
 func cachorro_mudou_de_lugar() -> void:
 	camera_controller.recentralizar()
+
+
+# --- HUD (estilo Coleira, ver scripts/ui/coleira.gd) ----------------------------------------
+
+## Monta as peças do HUD que não estão na cena: objetivo, controles, ação, balão, fim da fase.
+func _montar_hud() -> void:
+	var area := $HUD/Area as Control
+	# Objetivo: plaquinha + texto, no canto de cima à esquerda.
+	var linha_objetivo := HBoxContainer.new()
+	linha_objetivo.add_theme_constant_override(&"separation", 10)
+	linha_objetivo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	linha_objetivo.add_child(Coleira.Plaquinha.new(30.0))
+	contador.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	linha_objetivo.add_child(contador)
+	_pilula_objetivo.add_child(linha_objetivo)
+	_pilula_objetivo.name = "Objetivo"
+	_pilula_objetivo.position = Vector2(18, 16)
+	_pilula_objetivo.hide()
+	area.add_child(_pilula_objetivo)
+	# Controles: coluna de "[tecla] o que faz" no canto de baixo à direita.
+	controles.name = "Controles"
+	controles.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	controles.alignment = BoxContainer.ALIGNMENT_END
+	controles.add_theme_constant_override(&"separation", 6)
+	controles.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 18)
+	controles.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	controles.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	area.add_child(controles)
+	# Ação do F: pílula com a tecla, embaixo no centro.
+	_pilula_acao.name = "Acao"
+	_pilula_acao.add_child(rotulo_acao)
+	_pilula_acao.hide()
+	area.add_child(_pilula_acao)
+	# Termômetro: no canto de cima à direita.
+	indicador_calor.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 18)
+	indicador_calor.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	area.add_child(indicador_calor)
+	# Balão do cachorro.
+	_balao.name = "Balao"
+	var texto_balao := Coleira.rotulo("", 20, Coleira.CONTORNO, true)
+	texto_balao.name = "Texto"
+	_balao.add_child(texto_balao)
+	_balao.draw.connect(_desenhar_rabinho_do_balao)
+	_balao.hide()
+	$HUD.add_child(_balao)
+	# Fim da fase, no meio da tela.
+	_cartao_fim.name = "Fim"
+	_cartao_fim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cartao_fim.alignment = BoxContainer.ALIGNMENT_CENTER
+	_cartao_fim.add_theme_constant_override(&"separation", 12)
+	_cartao_fim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_cartao_fim.hide()
+	area.add_child(_cartao_fim)
+	# Mensagem de erro (fase que não abre).
+	mensagem.add_theme_font_override(&"font", Coleira.fonte_titulo())
+	mensagem.add_theme_font_size_override(&"font_size", 36)
+	mensagem.add_theme_color_override(&"font_outline_color", Coleira.CONTORNO)
+	mensagem.add_theme_constant_override(&"outline_size", 12)
+
+
+## Balão curto em cima da cabeça do cachorro por `segundos`.
+func mostrar_balao(texto: String, segundos := 1.6) -> void:
+	(_balao.get_node(^"Texto") as Label).text = texto
+	_balao.reset_size()
+	_tempo_balao = segundos
+	_atualizar_balao(0.0)
+
+
+func _atualizar_balao(delta: float) -> void:
+	_tempo_balao -= delta
+	var ponto := cachorro.global_position + Vector3.UP * 0.9
+	var camera := camera_controller.camera
+	if _tempo_balao <= 0.0 or camera == null or camera.is_position_behind(ponto):
+		_balao.hide()
+		return
+	var tela := camera.unproject_position(ponto)
+	_balao.position = (tela - Vector2(_balao.size.x * 0.4, _balao.size.y + 12.0)).round()
+	_balao.show()
+
+
+## O rabinho do balão, apontando para o cachorro.
+func _desenhar_rabinho_do_balao() -> void:
+	var base := Vector2(_balao.size.x * 0.4, _balao.size.y - 4.0)
+	_balao.draw_colored_polygon(PackedVector2Array([base + Vector2(-2, 0), base + Vector2(14, 0),
+		base + Vector2(1, 14)]), Coleira.CONTORNO)
 
 
 # --- Mirante -------------------------------------------------------------------------------
