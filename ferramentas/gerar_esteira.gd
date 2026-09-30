@@ -157,23 +157,29 @@ func floresta_01_andar() -> void:
 	salvar(12)
 
 
-## Barranco de mão única (ida pela rampa, 1 m para descer) e a trilha escondida por folhagem que
-## só existe na visão isométrica — na volta (3D) ela some. Mirante antes do barranco.
+## Barranco de mão única (2 m) com um túnel que a câmera isométrica não mostra: o teto cobre o
+## túnel e as bocas ficam de lado para a câmera. Na ida sobe pela rampa dupla e desce do outro
+## lado (o terraço do graveto é meio bloco mais alto, então o túnel não serve de atalho: na saída
+## leste há um degrau); na volta (3D, atrás do cachorro) a boca do túnel aparece na frente dele.
 func floresta_02_perspectiva() -> void:
 	base("floresta_02_perspectiva", "F02 — A outra perspectiva", 16)
-	caixa(Tiles.TERRA, 7, 9, 0, 1, -6, 0)
-	caixa(Tiles.GRAMA, 7, 9, 0, 1, -3, -2)
+	caixa(Tiles.TERRA, 7, 9, 0, 2, -6, 0)
 	t.set_cell_item(Vector3i(7, 0, -3), -1)
 	t.set_cell_item(Vector3i(8, 0, -3), -1)
+	caixa(Tiles.MEIO_BLOCO, 9, 16, 0, 1, -6, 0)
+	# O degrau fica um passo fora da boca: o teto do túnel não deixa descer direto do terraço.
+	t.set_cell_item(Vector3i(9, 0, -3), -1)
 	for z in [-6, -5]:
-		t.set_cell_item(Vector3i(5, 0, z), Tiles.RAMPA_BAIXA)
-		t.set_cell_item(Vector3i(6, 0, z), Tiles.RAMPA_ALTA)
-	obj("tampa_folhagem", Vector3(6.5, 0, -2.5))
-	obj("tampa_folhagem", Vector3(9.5, 0, -2.5))
-	obj("mirante", Vector3(3.5, 0, -1.5))
-	dica_inicial("Na ida a câmera é isométrica; com o graveto na boca, vira 3D e a fase muda.")
-	dica(Vector3(3.5, 0, -2.5), Vector3(2.0, 1.5, 3.0), "Mirante: {acao} mostra como a fase fica na volta.")
-	graveto(Vector3(12.5, 0.08, -3.5))
+		t.set_cell_item(Vector3i(3, 0, z), Tiles.RAMPA_BAIXA)
+		t.set_cell_item(Vector3i(4, 0, z), Tiles.RAMPA_ALTA)
+		t.set_cell_item(Vector3i(5, 0, z), Tiles.TERRA)
+		t.set_cell_item(Vector3i(6, 0, z), Tiles.TERRA)
+		t.set_cell_item(Vector3i(5, 1, z), Tiles.RAMPA_BAIXA)
+		t.set_cell_item(Vector3i(6, 1, z), Tiles.RAMPA_ALTA)
+	obj("mirante", Vector3(2.5, 0, -1.5))
+	dica_inicial("Na ida a câmera é isométrica; com o graveto na boca, vira 3D — e o que ela mostra muda.")
+	dica(Vector3(2.5, 0, -2.5), Vector3(2.0, 1.5, 3.0), "Mirante: {acao} mostra como a fase fica na volta.")
+	graveto(Vector3(12.5, 0.58, -3.5))
 	salvar(16)
 
 
@@ -196,7 +202,7 @@ func floresta_04_rampas() -> void:
 	for z in [-3, -2, -1]:
 		girado(Tiles.ESCADA_ALTA, Vector3i(12, 0, z), Vector3.LEFT)
 		girado(Tiles.ESCADA_BAIXA, Vector3i(13, 0, z), Vector3.LEFT)
-	dica_inicial("Sem pular: suba pela rampa, desça pela escada — e volte.")
+	dica_inicial("O platô é alto demais para pular: suba pela rampa, desça pela escada — e volte.")
 	graveto(Vector3(14.5, 0.08, -2.5))
 	salvar(16)
 
@@ -237,21 +243,23 @@ func floresta_07_ponte() -> void:
 	salvar(14)
 
 
-## Tábua (ida) e tronco caído como pinguela (volta): passagens estreitas. O graveto comprido
-## (1,4) faz balançar — devagar e ao comprido.
+## Tábua (ida) e tronco caído como pinguela (volta) sobre um riacho largo (5 m): passagens
+## estreitas e compridas. O graveto comprido (1,4) faz balançar — devagar e ao comprido.
 func floresta_08_tabua_e_pinguela() -> void:
-	base("floresta_08_tabua_e_pinguela", "F08 — Tábua e pinguela", 16)
-	riacho(7, 7)
-	t.set_cell_item(Vector3i(7, 0, -5), Tiles.TABUA)
-	(obj("tronco_caido", Vector3(7.5, 0, -2.5)) as TroncoCaido).pinguela = true
+	base("floresta_08_tabua_e_pinguela", "F08 — Tábua e pinguela", 19)
+	riacho(6, 10)
+	for x in range(6, 11):
+		t.set_cell_item(Vector3i(x, 0, -5), Tiles.TABUA)
+	var pinguela := obj("tronco_caido", Vector3(8.5, 0, -2.5)) as TroncoCaido
+	pinguela.comprimento = 6
+	pinguela.pinguela = true
 	dica_inicial("Tábua e pinguela são estreitas: com carga, o cachorro balança.")
-	dica(Vector3(10.5, 0, -3.5), Vector3(2.0, 1.5, 5.6),
+	dica(Vector3(13.5, 0, -3.5), Vector3(2.0, 1.5, 5.6),
 		"Graveto comprido: devagar ({andar_devagar}) e ao comprido ({virar_graveto}) balança menos.")
-	graveto(Vector3(12.5, 0.08, -3.5), true, 1.4, 1.0)
-	salvar(16)
+	graveto(Vector3(15.5, 0.08, -3.5), true, 1.4, 1.0)
+	salvar(19)
 
 
-## Correnteza (leva para a água funda ao norte) e o vau de água rasa ao sul.
 func floresta_09_correnteza() -> void:
 	base("floresta_09_correnteza", "F09 — Correnteza e vau", 16)
 	for x in [6, 7]:
@@ -594,14 +602,14 @@ func neve_05_frio_e_fogueira() -> void:
 	salvar(20)
 
 
-## A fogueira acesa derrete o monte de neve que fecha a trilha.
+## A fogueira acesa derrete a parede de gelo (que não se cava) que fecha a trilha.
 func neve_06_fogo_derrete() -> void:
 	neve("neve_06_fogo_derrete", "N06 — O fogo derrete", 16)
 	var fogueira := obj("fogueira", Vector3(6.5, 0, -3.5)) as Fogueira
 	fogueira.gravetos_para_acender = 1
-	muro(8, [], 1, Tiles.MONTE_DE_NEVE)
+	muro(8, [], 1, Tiles.BLOCO_DE_GELO)
 	graveto(Vector3(3.5, 0.08, -5.5), false, 0.8, 1.0, deg_to_rad(90))
-	dica_inicial("Sem cavar: acenda a fogueira e o monte de neve derrete.")
+	dica_inicial("Gelo não se cava: acenda a fogueira e a parede de gelo derrete.")
 	graveto(Vector3(11.5, 0.08, -3.5))
 	salvar(16)
 
@@ -657,14 +665,16 @@ func neve_09_pastoreio() -> void:
 
 
 func neve_10_celeiro() -> void:
-	neve("neve_10_celeiro", "N10 — O celeiro", 20)
+	neve("neve_10_celeiro", "N10 — O celeiro", 20, Fase.HABILIDADE_LATIR)
 	fase.objetivo = Fase.OBJETIVO_PASTOREIO
 	fase.raca = &"border_collie"
 	fase.raca_fixa = true
 	fase.frio = true
 	fase.tempo_de_frio = 90.0
 	obj("celeiro", Vector3(16.0, 0, -3.5), PI)
+	# Uma fogueira acesa no meio do caminho, na beira da frente (fora da rota das ovelhas).
+	(obj("fogueira", Vector3(10.5, 0, -0.5)) as Fogueira).gravetos_para_acender = 0
 	for p in [Vector3(4.5, 0, -4.5), Vector3(6.0, 0, -2.0)]:
 		obj("ovelha", p, rng.randf_range(-PI, PI))
-	dica_inicial("Frio: leve as ovelhas ao celeiro — dentro é quente.")
+	dica_inicial("Frio: leve as ovelhas ao celeiro ({latir} espanta). Perto do fogo e dentro do celeiro é quente.")
 	salvar(20)

@@ -13,7 +13,7 @@ esperar 20
 apertar acao 2
 esperar 120
 checar jogo._mirante != null
-checar jogo.dica.text.contains("sair do mirante")
+checar jogo.texto_dos_controles().contains("sair do mirante")
 apertar liberar_mouse 2
 esperar 90
 checar jogo._mirante == null

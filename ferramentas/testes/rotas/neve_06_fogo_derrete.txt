@@ -1,9 +1,15 @@
-# N06 — O fogo derrete: sem poder cavar, o monte de neve fecha a trilha; a fogueira acesa (1
-# graveto comum) derrete o monte em volta.
+# N06 — O fogo derrete: a parede de gelo fecha a trilha e não se cava (o cavar já veio da N04);
+# a fogueira acesa (1 graveto comum) derrete o gelo em volta.
 fase res://scenes/fases/neve_06_fogo_derrete.tscn
 esperar 20
-checar jogo.fase.terreno.get_cell_item(Vector3i(8, 0, -4)) == 24
-checar not jogo.cachorro.pode_cavar
+checar jogo.fase.terreno.get_cell_item(Vector3i(8, 0, -4)) == 29
+checar jogo.cachorro.pode_cavar
+# Cavar no gelo não adianta.
+ir 7.3 -2.5
+apertar mover_direita 4
+apertar cavar 2
+esperar 60
+checar jogo.fase.terreno.get_cell_item(Vector3i(8, 0, -4)) == 29 and jogo.fase.terreno.get_cell_item(Vector3i(8, 0, -3)) == 29 and jogo.cachorro.global_position.x > 7.0
 ir 3.5 -5.5
 esperar 10
 checar jogo.cachorro.tem_graveto

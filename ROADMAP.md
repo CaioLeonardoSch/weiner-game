@@ -122,6 +122,14 @@ O plano para a primeira versão jogável por outras pessoas: **dois biomas**, ca
   tamanho e formato (entorno que segue o formato do mapa, queda relativa).
 - Falta: as fases de verdade (mapas maiores, montados no editor) e os ajustes finos que as
   issues da esteira apontarem.
+- ✅ **Progressão de habilidades**: a habilidade liberada numa fase vale nas seguintes (pular
+  desde a F03, cavar desde a F10, latir desde a F25). Ajustes para isso: o pulo "de salsicha"
+  (pouco alcance no ar e recusa pular em água funda), o passarinho que bloqueia com uma caixa
+  alta (não dá para pular por cima), o platô da F04 alto demais e a parede de **bloco de gelo**
+  da N06 (não se cava; o fogo derrete).
+- ✅ **Correr** (Ctrl), **tela cheia** no F11 e, no editor, **Tab** esconde os painéis.
+- ✅ **HUD "Coleira"** (ver README): objetivo, controles com teclas, avisos, balão do cachorro,
+  medidores e o cartão de fim de fase.
 
 ## Visão
 

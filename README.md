@@ -27,7 +27,8 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
 | Mouse | câmera 3D | clique esq. coloca, dir. apaga, meio gira; Cursor: arrastar no vazio gira |
 | E | largar o graveto | girar (com Q) |
 | Q | virar o graveto (atravessado ↔ ao comprido) | girar (com E) |
-| Espaço | pular (se a fase liberar) | segurando + botão esquerdo: girar a vista |
+| Ctrl | correr | modificador (Ctrl + roda: tamanho do pincel) |
+| Espaço | pular (depois da F03; parado na beira de água funda, o salsicha não pula) | segurando + botão esquerdo: girar a vista |
 | C | cavar terra fofa (se a fase liberar) | — |
 | B | latir (se a fase liberar) | — |
 | F | ação do que está à frente (morder o mirante, a ponta de um tronco...) | — |
@@ -46,6 +47,8 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
 | F2 | — | testar daqui (o cachorro começa no cursor, em chão firme) |
 | F3 | liga/desliga o pixelado | idem |
 | H | — | lista de atalhos do editor |
+| Tab | — | esconder / mostrar os painéis (ver o mapa inteiro); o botão **Esconder painéis** no topo faz o mesmo |
+| F11 | tela cheia / janela (guarda nas opções) | idem |
 
 ## Opções e tela
 
@@ -145,13 +148,13 @@ editar uma fase no editor deve levar a mudança para o gerador (ou parar de usá
 | Fase | Mecânica |
 |---|---|
 | F01 Andar e pegar | andar, pegar o graveto, entregar ao dono |
-| F02 A outra perspectiva | a câmera vira 3D ao pegar; folhagem "só isométrica" esconde o túnel da volta |
+| F02 A outra perspectiva | a câmera vira 3D ao pegar; o túnel do barranco fica de perfil na isométrica (invisível) e aparece no 3D |
 | F03 Pular | pular um vão e um degrau (a habilidade vem da fase) |
-| F04 Rampas e escadas | sem pular: sobe pela rampa, desce pela escada |
+| F04 Rampas e escadas | o platô é alto demais para pular: sobe pela rampa, desce pela escada |
 | F05 Degrau alto | só pulando; com o graveto na boca o pulo não chega (a volta é descendo) |
 | F06 Rampa lisa | com um graveto pesado na boca, escorrega; a escada do lado é a saída |
 | F07 A ponte | ponte sobre água funda |
-| F08 Tábua e pinguela | passagem estreita: equilíbrio, andar devagar, graveto ao comprido |
+| F08 Tábua e pinguela | passagens estreitas de 5 e 6 m: equilíbrio, andar devagar, graveto ao comprido |
 | F09 Correnteza e vau | a correnteza arrasta; o vau de água rasa só deixa mais lento |
 | F10 Cavar | túnel no monte de terra fofa; no chão, a terra fofa vira buraco |
 | F11 Debaixo da cerca | cavar sob a cerca; o graveto comprido só passa ao comprido |
@@ -187,11 +190,16 @@ editar uma fase no editor deve levar a mudança para o gerador (ou parar de usá
 | N03 Gelo liso | desliza em linha reta (na grade) até bater |
 | N04 Monte de neve | cavar através do monte |
 | N05 Frio e fogueira | o calor cai longe do fogo; a fogueira acende com 2 gravetos; gelado, volta ao último lugar quente |
-| N06 O fogo derrete | a fogueira acesa derrete o monte de neve |
+| N06 O fogo derrete | a parede de gelo não se cava: a fogueira acesa derrete |
 | N07 Graveto aceso | leva o fogo de uma fogueira a outra; a acesa abre o portão |
 | N08 Vento forte | rajadas empurram; atrás das pedras fica abrigado |
 | N09 O rebanho | Border Collie: ovelhas ao cercado |
-| N10 O celeiro | com frio, ovelhas ao celeiro |
+| N10 O celeiro | com frio, ovelhas ao celeiro (o latido espanta; a fogueira e o celeiro aquecem) |
+
+**Progressão:** a habilidade que uma fase libera vale em todas as seguintes (pelo menu, na
+ordem das regiões): pular a partir da F03, cavar da F10, latir da F25 — e na Neve, tudo. As
+fases foram pensadas para isso (o platô da F04 é alto demais para o pulo, o gelo da N06 não se
+cava). Testando no editor valem só as habilidades da própria fase.
 
 Bugs encontrados nas rotas viram issues no repositório (#27 a #33), e as rotas citam o número.
 
@@ -370,6 +378,21 @@ o rabo, balançar as orelhas).
   Com o centro do corpo fora da tábua, ele cai. Ajustes no grupo "Equilíbrio" de
   `scripts/dachshund.gd`.
 
+## HUD "Coleira"
+
+Peças gordinhas de fundo creme, contorno marrom-escuro e sombra dura, nas cores de uma coleira
+(vermelho) e da plaquinha de nome (dourado). Títulos e teclas em **Lilita One**, textos em
+**Nunito ExtraBold** (fontes livres, OFL, em `assets/fontes/` com as licenças). O estilo fica em
+`scripts/ui/coleira.gd` (cores, caixas, pílulas, teclas, medidores e a plaquinha com o osso).
+
+- **Objetivo** (cima, à esquerda): a plaquinha e o que falta ("Leve o graveto ao dono",
+  "Ovelhas no celeiro: 1 / 2").
+- **Controles** (baixo, à direita): só os que valem agora, cada um com a sua tecla.
+- **Avisos** (cima, no meio): curtos numa faixa vermelha torta; compridos numa pílula creme.
+- **Balão** em cima do cachorro para as falas curtas ("Brrr!", "Splash!").
+- **Ação do F** (baixo, no meio), **Equilíbrio** e **Calor** (cima, à direita) em pílulas.
+- **Fim da fase**: a plaquinha dourada cai girando, "Fase concluída!" e as opções com as teclas.
+
 ## Visual pixelado
 
 - O 3D é renderizado em baixa resolução e ampliado sem filtro (`Viewport.scaling_3d_mode =
@@ -434,7 +457,7 @@ na fase, frio sem fogueira...).
 
 Nas propriedades da fase (nada selecionado) ficam a **região**, o **bioma**, o **objetivo**, a
 **raça** do cachorro (a do teste no editor; pelo menu vale a escolhida entre as da região, a
-não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir) — a F02 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
+não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir; pelo menu somam-se as das fases anteriores) — a F02 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
 objetivo pede alguns objetos:
 
 | Objetivo | Precisa de |

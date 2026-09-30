@@ -1,6 +1,7 @@
 extends Control
 ## Barra de equilíbrio do HUD: aparece quando o cachorro balança numa passagem estreita.
-## O marcador mostra para que lado ele está pendendo; perto das pontas fica vermelho.
+## O marcador mostra para que lado ele está pendendo; perto das pontas fica vermelho. Uma
+## pílula do estilo Coleira (ver scripts/ui/coleira.gd).
 
 var cachorro: Dachshund
 
@@ -22,14 +23,6 @@ func _process(_delta: float) -> void:
 func _draw() -> void:
 	if cachorro == null:
 		return
-	var largura := size.x
-	var altura := size.y
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.55))
-	draw_rect(Rect2(Vector2(largura * 0.5 - 1, 0), Vector2(2, altura)), Color(1, 1, 1, 0.5))
 	var valor := clampf(cachorro.balanco, -1.0, 1.0)
-	var cor := Color(0.5, 1.0, 0.5).lerp(Color(1.0, 0.3, 0.25), absf(valor))
-	var x := largura * 0.5 + valor * (largura * 0.5 - 6.0)
-	draw_rect(Rect2(Vector2(x - 5, 2), Vector2(10, altura - 4)), cor)
-	var fonte := get_theme_default_font()
-	draw_string_outline(fonte, Vector2(0, -6), "Equilíbrio", HORIZONTAL_ALIGNMENT_CENTER, largura, 16, 4, Color.BLACK)
-	draw_string(fonte, Vector2(0, -6), "Equilíbrio", HORIZONTAL_ALIGNMENT_CENTER, largura, 16, Color.WHITE)
+	var cor := Color("3f8f3a").lerp(Coleira.VERMELHO, absf(valor))
+	Coleira.desenhar_medidor(self, "Equilíbrio", 0.5 + valor * 0.5, cor, true)
