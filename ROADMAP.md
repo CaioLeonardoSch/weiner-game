@@ -29,6 +29,36 @@ Já é assim: `Fase.habilidades` (flags no painel da fase no editor); o `jogo.gd
 As raças não têm habilidades nem peso próprios: todas fazem o mesmo, e só o **tamanho** muda
 (colisão, o vão embaixo da cerca, o tempo de passar na portinhola).
 
+## Nova direção (2026-10) — o que programar
+
+O design mudou depois da análise crítica: ver [docs/DESIGN.md](docs/DESIGN.md). Nada disto foi
+codificado ainda; o autor decide quando começar. Ordem sugerida:
+
+1. **Tirar a isométrica**: o jogo fica só em terceira pessoa. Saem a câmera isométrica e a
+   transição (`CameraController`), a *Visibilidade* só isométrico / só 3D (`ObjetoFase`), as
+   tampas de folhagem, o mirante, o aviso "Nova perspectiva!" e a F02 como está. Câmera que não
+   briga com o graveto em corredores e recua em pontos-chave.
+2. **Textos**: tirar os textos de `ZonaDica` que ensinam a solução e os nomes de fase que
+   entregam a mecânica; prompts só com o ícone da tecla; a dica vira o assobio do dono, vindo
+   da direção do caminho.
+3. **Ações**: ações de contexto com animação (pular as pedras, pular na moita, rastejar) e a
+   ação de força (apertar repetidamente para puxar ou cavar; parou, recomeça). Falhas naturais
+   (cair na água, sair se sacudindo).
+4. **O parque, demo**: a área central (dono no banco, tirar e pôr a coleira, buscar a bolinha,
+   rolar na grama, alguns cães e donos passeando), o ciclo do dia (assobio, *fade*, saída do
+   parque) e os **dias 1 a 3**, com regiões liberadas pelo número de gravetos e bloqueios
+   naturais.
+5. **Animais novos**: tartaruga, peixe-cuspidor, castor, texugo e urso; personagens que voltam
+   e aparecem na área central depois de ajudados. Diálogo em balões (cães) e murmúrio (humanos).
+6. **Direção de arte, menu e nome**: depois de escolhida a direção visual (conceitos com IA de
+   imagem, ver DESIGN.md). O menu novo é original (o atual lembra o Minecraft).
+7. **O resto do capítulo**: dias 4 a 10, missões secundárias, a casa com a parede de gravetos;
+   depois, a Fazenda na neve.
+
+Saem das fases novas (o código pode ficar até decidirmos apagá-lo): placas de madeira e de
+pedra, regra E, portão com atraso, alavanca, comporta, mirante e o cão vizinho. O medidor de
+frio também sai; o frio vira motivo da história.
+
 ## Pontes, gatilho e tronco ✅ (feito)
 
 Pedido depois de testar: a ponte "passava" do bloco e sumia na troca de perspectiva sem explicação;
@@ -103,6 +133,10 @@ Junto, duas mudanças de mecânica pedidas:
 - ✅ **Sem graveto molhado**: a água não muda mais o peso do graveto. (Na esteira: F15 e F16.)
 
 ## Versão de teste: Floresta e Neve
+
+> Substituída pela *Nova direção (2026-10)* acima: a Floresta vira o capítulo do parque (10 dias
+> com área central) e a Neve, a fazenda do border collie. A esteira de fases continua servindo
+> de teste das mecânicas.
 
 O plano para a primeira versão jogável por outras pessoas: **dois biomas**, cada um uma região.
 

@@ -3,6 +3,10 @@
 Instruções para implementar uma **demo experimental** da primeira fase no Godot.
 Repositório: `CaioLeonardoSch/weiner-game`.
 
+> **Histórico (2026-10).** A câmera isométrica e a troca de perspectiva saem do jogo, que fica
+> só em terceira pessoa; o novo dia 1 está em [docs/DESIGN.md](docs/DESIGN.md). Este documento
+> fica como registro da demo original.
+
 > **Revisão (2026-09-25) — visão isométrica no lugar da lateral.** Onde este documento fala em
 > "modo 2D", "câmera lateral" e "trilho (`Path3D`)", vale o seguinte:
 >

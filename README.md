@@ -5,8 +5,9 @@
 Jogo de puzzle 3D: um cachorro salsicha busca gravetos lendários e precisa voltar carregando
 o graveto na boca — a colisão do graveto pelo cenário é o núcleo do puzzle.
 
-Ver [CONCEITO.md](CONCEITO.md) para a ideia completa e [ROADMAP.md](ROADMAP.md) para as
-próximas etapas (túneis, pulo, cavar, empurrar, riachos, latir, truques, peso do graveto...).
+Ver [docs/DESIGN.md](docs/DESIGN.md) para o design atual (a nova direção de 2026-10: capítulos,
+o parque, só terceira pessoa), [CONCEITO.md](CONCEITO.md) para a ideia original e
+[ROADMAP.md](ROADMAP.md) para as próximas etapas (túneis, pulo, cavar, empurrar, riachos, latir, truques, peso do graveto...).
 
 ## Rodando
 
