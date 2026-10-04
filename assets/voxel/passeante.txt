@@ -1,0 +1,54 @@
+# Passeante (outro dono no parque) — o modelo do dono com outras cores. Provisório até a arte.
+voxel 0.125
+cor s 3a2a1e   # sapato
+cor j 6b4f36   # calça
+cor b 2a2a2a   # cinto
+cor c 4f8a4a   # camiseta
+cor p f0c8a0   # pele
+cor h 9a9a9a   # cabelo
+cor e 222222   # olhos
+
+camada 0
+.ss.ss.
+.ss.ss.
+.ss.ss.
+
+camada 1-4
+.jj.jj.
+.jj.jj.
+.jj.jj.
+
+camada 5
+.bbbbb.
+pbbbbbp
+.bbbbb.
+
+camada 6
+.ccccc.
+pcccccp
+.ccccc.
+
+camada 7-9
+.ccccc.
+ccccccc
+.ccccc.
+
+camada 10
+..ppp..
+..ppp..
+..ppp..
+
+camada 11
+..hhh..
+..ppp..
+..ppp..
+
+camada 12
+..hhh..
+.hppph.
+..epe..
+
+camada 13
+..hhh..
+..hhh..
+..hhh..

@@ -20,6 +20,7 @@ const HABILIDADE_LATIR := 4
 ## nome em @export_enum (no fim), uma constante e uma classe em scripts/objetivos/.
 const OBJETIVO_GRAVETO := 0
 const OBJETIVO_PASTOREIO := 1
+const OBJETIVO_PARQUE := 2
 
 ## Identidade da fase no save do jogador (fases concluídas). Não muda quando o arquivo é
 ## renomeado ou movido: é o que mantém o ✓ entre versões. O editor preenche ao salvar uma fase
@@ -33,7 +34,12 @@ const OBJETIVO_PASTOREIO := 1
 var habilidades_herdadas := -1
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
-@export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)") var objetivo := OBJETIVO_GRAVETO
+@export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)",
+	"Área central do parque (não termina)") var objetivo := OBJETIVO_GRAVETO
+## Só terceira pessoa: a câmera começa atrás do cachorro e não vai para a isométrica ao largar o
+## graveto (a direção nova do jogo, ver docs/DESIGN.md). Objetos "só isométrico" ficam de fora e
+## os "só 3D" valem desde o começo.
+@export var terceira_pessoa := false
 ## Raça do cachorro nesta fase (id de assets/racas/*.tres): só muda o tamanho. Jogando pelo
 ## menu, vale a raça que o jogador escolheu para a região (Regiao.racas); esta é a do teste no
 ## editor — e a de sempre, com `raca_fixa`.

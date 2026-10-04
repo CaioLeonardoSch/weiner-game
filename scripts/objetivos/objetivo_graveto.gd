@@ -45,6 +45,11 @@ func preparar(novo_jogo: Node) -> void:
 func ao_pegar_graveto(pego: Graveto) -> void:
 	if pego.lendario:
 		jogo.contador.text = "Leve o graveto ao dono"
+		# Um dia do parque: o dono assobia, chamando para ir embora.
+		var fases := jogo.get_node_or_null(^"/root/Fases")
+		if fases and fases.do_parque and not pego.get_meta(&"assobiou", false):
+			pego.set_meta(&"assobiou", true)
+			Som.assobio(jogo)
 	# Pegou (de novo) já do lado do dono.
 	if dono.contem(jogo.cachorro):
 		_conferir()

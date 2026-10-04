@@ -1933,7 +1933,7 @@ func _alterar_propriedade(alvo: Object, propriedade: StringName, valor: Variant)
 	undo.commit_action()
 	if alvo == fase and propriedade == &"nome":
 		campo_nome.text = fase.nome
-	elif alvo == fase and propriedade in [&"raca", &"raca_fixa", &"regiao", &"frio"]:
+	elif alvo == fase and propriedade in [&"raca", &"raca_fixa", &"regiao", &"frio", &"terceira_pessoa"]:
 		# A dica das habilidades nativas depende da raça (e o frio mostra mais campos): remonta.
 		inspetor.mostrar.call_deferred(fase)
 

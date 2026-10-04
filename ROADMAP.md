@@ -31,8 +31,8 @@ As raças não têm habilidades nem peso próprios: todas fazem o mesmo, e só o
 
 ## Nova direção (2026-10) — o que programar
 
-O design mudou depois da análise crítica: ver [docs/DESIGN.md](docs/DESIGN.md). Nada disto foi
-codificado ainda; o autor decide quando começar. Ordem sugerida:
+O design mudou depois da análise crítica: ver [docs/DESIGN.md](docs/DESIGN.md). O item 4 (o
+parque) começou; o resto ainda não foi codificado. Ordem sugerida:
 
 1. **Tirar a isométrica**: o jogo fica só em terceira pessoa. Saem a câmera isométrica e a
    transição (`CameraController`), a *Visibilidade* só isométrico / só 3D (`ObjetoFase`), as
@@ -48,6 +48,15 @@ codificado ainda; o autor decide quando começar. Ordem sugerida:
    rolar na grama, alguns cães e donos passeando), o ciclo do dia (assobio, *fade*, saída do
    parque) e os **dias 1 a 3**, com regiões liberadas pelo número de gravetos e bloqueios
    naturais.
+   - **Começou (estrutura, visual provisório)**: a área central gerada
+     (`ferramentas/gerar_parque.gd`), o dono que chega com a guia, solta e senta no banco, a
+     bolinha, rolar (T), deitar parado, dois passeantes, as 10 entradas (abertas pelo número de
+     fases dos dias concluídas, fechadas por troncos), o assobio ao pegar o graveto, a volta ao
+     parque e a saída, e o dia seguinte. Ver *O parque* no README.
+   - **Falta**: as fases dos dias (os dias 1 a 3 usam F01, F03 e F04 da esteira; 4 a 10 sem
+     fase), o *fade* que corta um pedaço do retorno, o cachorro reparar no que mudou, os
+     bloqueios naturais de verdade (o urso, a correnteza), o marco de cada região e toda a
+     arte e animação (depois da direção visual, item 6).
 5. **Animais novos**: tartaruga, peixe-cuspidor, castor, texugo e urso; personagens que voltam
    e aparecem na área central depois de ajudados. Diálogo em balões (cães) e murmúrio (humanos).
 6. **Direção de arte, menu e nome**: depois de escolhida a direção visual (conceitos com IA de

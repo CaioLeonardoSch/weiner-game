@@ -32,6 +32,7 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
 | Espaço | pular (depois da F03; parado na beira de água funda, o salsicha não pula) | segurando + botão esquerdo: girar a vista |
 | C | cavar terra fofa (se a fase liberar) | — |
 | B | latir (se a fase liberar) | — |
+| T | rolar na grama (na área central do parque) | — |
 | F | ação do que está à frente (morder o mirante, a ponta de um tronco...) | — |
 | F (segurando) + trás | puxar o bloco de pedra ou o tronco pela ponta (sem graveto): segurando F perto, o cachorro vira de frente e agarra | — |
 | F (segurando) + lado | mordendo a ponta de um tronco: gira o tronco 90° em volta da outra ponta | — |
@@ -129,6 +130,37 @@ vento forte e graveto aceso (`teste_etapa11.gd`).
 Precisa do Godot no PATH (ou `GODOT=/caminho/do/godot`).
 Os testes não mexem nos arquivos do jogador: usam as opções de fábrica e guardam o progresso
 só na memória (se o `progresso.cfg` real mudar durante um teste, o teste falha).
+
+## O parque (área central)
+
+**▶ O Parque** no menu principal abre a área central do capítulo 1 (ver *O ciclo de um dia* em
+[docs/DESIGN.md](docs/DESIGN.md)): `scenes/parque/area_central.tscn`, objetivo *Parque*
+(`scripts/objetivos/objetivo_parque.gd`). A arte, o *layout* final e as animações ficam para
+depois da direção visual; o que existe agora é a estrutura, com visual provisório.
+
+- **Começo do dia**: "Dia N"; o dono chega pela saída com o cachorro na guia, tira a guia, diz a
+  frase do dia (a da entrada do dia, ou "Vai lá, garotão, pode brincar") e senta no banco.
+- **Brincar**: a **bolinha** vai para a boca encostando; levada ao dono sentado, ele joga longe;
+  E larga. **T** rola na grama (e se sacode no fim); parado um tempo, o cachorro deita. Dois
+  passeantes (pessoa + cão na guia) dão voltas na clareira.
+- **As 10 entradas** (`EntradaDia`): uma por dia, em volta da clareira, com uma placa colorida.
+  Abre a do dia atual e as anteriores (dia = fases dos dias concluídas + 1); as outras ficam
+  fechadas por troncos. Entrar numa aberta joga a fase do dia.
+- **Na fase do dia**: pegar o graveto lendário faz o dono **assobiar**; concluída, o jogo volta
+  ao parque: o cachorro chega ao dono, que levanta, põe a guia, e os dois vão embora pela saída.
+  Aí começa o dia seguinte.
+- **Provisório**: os dias 1 a 3 usam fases da esteira (F01, F03 e F04); os dias 4 a 10 ainda
+  não têm fase e ficam fechados. A volta da fase ainda não tem o *fade* que corta um pedaço do
+  retorno (a fase termina ao entregar o graveto, como na esteira).
+
+A cena é gerada por `ferramentas/gerar_parque.gd` (sobrescreve a cena; as fases dos dias ficam
+em `FASES_DOS_DIAS`):
+
+    godot --headless --path . --script res://ferramentas/gerar_parque.gd
+
+No editor, os objetos estão na categoria **Parque**: Banco, Bolinha, Entrada do dia (dia, fase,
+frase do dono, largura), Saída do parque e Passeante (raça, raio, velocidade, sentido). A rota
+`parque` testa o ciclo inteiro: chegada, bolinha, rolar, entrar no dia 1, voltar e o dia 2.
 
 ## Esteira de fases de teste
 
@@ -574,6 +606,7 @@ scenes/menu.tscn              menu principal (cena inicial)
 scenes/jogo.tscn              jogo: cachorro, câmera, HUD (a fase é carregada por código)
 scenes/editor/editor_fase.tscn  editor de fases (F1)
 scenes/fases/                 fases (conteúdo: terreno + objetos)
+scenes/parque/                área central do parque (gerada por ferramentas/gerar_parque.gd)
 scenes/modulos/               módulos: trechos de fase para reusar (criados pelo editor)
 scenes/objetos/               objetos que o editor coloca
 scripts/jogo.gd               regras: pegar/largar graveto, perspectiva, vitória

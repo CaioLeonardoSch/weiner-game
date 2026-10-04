@@ -16,6 +16,7 @@ const REMAPEAVEIS := [
 	[&"correr", "Correr"],
 	[&"cavar", "Cavar"],
 	[&"latir", "Latir"],
+	[&"rolar", "Rolar na grama"],
 	[&"reiniciar", "Reiniciar a fase"],
 	[&"alternar_editor", "Abrir o editor de fases"],
 	[&"alternar_pixel", "Liga/desliga o pixelado"],

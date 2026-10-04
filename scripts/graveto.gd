@@ -156,7 +156,7 @@ func soltar() -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if ja_pego or _bloqueio > 0.0 or not body is Dachshund:
 		return
-	if (body as Dachshund).tem_graveto:
+	if (body as Dachshund).boca_ocupada():
 		if _espera_aviso <= 0.0:
 			_espera_aviso = 2.0
 			boca_cheia.emit()

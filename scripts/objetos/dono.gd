@@ -4,6 +4,7 @@ extends ObjetoFase
 ## O dono. Chegar perto dele com o graveto na boca conclui a fase.
 ## `dormindo`: cochilando ("Zzz"), não recebe o graveto até um latido acordar ele — e com o
 ## graveto na boca o cachorro não late (larga, late, pega de novo; ou um cão vizinho late).
+## `sentado`: no banco do parque (posto na origem do Banco, com o mesmo giro).
 
 signal cachorro_chegou(corpo: Node3D)
 signal acordou
@@ -12,6 +13,14 @@ signal acordou
 	set(valor):
 		dormindo = valor
 		_atualizar_sono()
+
+@export var sentado := false:
+	set(valor):
+		sentado = valor
+		_atualizar_pose()
+
+const MODELO_EM_PE := "res://assets/voxel/dono.txt"
+const MODELO_SENTADO := "res://assets/voxel/dono_sentado.txt"
 
 var _zzz: Label3D
 var _tempo := 0.0
@@ -28,13 +37,26 @@ func categoria_no_editor() -> String:
 
 
 func propriedades_editaveis() -> Array[StringName]:
-	return [&"dormindo"]
+	return [&"dormindo", &"sentado"]
 
 
 func _ready() -> void:
+	_atualizar_pose()
 	_atualizar_sono()
 	if not Engine.is_editor_hint():
 		area_entrega.body_entered.connect(cachorro_chegou.emit)
+
+
+## Onde a guia (coleira) fica presa: na mão do dono (global).
+func ponto_da_guia() -> Vector3:
+	return to_global(Vector3(-0.44, 0.7, 0.08) if not sentado else Vector3(-0.44, 0.66, 0.4))
+
+
+## Vira o dono (o modelo olha para +Z) para o ponto `alvo`, no chão.
+func olhar_para(alvo: Vector3) -> void:
+	var direcao := alvo - global_position
+	if Vector2(direcao.x, direcao.z).length() > 0.01:
+		global_rotation.y = atan2(direcao.x, direcao.z)
 
 
 func contem(corpo: Node3D) -> bool:
@@ -71,6 +93,15 @@ func _process(delta: float) -> void:
 	var ciclo := fmod(_tempo, 2.0) / 2.0
 	_zzz.position = Vector3(0.35 + ciclo * 0.25, 2.25 + ciclo * 0.5, 0)
 	_zzz.modulate.a = 1.0 - ciclo * 0.8
+
+
+func _atualizar_pose() -> void:
+	if not is_node_ready():
+		return
+	var modelo := $Modelo as ModeloVoxel
+	var arquivo := MODELO_SENTADO if sentado else MODELO_EM_PE
+	if modelo.arquivo != arquivo:
+		modelo.arquivo = arquivo
 
 
 func _atualizar_sono() -> void:

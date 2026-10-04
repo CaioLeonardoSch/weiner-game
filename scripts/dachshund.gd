@@ -65,6 +65,11 @@ var entrada_bloqueada := false
 var pode_pular := false
 var pode_cavar := false
 var pode_latir := false
+## Brincadeiras da área central do parque: rolar na grama (`rolar`), se sacudir e deitar quando
+## fica parado um tempo.
+var pode_brincar := false
+## Brinquedo na boca (a bolinha do parque): não é graveto, não tem colisão nem troca a câmera.
+var brinquedo: Node3D
 ## No ar depois de um pulo (a velocidade horizontal fica limitada; ver velocidade_no_pulo).
 var pulando := false
 ## Balanço atual, de -1 a 1 (para o HUD). Só muda em passagens estreitas.
@@ -94,6 +99,11 @@ var _tempo_fora_da_passagem := 0.0
 var _forma_teste := CapsuleShape3D.new()
 var _tween_graveto: Tween
 var _cavando := false
+## Rolando ou se sacudindo: fica parado enquanto isso.
+var _brincando := false
+## Segundos parado (com `pode_brincar`): passou de TEMPO_PARA_DEITAR, deita.
+var _tempo_parado := 0.0
+const TEMPO_PARA_DEITAR := 6.0
 var _espera_latido := 0.0
 var _empurrando: Node
 ## Pelo chão embaixo (água rasa, neve fofa): multiplicador da velocidade e se há correnteza.
@@ -208,7 +218,7 @@ func _physics_process(delta: float) -> void:
 				pulando = true
 
 	_espera_latido = maxf(_espera_latido - delta, 0.0)
-	var horizontal := Vector3.ZERO if entrada_bloqueada or _cavando else _velocidade_entrada()
+	var horizontal := Vector3.ZERO if entrada_bloqueada or _cavando or _brincando else _velocidade_entrada()
 	if _tempo_puxando > 0.0:
 		_tempo_puxando -= delta
 		horizontal = _sentido_puxar / _duracao_puxando
@@ -265,6 +275,7 @@ func _physics_process(delta: float) -> void:
 	_escalar_do_buraco(horizontal)
 	voxel.velocidade = Vector2(get_real_velocity().x, get_real_velocity().z).length()
 	voxel.no_chao = is_on_floor()
+	_descansar(delta, horizontal)
 	_empurrar(delta, horizontal)
 	_girar_modelo(delta)
 	_checar_queda(delta)
@@ -326,6 +337,79 @@ func virar_graveto() -> bool:
 	_tween_graveto.tween_property(graveto, "transform", _transform_visual_graveto(graveto_ao_comprido), 0.2) \
 		.set_trans(Tween.TRANS_SINE)
 	return true
+
+
+# --- Brinquedos e brincadeiras (área central do parque) -----------------------------------
+
+## Algo na boca (graveto ou brinquedo): não pega outra coisa nem late.
+func boca_ocupada() -> bool:
+	return tem_graveto or brinquedo != null
+
+
+## Põe o brinquedo na boca (ele vira filho da boca; a origem do brinquedo é o ponto de baixo).
+func pegar_brinquedo(novo: Node3D) -> void:
+	brinquedo = novo
+	novo.reparent(boca, false)
+	novo.position = Vector3(0.06, -0.1, 0.0)
+	_tempo_parado = 0.0
+
+
+## Tira o brinquedo da boca e devolve (quem chamou decide onde ele vai parar).
+func largar_brinquedo() -> Node3D:
+	var solto := brinquedo
+	brinquedo = null
+	if solto and fase:
+		solto.reparent(fase.objetos)
+	return solto
+
+
+## Rola na grama (de costas, de um lado para o outro) e se sacode no fim. Só parado no chão, com a
+## boca vazia; falso se não deu.
+func rolar() -> bool:
+	if not pode_brincar or _brincando or _cavando or entrada_bloqueada or atravessando \
+			or boca_ocupada() or not is_on_floor():
+		return false
+	_brincando = true
+	voxel.deitado = 1.0
+	var tween := create_tween()
+	tween.tween_interval(0.15)
+	tween.tween_property(voxel, "giro", TAU, 0.9).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(voxel, "giro", TAU + 0.6, 0.18)
+	tween.tween_property(voxel, "giro", TAU, 0.18)
+	await tween.finished
+	voxel.giro = 0.0
+	voxel.deitado = 0.0
+	await sacudir()
+	return true
+
+
+## Se sacode (depois de rolar, de sair da água): o corpo chacoalha e voa um pouco de sujeira.
+func sacudir() -> void:
+	_brincando = true
+	voxel.sacudida = 1.0
+	Efeitos.terra(get_parent(), global_position + Vector3.UP * 0.35)
+	var tween := create_tween()
+	tween.tween_property(voxel, "sacudida", 0.0, 0.7).set_ease(Tween.EASE_IN)
+	await tween.finished
+	_brincando = false
+	_tempo_parado = 0.0
+
+
+## Parado um tempo (sem ser mandado andar, no chão, com a boca vazia), o cachorro deita; ao andar,
+## levanta.
+func _descansar(delta: float, horizontal: Vector3) -> void:
+	if not pode_brincar or _brincando:
+		return
+	var parado := horizontal.length() < 0.05 and is_on_floor() and not entrada_bloqueada \
+		and not atravessando and not boca_ocupada()
+	_tempo_parado = _tempo_parado + delta if parado else 0.0
+	voxel.deitado = move_toward(voxel.deitado, 1.0 if _tempo_parado > TEMPO_PARA_DEITAR else 0.0,
+		delta * (1.5 if _tempo_parado > TEMPO_PARA_DEITAR else 5.0))
+
+
+## Deitado (ou deitando) agora?
+func deitado() -> bool:
+	return voxel.deitado > 0.5
 
 
 # --- Passagens ---------------------------------------------------------------------------
@@ -519,7 +603,7 @@ func _animar_cavar(celula: Vector3i, ao_terminar: Callable) -> void:
 func latir() -> String:
 	if not pode_latir:
 		return "sem_habilidade"
-	if tem_graveto:
+	if boca_ocupada():
 		return "boca_cheia"
 	if _espera_latido > 0.0:
 		return "ocupado"
@@ -1090,9 +1174,9 @@ func _atualizar_calor(delta: float) -> void:
 	# Tremendo de frio.
 	if calor < 0.35:
 		_tremor += delta * 40.0
-		voxel.position.z = sin(_tremor) * 0.012 * (1.0 - calor / 0.35)
-	elif voxel.position.z != 0.0:
-		voxel.position.z = 0.0
+		voxel.tremor = sin(_tremor) * 0.012 * (1.0 - calor / 0.35)
+	elif voxel.tremor != 0.0:
+		voxel.tremor = 0.0
 	if calor <= 0.0:
 		calor = 1.0
 		_embalo = Vector3.ZERO

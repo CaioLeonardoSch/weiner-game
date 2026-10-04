@@ -231,6 +231,9 @@ func _focar_primeiro() -> void:
 func _tela_principal() -> void:
 	_limpar("")
 	var lista := Fases.listar()
+	# O capítulo do parque (em construção): a área central e os dias.
+	if ResourceLoader.exists(Fases.CENA_PARQUE):
+		_botao("▶  O Parque", Fases.jogar_parque)
 	var continuar := Fases.fase_para_continuar()
 	if continuar.is_empty():
 		_rotulo("Nenhuma fase ainda — crie a primeira no editor.")
