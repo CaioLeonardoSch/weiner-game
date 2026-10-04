@@ -1,5 +1,11 @@
 # Conceito de Jogo: Salsicha em Busca do Graveto Lendário
 
+> **Revisão (2026-10) — nova direção.** O design atual está em [docs/DESIGN.md](docs/DESIGN.md):
+> o jogo vira uma antologia das vidas dos cães, contada em capítulos de dias (o primeiro é o
+> salsicha no parque, o segundo o border collie na fazenda na neve); a câmera fica **só em
+> terceira pessoa** (sai a isométrica); os textos não ensinam soluções; as fases focam em
+> obstáculos naturais e animais. Este arquivo guarda a ideia original.
+
 ## Premissa
 Um jogo de puzzle 3D em que o jogador controla um cachorro salsicha (Dachshund) que percorre cenários diferentes em busca de gravetos lendários. Cada fase é dividida em duas partes:
 
@@ -32,8 +38,8 @@ A dificuldade aumenta progressivamente a cada fase.
 ## Perguntas em aberto
 - Progressão de dificuldade: por tamanho/formato de graveto, por complexidade de cenário, ou ambos?
 - Cada bioma terá seu próprio conjunto de obstáculos ou eles se combinam progressivamente?
-- Existe um limite de tentativas/tempo por fase, ou é puzzle livre (sem pressão)?
-- Câmera: livre, fixa isométrica, ou acompanhando por trás do cachorro?
+- Existe um limite de tentativas/tempo por fase, ou é puzzle livre (sem pressão)? *(Decidido: livre, sem cronômetro, falhas naturais.)*
+- Câmera: livre, fixa isométrica, ou acompanhando por trás do cachorro? *(Decidido em 2026-10: só terceira pessoa.)*
 
 ## Próximos passos (quando fizer sentido)
 - Esboçar a primeira fase completa (ida + volta) para validar se a mecânica de colisão do graveto funciona no papel.
