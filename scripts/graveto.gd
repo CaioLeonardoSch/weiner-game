@@ -30,6 +30,8 @@ const TEMPO_PARA_PEGAR_FOGO := 0.4
 ## Quanto do fogo cada bloco de neve derretido gasta.
 const GASTO_DERRETER := 0.25
 
+enum Formato { RETO, CAJADO }
+
 ## O lendário (dourado) é o que o dono quer; os comuns são ferramentas.
 @export var lendario := true:
 	set(valor):
@@ -49,6 +51,11 @@ const GASTO_DERRETER := 0.25
 		_atualizar_forma()
 ## 1 = normal. Mais pesado, mais devagar o cachorro anda carregando.
 @export_range(0.5, 3.0, 0.1) var peso := 1.0
+## Reto (o graveto de sempre) ou cajado (a ponta +Z curva para cima num gancho).
+@export var formato := Formato.RETO:
+	set(valor):
+		formato = valor
+		_atualizar_forma()
 ## Enterrado: só aparece um montinho de terra (com a pontinha do graveto); o cachorro cava
 ## (C, com a habilidade Cavar) de frente para ele para desenterrar.
 @export var enterrado := false:
@@ -57,6 +64,12 @@ const GASTO_DERRETER := 0.25
 		_atualizar_enterrado()
 
 var ja_pego := false
+## Um lendário que ainda não parece (ex.: o galho na árvore, antes de cair na luz): visual de
+## comum, sem brilho.
+var disfarcado := false:
+	set(valor):
+		disfarcado = valor
+		_atualizar_visual()
 var _tempo := 0.0
 var _bloqueio := 0.0
 var _espera_aviso := 0.0
@@ -92,7 +105,7 @@ func categoria_no_editor() -> String:
 
 
 func propriedades_editaveis() -> Array[StringName]:
-	return [&"lendario", &"comprimento", &"peso", &"enterrado"]
+	return [&"lendario", &"comprimento", &"peso", &"formato", &"enterrado"]
 
 
 func _ready() -> void:
@@ -156,7 +169,7 @@ func soltar() -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if ja_pego or _bloqueio > 0.0 or not body is Dachshund:
 		return
-	if (body as Dachshund).tem_graveto:
+	if (body as Dachshund).boca_ocupada():
 		if _espera_aviso <= 0.0:
 			_espera_aviso = 2.0
 			boca_cheia.emit()
@@ -185,21 +198,53 @@ func _atualizar_forma() -> void:
 	(($Visual/Haste as MeshInstance3D).mesh as BoxMesh).size.z = comprimento
 	($Visual/Galhinho as Node3D).position.z = comprimento * 0.22
 	(($AreaPegar/Colisao as CollisionShape3D).shape as BoxShape3D).size.z = comprimento + 0.1
+	_montar_gancho()
 	if _fogo:
 		_fogo.position = Vector3(0.0, 0.03, _lado_aceso * comprimento * 0.5)
 
 
-## Dourado com brilho (lendário) ou marrom (comum).
+## O gancho do cajado (feito por código), na ponta +Z.
+func _montar_gancho() -> void:
+	var antigo := get_node_or_null(^"Visual/Gancho")
+	if antigo:
+		antigo.free()
+	if formato != Formato.CAJADO:
+		return
+	var gancho := Node3D.new()
+	gancho.name = "Gancho"
+	gancho.position.z = comprimento * 0.5
+	# [tamanho, posição, giro em X]: sobe e volta, como a ponta de um cajado.
+	for parte: Array in [[Vector3(0.09, 0.09, 0.16), Vector3(0, 0.05, 0.04), -0.8],
+			[Vector3(0.08, 0.16, 0.08), Vector3(0, 0.16, 0.08), 0.0],
+			[Vector3(0.07, 0.07, 0.13), Vector3(0, 0.25, 0.03), 0.7]]:
+		var pedaco := MeshInstance3D.new()
+		var caixa := BoxMesh.new()
+		caixa.size = parte[0]
+		pedaco.mesh = caixa
+		pedaco.position = parte[1]
+		pedaco.rotation.x = parte[2]
+		gancho.add_child(pedaco)
+	$Visual.add_child(gancho)
+	_atualizar_visual()
+
+
+## Dourado com brilho (lendário) ou marrom (comum, ou lendário disfarçado).
 func _atualizar_visual() -> void:
 	if not is_node_ready():
 		return
-	var material: Material = MATERIAL_LENDARIO if lendario else MATERIAL_COMUM
+	var dourado := lendario and not disfarcado
+	var material: Material = MATERIAL_LENDARIO if dourado else MATERIAL_COMUM
 	($Visual/Haste as MeshInstance3D).material_override = material
 	($Visual/Galhinho as MeshInstance3D).material_override = material
+	var gancho := get_node_or_null(^"Visual/Gancho")
+	if gancho:
+		for pedaco in gancho.get_children():
+			(pedaco as MeshInstance3D).material_override = material
 	var brilho := get_node_or_null(^"Visual/Brilho")
-	if lendario and brilho == null:
+	if dourado and brilho == null:
 		$Visual.add_child(_criar_brilho())
-	elif not lendario and brilho:
+	elif not dourado and brilho:
+		$Visual.remove_child(brilho)
 		brilho.queue_free()
 
 
@@ -248,6 +293,9 @@ func _atualizar_enterrado() -> void:
 		return
 	($Visual/Haste as Node3D).visible = not enterrado
 	($Visual/Galhinho as Node3D).visible = not enterrado
+	var gancho := get_node_or_null(^"Visual/Gancho") as Node3D
+	if gancho:
+		gancho.visible = not enterrado
 	var brilho := get_node_or_null(^"Visual/Brilho") as CPUParticles3D
 	if brilho:
 		brilho.emitting = not enterrado

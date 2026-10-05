@@ -9,6 +9,8 @@ const PASTA_USUARIO := "user://fases/"
 const CENA_JOGO := "res://scenes/jogo.tscn"
 const CENA_EDITOR := "res://scenes/editor/editor_fase.tscn"
 const CENA_MENU := "res://scenes/menu.tscn"
+## A área central do parque (fora de scenes/fases/: não entra na lista de fases do menu).
+const CENA_PARQUE := "res://scenes/parque/area_central.tscn"
 ## O save do jogador. A pasta user:// é fixa (application/config/custom_user_dir_name =
 ## "WeinerGame" no project.godot; no Windows, %APPDATA%\\WeinerGame): NÃO MUDE, senão o jogo
 ## novo não acha o progresso de quem já jogava. O teste "save" confere isso.
@@ -43,6 +45,10 @@ var progresso := ConfigFile.new()
 var _so_memoria := false
 ## Fase para a qual o menu abre direto na tela "antes de jogar" (raça), ou "".
 var antes_de_jogar_pendente := ""
+## A fase em jogo é um dia do parque (entrou pela área central): concluída, volta para lá.
+var do_parque := false
+## O jogo está voltando ao parque depois desta fase (o fim do dia), ou "".
+var parque_voltando_de := ""
 ## caminho da fase → id (ver id_da_fase).
 var _ids := {}
 ## [caminho, propriedade] → valor (ver propriedade_da_fase).
@@ -135,6 +141,7 @@ func proxima() -> String:
 
 func jogar(caminho: String) -> void:
 	caminho_atual = caminho
+	do_parque = false
 	antes_de_jogar_pendente = ""
 	inicio_do_teste = null
 	rascunho = null
@@ -146,11 +153,32 @@ func jogar(caminho: String) -> void:
 
 ## Chamado pelo editor: joga a fase como está no editor, sem salvar.
 func testar(cena: PackedScene, modificado: bool) -> void:
+	do_parque = false
 	rascunho = cena
 	rascunho_modificado = modificado
 	testando = true
 	get_tree().paused = false
 	get_tree().change_scene_to_file(CENA_JOGO)
+
+
+# --- O parque -------------------------------------------------------------------------------
+
+## Abre a área central do parque (o começo de um dia; ver ObjetivoParque).
+func jogar_parque() -> void:
+	jogar(CENA_PARQUE)
+
+
+## Joga a fase de um dia, entrando pela área central: concluída, volta para lá (`voltar_ao_parque`).
+func jogar_dia(caminho: String) -> void:
+	jogar(caminho)
+	do_parque = true
+
+
+## Fim de um dia: de volta à área central, para o cachorro chegar ao dono e os dois irem embora.
+func voltar_ao_parque() -> void:
+	var de := caminho_atual
+	jogar(CENA_PARQUE)
+	parque_voltando_de = de
 
 
 ## Nome da fase (propriedade `nome` da raiz), lido sem instanciar a cena.
@@ -325,6 +353,8 @@ func fase_para_continuar() -> String:
 
 
 func abrir_menu() -> void:
+	do_parque = false
+	parque_voltando_de = ""
 	rascunho = null
 	rascunho_modificado = false
 	testando = false
@@ -336,6 +366,7 @@ func abrir_menu() -> void:
 ## Abre o editor numa fase existente ("" = fase nova, do zero).
 func editar(caminho: String) -> void:
 	caminho_atual = caminho
+	do_parque = false
 	rascunho = null
 	rascunho_modificado = false
 	testando = false

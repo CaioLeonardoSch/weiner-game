@@ -110,10 +110,13 @@ static func linha_tecla(tecla_texto: String, texto: String, tamanho := 16, cor :
 	return linha
 
 
-## Troca o texto de uma `linha_tecla`.
+## Troca o texto de uma `linha_tecla` (vazio: só a tecla).
 static func mudar_linha(linha: HBoxContainer, tecla_texto: String, texto: String) -> void:
 	(linha.get_node(^"Tecla/Texto") as Label).text = tecla_texto
-	(linha.get_node(^"Texto") as Label).text = texto
+	var rotulo_texto := linha.get_node(^"Texto") as Label
+	rotulo_texto.text = texto
+	# Sem texto, só a tecla (sem o espaço do separador).
+	rotulo_texto.visible = not texto.is_empty()
 
 
 ## Medidor em pílula (calor, equilíbrio): o nome à esquerda e um trilho à direita. `valor`

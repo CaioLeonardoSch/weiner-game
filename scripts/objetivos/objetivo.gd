@@ -13,6 +13,10 @@ static func criar(tipo: int) -> Objetivo:
 	match tipo:
 		Fase.OBJETIVO_PASTOREIO:
 			return ObjetivoPastoreio.new()
+		Fase.OBJETIVO_PARQUE:
+			return ObjetivoParque.new()
+		Fase.OBJETIVO_DIA:
+			return ObjetivoDia.new()
 		_:
 			return ObjetivoGraveto.new()
 
@@ -25,6 +29,11 @@ func faltando(_fase: Fase) -> PackedStringArray:
 ## Problemas que não impedem de jogar, mas que o editor deve apontar.
 func avisos(_fase: Fase) -> PackedStringArray:
 	return []
+
+
+## O título mostrado ao abrir a fase (padrão: o nome dela).
+func titulo(fase: Fase) -> String:
+	return fase.nome
 
 
 func preparar(novo_jogo: Node) -> void:

@@ -38,6 +38,13 @@ const ROTULOS := {
 	&"duracao_rajada": "Duração da rajada (s)",
 	&"defasagem": "Atraso do ciclo (s)",
 	&"acende_com_fogo": "Só acende com graveto aceso",
+	&"terceira_pessoa": "Só terceira pessoa (sem isométrica)",
+	&"dia": "Dia",
+	&"caminho_fase": "Fase do dia",
+	&"frase_do_dono": "Frase do dono no começo do dia",
+	&"sentado": "Sentado",
+	&"raio": "Raio da volta (m)",
+	&"velocidade": "Velocidade (m/s)",
 }
 const NOMES_VISIBILIDADE := ["Sempre", "Só isométrico", "Só 3D"]
 
@@ -87,7 +94,9 @@ func mostrar(alvo: Object) -> void:
 		_campo(&"raca_fixa")
 		_dica_raca_no_menu(alvo as Fase)
 		_campo(&"habilidades")
-		_campo(&"desvio_camera_3d")
+		_campo(&"terceira_pessoa")
+		if not (alvo as Fase).terceira_pessoa:
+			_campo(&"desvio_camera_3d")
 		_campo(&"frio")
 		if (alvo as Fase).frio:
 			_campo(&"tempo_de_frio")

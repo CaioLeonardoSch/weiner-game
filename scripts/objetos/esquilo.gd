@@ -176,6 +176,17 @@ func _voltar() -> void:
 func _assustar(_origem: Vector3) -> void:
 	estado = Estado.ESCONDIDO
 	_escondido = tempo_escondido
+	var susto := Esquilo.exclamacao(self, _bicho.global_position + Vector3.UP * 0.6)
+	var tween := create_tween()
+	tween.tween_property(susto, "global_position:y", susto.global_position.y + 0.4, 0.2)
+	tween.parallel().tween_property(_bicho, "global_position", global_position, 0.35)
+	tween.tween_callback(_bicho.hide)
+	tween.tween_property(susto, "modulate:a", 0.0, 0.3)
+	tween.tween_callback(susto.queue_free)
+
+
+## O "!" do susto em `onde`, filho de `pai` (quem chama anima e apaga).
+static func exclamacao(pai: Node, onde: Vector3) -> Label3D:
 	var susto := Label3D.new()
 	susto.text = "!"
 	susto.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -184,14 +195,9 @@ func _assustar(_origem: Vector3) -> void:
 	susto.pixel_size = 0.008
 	susto.modulate = Color(1.0, 0.92, 0.5)
 	susto.no_depth_test = true
-	add_child(susto)
-	susto.global_position = _bicho.global_position + Vector3.UP * 0.6
-	var tween := create_tween()
-	tween.tween_property(susto, "global_position:y", susto.global_position.y + 0.4, 0.2)
-	tween.parallel().tween_property(_bicho, "global_position", global_position, 0.35)
-	tween.tween_callback(_bicho.hide)
-	tween.tween_property(susto, "modulate:a", 0.0, 0.3)
-	tween.tween_callback(susto.queue_free)
+	pai.add_child(susto)
+	susto.global_position = onde
+	return susto
 
 
 static func _plano(v: Vector3) -> Vector3:
@@ -240,13 +246,19 @@ func _montar() -> void:
 	corpo.add_child(colisao)
 	add_child(corpo)
 
-	_bicho = Node3D.new()
-	_bicho.name = "Bicho"
+	_bicho = Esquilo.montar_bicho()
 	add_child(_bicho)
 	_bicho.position = Vector3(0.6, 0, 0)
+
+
+## O esquilo (sem a toca): corpo ruivo, barriga clara, rabo peludo enrolado para cima. Olha para
+## o +X; filhos "Modelo" e "Modelo/Rabo".
+static func montar_bicho() -> Node3D:
+	var bicho := Node3D.new()
+	bicho.name = "Bicho"
 	var modelo := Node3D.new()
 	modelo.name = "Modelo"
-	_bicho.add_child(modelo)
+	bicho.add_child(modelo)
 	var pelo := Color("b5652b")
 	var barriga := Color("ecc99c")
 	var corpo_vox := {}
@@ -282,3 +294,4 @@ func _montar() -> void:
 	var malha_rabo := MeshInstance3D.new()
 	malha_rabo.mesh = Voxel.malha(rabo_vox, 1.0 / 16.0)
 	rabo.add_child(malha_rabo)
+	return bicho

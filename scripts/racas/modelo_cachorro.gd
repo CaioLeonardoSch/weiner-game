@@ -17,6 +17,15 @@ extends Node3D
 ## Velocidade horizontal atual (m/s) e se está no chão: comandam a animação.
 var velocidade := 0.0
 var no_chao := true
+## Poses (brincadeiras do parque): `deitado` de 0 a 1 (patas dobradas, barriga no chão), `giro`
+## (rad) rolando de costas em volta do comprimento do corpo e `sacudida` de 0 a 1 (chacoalhando).
+var deitado := 0.0
+var giro := 0.0
+var sacudida := 0.0
+## Segundos que ainda faltam de rabo abanando de alegria (rápido e largo, ex.: pegou o lendário).
+var alegria := 0.0
+## Deslocamento de lado (m) do corpo tremendo de frio.
+var tremor := 0.0
 ## Posição da boca (onde o graveto fica), no espaço deste nó.
 var boca := Vector3(0.74, 0.42, 0.0)
 
@@ -35,6 +44,11 @@ func _ready() -> void:
 func montar(nova_raca: Raca, indice: int) -> void:
 	indice_pelagem = indice
 	raca = nova_raca
+
+
+## Onde a guia prende na coleira (global): o pescoço, logo atrás da cabeça.
+func ponto_da_coleira() -> Vector3:
+	return to_global(boca + Vector3(-0.24, -0.06, 0.0))
 
 
 func pelagem() -> Pelagem:
@@ -103,18 +117,39 @@ func _process(delta: float) -> void:
 		_girar_pata(&"pata_fd", 0.6)
 		_girar_pata(&"pata_te", -0.6)
 		_girar_pata(&"pata_td", -0.6)
+	if deitado > 0.001:
+		_dobrar_pata(&"pata_fe", 1.4)
+		_dobrar_pata(&"pata_fd", 1.4)
+		_dobrar_pata(&"pata_te", -1.4)
+		_dobrar_pata(&"pata_td", -1.4)
 
-	# Sobe e desce um pouquinho a cada passada.
-	position.y = absf(sin(_passo)) * 0.015 * _amplitude
+	# Sobe e desce um pouquinho a cada passada; deitado, desce até a barriga encostar no chão. O
+	# giro e a sacudida são em volta do meio do corpo.
+	var altura_pata := raca.altura_pata * Raca.VOXEL
+	var centro := Vector3(0.0, altura_pata + raca.altura_corpo * Raca.VOXEL * 0.5, 0.0)
+	var base := Basis(Vector3.RIGHT, giro + sin(_tempo * 45.0) * 0.45 * sacudida)
+	var altura := absf(sin(_passo)) * 0.015 * _amplitude - deitado * altura_pata * 0.85
+	transform = Transform3D(base, centro - base * centro + Vector3(0.0, altura, tremor))
 	if _pivos.has(&"rabo"):
 		# Abana mais rápido parado (contente), mais devagar andando.
 		var ritmo := lerpf(11.0, 6.0, _amplitude)
-		(_pivos[&"rabo"] as Node3D).rotation.y = sin(_tempo * ritmo) * lerpf(0.55, 0.3, _amplitude)
+		var abertura := lerpf(0.55, 0.3, _amplitude)
+		if alegria > 0.0:
+			alegria = maxf(alegria - delta, 0.0)
+			ritmo = 19.0
+			abertura = 0.75
+		(_pivos[&"rabo"] as Node3D).rotation.y = sin(_tempo * ritmo) * abertura
 	var orelha := sin(_passo * 2.0) * 0.18 * _amplitude + sin(_tempo * 1.7) * 0.03
 	if _pivos.has(&"orelha_e"):
 		(_pivos[&"orelha_e"] as Node3D).rotation.x = -orelha
 	if _pivos.has(&"orelha_d"):
 		(_pivos[&"orelha_d"] as Node3D).rotation.x = orelha
+
+
+func _dobrar_pata(nome: StringName, angulo: float) -> void:
+	if _pivos.has(nome):
+		var pata := _pivos[nome] as Node3D
+		pata.rotation.z = lerpf(pata.rotation.z, angulo, deitado)
 
 
 func _girar_pata(nome: StringName, angulo: float) -> void:

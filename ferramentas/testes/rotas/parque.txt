@@ -1,0 +1,66 @@
+# Parque (área central): o dia começa com o dono chegando com o cachorro na guia, tirando a guia e
+# sentando no banco; a bolinha levada ao dono é jogada longe; largar a bolinha e rolar na grama;
+# só a entrada do dia 1 está aberta; entrar nela joga a fase do dia; concluída, o jogo volta ao
+# parque, o cachorro chega ao dono, os dois vão embora e começa o dia 2 (entrada do dia 2 aberta).
+# Momentos do ObjetivoParque: 0 chegando, 1 brincando, 2 entrando, 3 indo embora.
+fase res://scenes/parque/area_central.tscn
+esperar 20
+checar jogo.objetivo.momento == 0
+checar jogo.cachorro.entrada_bloqueada
+checar jogo.objetivo.guia.visible
+checar jogo.objetivo.dia == 1
+checar obj("EntradaDia", 0).aberta
+checar not obj("EntradaDia", 1).aberta
+checar not obj("EntradaDia", 3).aberta
+esperar 560
+checar jogo.objetivo.momento == 1
+checar not jogo.cachorro.entrada_bloqueada
+checar not jogo.objetivo.guia.visible
+checar obj("Dono").sentado
+checar obj("Dono").global_position.distance_to(obj("Banco").global_position) < 0.01
+# A bolinha: pegar, levar ao dono, ele joga longe. (Na boca ela sai de Objetos: obj() não acha.)
+ir -1.8 16.2 300
+esperar 10
+checar jogo.cachorro.brinquedo == jogo.objetivo.bolinha
+ir -3.5 18.3 300
+esperar 20
+checar jogo.cachorro.brinquedo == null
+esperar 150
+checar jogo.objetivo.bolinha.global_position.distance_to(obj("Banco").global_position) > 4.0
+checar not jogo.objetivo.bolinha.presa
+# Pegar de novo e largar longe do dono: fica no chão (não volta sozinha para a boca).
+chamar res://ferramentas/testes/teste_parque.gd ir_na_bolinha
+esperar 10
+checar jogo.cachorro.brinquedo == jogo.objetivo.bolinha
+apertar largar_graveto
+esperar 60
+checar jogo.cachorro.brinquedo == null
+checar not jogo.objetivo.bolinha.presa
+# Rolar na grama e se sacudir.
+apertar rolar
+esperar 30
+checar jogo.cachorro.voxel.giro > 0.1
+esperar 120
+checar jogo.cachorro.voxel.giro == 0.0
+checar jogo.cachorro.voxel.sacudida == 0.0
+# A entrada do dia 1: a fase do dia, vinda do parque.
+ir -10 17 400
+ir -16.66 16.03 300
+ir -18.54 19.57 150
+esperar 120
+checar jogo.get_node("/root/Fases").caminho_atual == "res://scenes/parque/dia_01.tscn"
+checar jogo.get_node("/root/Fases").do_parque
+# Concluída: de volta ao parque, no fim do dia.
+eval jogo.concluir()
+esperar 90
+checar jogo.get_node("/root/Fases").caminho_atual == "res://scenes/parque/area_central.tscn"
+checar jogo.get_node("/root/Fases").concluida("res://scenes/parque/dia_01.tscn")
+checar jogo.objetivo.momento == 3
+checar obj("EntradaDia", 0).aberta
+checar obj("EntradaDia", 1).aberta
+esperar 1000
+# O dia seguinte.
+checar jogo.objetivo.dia == 2
+checar jogo.objetivo.momento == 0
+checar obj("EntradaDia", 1).aberta
+checar not obj("EntradaDia", 2).aberta

@@ -208,6 +208,44 @@ static func trovao(pai: Node, volume_db := 0.0) -> void:
 	jogador.finished.connect(jogador.queue_free)
 
 
+## Assobio do dono chamando (pegou o graveto do dia: hora de ir embora). Sem posição por enquanto;
+## depois vem da direção do dono.
+static func assobio(pai: Node) -> void:
+	if not _cache.has("assobio"):
+		_cache["assobio"] = _gerar_assobio()
+	var jogador := AudioStreamPlayer.new()
+	jogador.stream = _cache["assobio"]
+	jogador.bus = &"Efeitos"
+	pai.add_child(jogador)
+	jogador.play()
+	jogador.finished.connect(jogador.queue_free)
+
+
+## "Fiu-fiiiu": duas notas de assobio (seno quase puro com um pouco de sopro), a segunda subindo.
+static func _gerar_assobio() -> AudioStreamWAV:
+	var notas := [[0.0, 0.22, 1500.0, 1700.0], [0.32, 0.5, 1350.0, 2000.0]]
+	var duracao := 0.85
+	var total := int(TAXA * duracao)
+	var dados := PackedByteArray()
+	dados.resize(total * 2)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 31
+	var fase := 0.0
+	for i in total:
+		var t := float(i) / TAXA
+		var amostra := 0.0
+		for nota: Array in notas:
+			var p: float = (t - nota[0]) / nota[1]
+			if p < 0.0 or p > 1.0:
+				continue
+			var frequencia: float = lerpf(nota[2], nota[3], sin(p * PI * 0.5)) + sin(t * TAU * 6.0) * 25.0
+			fase += TAU * frequencia / TAXA
+			var envelope := minf(p / 0.12, 1.0) * minf((1.0 - p) / 0.2, 1.0)
+			amostra = (sin(fase) + rng.randf_range(-1.0, 1.0) * 0.06) * envelope * 0.55
+		dados.encode_s16(i * 2, int(clampf(amostra, -1.0, 1.0) * 32767.0))
+	return _wav(dados)
+
+
 ## Monta um laço de `duracao` segundos com `amostra(t, rng, estado)`: o fim se funde no começo
 ## (0,3 s de mistura), então a emenda não estala.
 static func _gerar_laco(amostra: Callable, duracao: float, semente: int) -> AudioStreamWAV:

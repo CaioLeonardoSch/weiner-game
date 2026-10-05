@@ -81,6 +81,22 @@ func recentralizar() -> void:
 		_foco_iso = alvo.global_position
 
 
+## Começa direto na terceira pessoa, sem transição (fases só em terceira pessoa, como o parque):
+## a câmera atrás do alvo, girada `yaw` graus (ver `yaw_inicial_3d`).
+func comecar_em_3d(yaw: float) -> void:
+	_yaw = deg_to_rad(yaw)
+	_pitch = deg_to_rad(pitch_inicial_3d)
+	camera.projection = Camera3D.PROJECTION_PERSPECTIVE
+	camera.fov = fov_3d
+	mistura = 1.0
+	estado = Estado.TERCEIRA_PESSOA
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if alvo:
+		braco.global_position = alvo.global_position + Vector3.UP * altura_pivo_3d
+		braco.rotation = Vector3(_pitch, _yaw, 0.0)
+		camera.global_transform = _transform_3d()
+
+
 func transicionar_para_3d() -> void:
 	if estado != Estado.ISOMETRICO:
 		return
