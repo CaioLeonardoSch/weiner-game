@@ -21,6 +21,8 @@ const VERDES := [Color("3f8f3a"), Color("367f34"), Color("4b9e42")]
 ## Intervalo (s) entre uma mexida e outra, chamando atenção.
 const INTERVALO_MINIMO := 2.5
 const INTERVALO_MAXIMO := 4.0
+## Quanto (m) ele anda para longe da moita depois de sair.
+const PASSOS_DEPOIS := 1.5
 
 var _folhas: Node3D
 var _mexida: Tween
@@ -100,10 +102,12 @@ func _montar() -> void:
 			bola.position = Vector3(x, 0.55 + 0.1 * fileira, (fileira - 0.5) * 0.5)
 			_folhas.add_child(bola)
 	add_child(_folhas)
-	Travessia.caixa_solida(self, Vector3(largura, ALTURA, FUNDO * 0.8), Vector3(0.0, ALTURA * 0.5, 0.0))
+	var caixa := Travessia.caixa_solida(self, Vector3(largura, ALTURA, FUNDO * 0.8), Vector3(0.0, ALTURA * 0.5, 0.0))
+	# Também na camada do terreno: a câmera não fica do outro lado da moita, escondendo o cachorro.
+	caixa.collision_layer |= 1
 
 
-## Pula para dentro (some na moita, que sacode) e sai pulando do outro lado.
+## Pula para dentro (some na moita, que sacode), sai pulando do outro lado e anda um pouco.
 func _animar(cachorro: Dachshund, pontos: PackedVector3Array) -> void:
 	var yaw := Travessia.yaw_para(pontos[2] - pontos[0])
 	var ate_a_moita := cachorro.global_position.distance_to(pontos[0])
@@ -115,3 +119,8 @@ func _animar(cachorro: Dachshund, pontos: PackedVector3Array) -> void:
 	await get_tree().create_timer(0.7).timeout
 	cachorro.show()
 	await cachorro.saltar(pontos[2], 0.35, 0.35, yaw)
+	# Uns passos para longe da moita: a câmera vem junto e não fica colada nas costas dele.
+	var direcao := pontos[2] - pontos[0]
+	direcao.y = 0.0
+	var adiante := pontos[2] + direcao.normalized() * PASSOS_DEPOIS
+	await cachorro.atravessar(PackedVector3Array([adiante]), PASSOS_DEPOIS / 2.5, yaw)

@@ -2,8 +2,8 @@
 class_name RaioDeSol
 extends ObjetoFase
 ## Luz do sol entrando por uma abertura nas copas: um facho de luz quente que desce até o chão,
-## num círculo de `raio` metros. Visual provisório (um cone translúcido e um holofote), até a
-## arte.
+## num círculo de `raio` metros. Visual provisório (um cone translúcido que some subindo e um
+## holofote), até a arte.
 
 @export_range(0.5, 4.0, 0.1) var raio := 1.3:
 	set(valor):
@@ -16,6 +16,24 @@ extends ObjetoFase
 		_montar()
 
 const COR := Color(1.0, 0.86, 0.55)
+## O facho some subindo (não aparece como coluna acima das copas) e nas bordas.
+const CODIGO_DO_FACHO := """
+shader_type spatial;
+render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
+uniform vec4 cor : source_color;
+uniform float altura = 8.0;
+varying float subida;
+void vertex() {
+	subida = VERTEX.y / altura + 0.5;
+}
+void fragment() {
+	float borda = abs(dot(normalize(NORMAL), normalize(VIEW)));
+	ALBEDO = cor.rgb;
+	ALPHA = cor.a * (1.0 - smoothstep(0.05, 0.6, subida)) * borda * borda;
+}
+"""
+
+static var _shader_do_facho: Shader
 
 
 func nome_no_editor() -> String:
@@ -65,14 +83,19 @@ func _montar() -> void:
 	cone.radial_segments = 16
 	cone.cap_top = false
 	cone.cap_bottom = false
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	material.albedo_color = Color(COR, 0.08)
+	var material := ShaderMaterial.new()
+	material.shader = _shader()
+	material.set_shader_parameter(&"cor", Color(COR, 0.16))
+	material.set_shader_parameter(&"altura", altura)
 	cone.material = material
 	facho.mesh = cone
 	facho.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	facho.position.y = altura * 0.5
 	add_child(facho)
+
+
+static func _shader() -> Shader:
+	if _shader_do_facho == null:
+		_shader_do_facho = Shader.new()
+		_shader_do_facho.code = CODIGO_DO_FACHO
+	return _shader_do_facho

@@ -11,7 +11,7 @@ signal atravessou(cachorro: Dachshund)
 ## Até onde (m) da ponta do caminho o cachorro pode estar para a ação aparecer.
 const ALCANCE := 0.9
 ## O ponto da ação fica a isso (m) da ponta, para o lado do obstáculo.
-const DIANTE_DA_PONTA := 0.3
+const DIANTE_DA_PONTA := 0.4
 
 var _ocupada := false
 

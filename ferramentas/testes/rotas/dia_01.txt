@@ -46,12 +46,14 @@ checar jogo.cachorro.objeto_da_acao() is MoitaPassagem
 apertar acao
 esperar 55
 checar not jogo.cachorro.visible
-esperar 85
+esperar 125
 checar jogo.cachorro.visible
 checar not jogo.cachorro.atravessando
-checar jogo.cachorro.global_position.z < -47.5
+checar jogo.cachorro.global_position.z < -48.8
+# A câmera vem para o lado da clareira (a moita não esconde o cachorro).
+checar jogo.camera_controller.camera.global_position.z < -46.5
 # O esquilo se assusta e sobe; o galho cai no raio de sol e fica dourado.
-esperar 200
+esperar 160
 checar obj("EsquiloDoGalho")._assustado
 checar obj("Graveto").com_bicho == null
 checar not obj("Graveto").disfarcado
@@ -68,8 +70,8 @@ ir 6.5 -48.2 400
 esperar 10
 checar jogo.cachorro.objeto_da_acao() is MoitaPassagem
 apertar acao
-esperar 150
-checar jogo.cachorro.global_position.z > -45.5
+esperar 190
+checar jogo.cachorro.global_position.z > -44.0
 ir 6.5 -40.1 300
 esperar 10
 checar jogo.cachorro.objeto_da_acao() is PedrasCorrego
