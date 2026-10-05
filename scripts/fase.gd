@@ -21,6 +21,7 @@ const HABILIDADE_LATIR := 4
 const OBJETIVO_GRAVETO := 0
 const OBJETIVO_PASTOREIO := 1
 const OBJETIVO_PARQUE := 2
+const OBJETIVO_DIA := 3
 
 ## Identidade da fase no save do jogador (fases concluídas). Não muda quando o arquivo é
 ## renomeado ou movido: é o que mantém o ✓ entre versões. O editor preenche ao salvar uma fase
@@ -35,7 +36,7 @@ var habilidades_herdadas := -1
 ## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
 @export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
 @export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)",
-	"Área central do parque (não termina)") var objetivo := OBJETIVO_GRAVETO
+	"Área central do parque (não termina)", "Dia do parque (achar o lendário e voltar)") var objetivo := OBJETIVO_GRAVETO
 ## Só terceira pessoa: a câmera começa atrás do cachorro e não vai para a isométrica ao largar o
 ## graveto (a direção nova do jogo, ver docs/DESIGN.md). Objetos "só isométrico" ficam de fora e
 ## os "só 3D" valem desde o começo.

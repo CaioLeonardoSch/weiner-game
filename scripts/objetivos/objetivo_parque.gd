@@ -19,8 +19,8 @@ const VELOCIDADE_ANDANDO := 1.3
 ## Até onde (m, na frente do banco) o cachorro trota quando o dono solta a guia.
 const TROTE_SOLTO := 4.5
 ## Distância (m) da bolinha jogada, a partir do banco, e o espalhamento (rad) para os lados.
-const ARREMESSO_MINIMO := 5.0
-const ARREMESSO_MAXIMO := 9.0
+const ARREMESSO_MINIMO := 7.0
+const ARREMESSO_MAXIMO := 12.0
 const ARREMESSO_ABERTURA := 0.9
 
 var momento := Momento.CHEGANDO

@@ -22,6 +22,8 @@ var no_chao := true
 var deitado := 0.0
 var giro := 0.0
 var sacudida := 0.0
+## Segundos que ainda faltam de rabo abanando de alegria (rápido e largo, ex.: pegou o lendário).
+var alegria := 0.0
 ## Deslocamento de lado (m) do corpo tremendo de frio.
 var tremor := 0.0
 ## Posição da boca (onde o graveto fica), no espaço deste nó.
@@ -131,7 +133,12 @@ func _process(delta: float) -> void:
 	if _pivos.has(&"rabo"):
 		# Abana mais rápido parado (contente), mais devagar andando.
 		var ritmo := lerpf(11.0, 6.0, _amplitude)
-		(_pivos[&"rabo"] as Node3D).rotation.y = sin(_tempo * ritmo) * lerpf(0.55, 0.3, _amplitude)
+		var abertura := lerpf(0.55, 0.3, _amplitude)
+		if alegria > 0.0:
+			alegria = maxf(alegria - delta, 0.0)
+			ritmo = 19.0
+			abertura = 0.75
+		(_pivos[&"rabo"] as Node3D).rotation.y = sin(_tempo * ritmo) * abertura
 	var orelha := sin(_passo * 2.0) * 0.18 * _amplitude + sin(_tempo * 1.7) * 0.03
 	if _pivos.has(&"orelha_e"):
 		(_pivos[&"orelha_e"] as Node3D).rotation.x = -orelha

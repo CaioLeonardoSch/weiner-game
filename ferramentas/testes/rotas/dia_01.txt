@@ -1,0 +1,83 @@
+# Dia 1 do parque, "O primeiro graveto": rastejar sob o tronco, pular as pedras do córrego, pular
+# dentro da moita; na clareira o esquilo se assusta, sobe na árvore e o galho (o cajado lendário)
+# cai na luz e fica dourado; o cachorro pega, abana o rabo e volta: moita, pedras e o corte da
+# volta termina o dia. Ações de contexto: perto da ponta, olhando para o obstáculo, F.
+fase res://scenes/parque/dia_01.tscn
+esperar 20
+checar jogo.objetivo is ObjetivoDia
+checar jogo.contador.text == ""
+# O galho começa na árvore, com cara de galho comum.
+checar obj("Graveto").com_bicho == obj("EsquiloDoGalho")
+checar obj("Graveto").disfarcado
+checar obj("Graveto").global_position.y > 1.5
+# A trilha até o tronco semicaído. Andando, ele não deixa passar.
+ir 0.5 -11 400
+ir 6.5 -19 400
+ir 6.5 -28 200
+checar jogo.cachorro.global_position.z > -26.0
+ir 6.5 -23 200
+ir 6.5 -24.5 200
+esperar 10
+checar jogo.cachorro.objeto_da_acao() is TroncoSemicaido
+apertar acao
+esperar 50
+checar jogo.cachorro.atravessando
+checar jogo.cachorro.voxel.deitado > 0.3
+esperar 190
+checar not jogo.cachorro.atravessando
+checar jogo.cachorro.global_position.z < -26.5
+checar jogo.cachorro.voxel.deitado == 0.0
+# A moita, lá na frente, se mexe sozinha.
+checar obj("MoitaPassagem").chamar_atencao
+# O corte da volta, sem o graveto: nada acontece.
+ir 6.5 -34.9 300
+checar not jogo.concluida
+esperar 10
+checar jogo.cachorro.objeto_da_acao() is PedrasCorrego
+apertar acao
+esperar 220
+checar not jogo.cachorro.atravessando
+checar jogo.cachorro.global_position.z < -39.5
+checar jogo.cachorro.is_on_floor()
+# A moita: pula dentro e sai do outro lado, na clareira.
+ir 6.5 -44.9 300
+esperar 10
+checar jogo.cachorro.objeto_da_acao() is MoitaPassagem
+apertar acao
+esperar 55
+checar not jogo.cachorro.visible
+esperar 85
+checar jogo.cachorro.visible
+checar not jogo.cachorro.atravessando
+checar jogo.cachorro.global_position.z < -47.5
+# O esquilo se assusta e sobe; o galho cai no raio de sol e fica dourado.
+esperar 200
+checar obj("EsquiloDoGalho")._assustado
+checar obj("Graveto").com_bicho == null
+checar not obj("Graveto").disfarcado
+checar obj("Graveto").formato == 1
+checar obj("Graveto").global_position.y < 0.2
+ir 7.2 -54.3 300
+esperar 20
+checar jogo.cachorro.tem_graveto
+checar jogo.cachorro.graveto.lendario
+checar jogo.cachorro.voxel.alegria > 0.0
+checar not jogo.concluida
+# A volta: a moita e as pedras, agora com o graveto na boca.
+ir 6.5 -48.2 400
+esperar 10
+checar jogo.cachorro.objeto_da_acao() is MoitaPassagem
+apertar acao
+esperar 150
+checar jogo.cachorro.global_position.z > -45.5
+ir 6.5 -40.1 300
+esperar 10
+checar jogo.cachorro.objeto_da_acao() is PedrasCorrego
+apertar acao
+esperar 220
+checar jogo.cachorro.global_position.z > -35.5
+checar jogo.cachorro.tem_graveto
+# O corte da volta termina o dia.
+ir 6.5 -30 200
+esperar 10
+checar jogo.concluida

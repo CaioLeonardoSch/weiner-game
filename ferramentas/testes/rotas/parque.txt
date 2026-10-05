@@ -19,10 +19,10 @@ checar not jogo.objetivo.guia.visible
 checar obj("Dono").sentado
 checar obj("Dono").global_position.distance_to(obj("Banco").global_position) < 0.01
 # A bolinha: pegar, levar ao dono, ele joga longe. (Na boca ela sai de Objetos: obj() não acha.)
-ir -1.8 4.2 300
+ir -1.8 16.2 300
 esperar 10
 checar jogo.cachorro.brinquedo == jogo.objetivo.bolinha
-ir -3.5 6.3 300
+ir -3.5 18.3 300
 esperar 20
 checar jogo.cachorro.brinquedo == null
 esperar 150
@@ -44,21 +44,21 @@ esperar 120
 checar jogo.cachorro.voxel.giro == 0.0
 checar jogo.cachorro.voxel.sacudida == 0.0
 # A entrada do dia 1: a fase do dia, vinda do parque.
-ir -5.5 4.5 400
-ir -6.9 6.8 300
-ir -8.3 9.2 120
+ir -10 17 400
+ir -16.66 16.03 300
+ir -18.54 19.57 150
 esperar 120
-checar jogo.get_node("/root/Fases").caminho_atual == "res://scenes/fases/floresta_01_andar.tscn"
+checar jogo.get_node("/root/Fases").caminho_atual == "res://scenes/parque/dia_01.tscn"
 checar jogo.get_node("/root/Fases").do_parque
 # Concluída: de volta ao parque, no fim do dia.
 eval jogo.concluir()
 esperar 90
 checar jogo.get_node("/root/Fases").caminho_atual == "res://scenes/parque/area_central.tscn"
-checar jogo.get_node("/root/Fases").concluida("res://scenes/fases/floresta_01_andar.tscn")
+checar jogo.get_node("/root/Fases").concluida("res://scenes/parque/dia_01.tscn")
 checar jogo.objetivo.momento == 3
 checar obj("EntradaDia", 0).aberta
 checar obj("EntradaDia", 1).aberta
-esperar 700
+esperar 1000
 # O dia seguinte.
 checar jogo.objetivo.dia == 2
 checar jogo.objetivo.momento == 0

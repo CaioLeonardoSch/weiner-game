@@ -4,24 +4,31 @@ extends SceneTree
 ## a bolinha, dois passeantes e árvores do lado de fora.
 ##   godot --headless --path . --script res://ferramentas/gerar_parque.gd
 ## Sobrescreve a cena: mudanças feitas no editor se perdem.
-## Provisório até a arte do parque: o formato e as fases dos dias (1 a 3 usam fases da esteira de
-## teste; 4 a 10 ainda não têm fase e ficam fechados).
+## Provisório até a arte do parque: o formato e as fases dos dias (o 1 é o Dia 1 de verdade,
+## ferramentas/gerar_dia_01.gd; 2 e 3 usam fases da esteira de teste; 4 a 10 ainda não têm fase e
+## ficam fechados).
 
 const OBJ := "res://scenes/objetos/%s.tscn"
 const ARQUIVO := "res://scenes/parque/area_central.tscn"
-## Semieixos da clareira (m) e a espessura do mato em volta (em fração do raio).
-const RX := 13.0
-const RZ := 10.0
+## Semieixos da clareira (m) e a espessura do mato em volta (em fração do raio). Grande para
+## correr: 60 x 44 m (correndo, uns 10 s de uma ponta à outra).
+const RX := 30.0
+const RZ := 22.0
 const MATO_ATE := 1.22
 ## As fases dos dias, por enquanto.
 const FASES_DOS_DIAS := {
-	1: "res://scenes/fases/floresta_01_andar.tscn",
+	1: "res://scenes/parque/dia_01.tscn",
 	2: "res://scenes/fases/floresta_03_pular.tscn",
 	3: "res://scenes/fases/floresta_04_rampas.tscn",
 }
 const LARGURA_ENTRADA := 3.0
 ## Comprimento (m) do corredor de cada entrada, além da clareira.
 const CORREDOR := 5.5
+## Limites do gramado (células).
+const X0 := -56
+const X1 := 56
+const Z0 := -44
+const Z1 := 40
 
 var fase: Fase
 var t: GridMap
@@ -67,8 +74,8 @@ static func _oval(x: float, z: float) -> float:
 
 
 func _chao() -> void:
-	for x in range(-34, 34):
-		for z in range(-30, 26):
+	for x in range(X0, X1):
+		for z in range(Z0, Z1):
 			t.set_cell_item(Vector3i(x, -1, z), Tiles.GRAMA)
 
 
@@ -95,8 +102,8 @@ func _entradas() -> Array[Transform3D]:
 ## O anel de mato em volta da clareira, com as passagens das entradas (e as paredes dos
 ## corredores, de mato, até o fundo).
 func _mato(entradas: Array[Transform3D]) -> void:
-	for x in range(-34, 34):
-		for z in range(-30, 26):
+	for x in range(X0, X1):
+		for z in range(Z0, Z1):
 			var centro := Vector3(x + 0.5, 0.0, z + 0.5)
 			var oval := _oval(centro.x, centro.z)
 			if oval < 1.35:
@@ -130,21 +137,21 @@ func _saida() -> void:
 
 func _objetos() -> void:
 	# O banco perto da saída, olhando para o meio da clareira (-Z); o dono sentado nele.
-	var banco_pos := Vector3(-3.5, 0.0, 7.5)
+	var banco_pos := Vector3(-3.5, 0.0, RZ - 2.5)
 	obj("banco", banco_pos, PI)
 	var dono := obj("dono", banco_pos, PI) as Dono
 	dono.sentado = true
-	obj("inicio_cachorro", Vector3(-3.5, 0.0, 5.5), PI * 0.5)
-	obj("bolinha", Vector3(-1.8, 0.0, 4.2))
+	obj("inicio_cachorro", banco_pos + Vector3(0.0, 0.0, -2.0), PI * 0.5)
+	obj("bolinha", banco_pos + Vector3(1.7, 0.0, -3.3))
 	var passeante := obj("passeante", Vector3(0.0, 0.0, -1.0)) as Passeante
 	passeante.raca = &"pug"
-	passeante.raio = 5.5
+	passeante.raio = 10.0
 	var outro := obj("passeante", Vector3(1.0, 0.0, -1.0)) as Passeante
 	outro.raca = &"border_collie"
-	outro.raio = 8.0
+	outro.raio = 16.0
 	outro.velocidade = 1.1
 	outro.sentido_horario = true
-	for i in 9:
+	for i in 24:
 		var angulo := rng.randf_range(-PI, PI)
 		var raio := rng.randf_range(0.55, 0.92)
 		var ponto := Vector3(sin(angulo) * RX * raio, 0.0, -cos(angulo) * RZ * raio)
@@ -155,9 +162,9 @@ func _objetos() -> void:
 
 
 func _arvores() -> void:
-	for tentativa in 2600:
-		var x := rng.randi_range(-33, 32)
-		var z := rng.randi_range(-29, 24)
+	for tentativa in 5000:
+		var x := rng.randi_range(X0 + 1, X1 - 2)
+		var z := rng.randi_range(Z0 + 1, Z1 - 2)
 		if ocupado.has(Vector2i(x, z)):
 			continue
 		var arvore := obj("arvore", Vector3(x + rng.randf_range(0.2, 0.8), 0, z + rng.randf_range(0.2, 0.8))) as Arvore

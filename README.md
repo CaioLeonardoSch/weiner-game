@@ -149,9 +149,34 @@ depois da direção visual; o que existe agora é a estrutura, com visual provis
 - **Na fase do dia**: pegar o graveto lendário faz o dono **assobiar**; concluída, o jogo volta
   ao parque: o cachorro chega ao dono, que levanta, põe a guia, e os dois vão embora pela saída.
   Aí começa o dia seguinte.
-- **Provisório**: os dias 1 a 3 usam fases da esteira (F01, F03 e F04); os dias 4 a 10 ainda
-  não têm fase e ficam fechados. A volta da fase ainda não tem o *fade* que corta um pedaço do
-  retorno (a fase termina ao entregar o graveto, como na esteira).
+- **Provisório**: os dias 2 e 3 usam fases da esteira (F03 e F04); os dias 4 a 10 ainda não têm
+  fase e ficam fechados.
+
+### Dia 1, "O primeiro graveto"
+
+`scenes/parque/dia_01.tscn`, gerada por `ferramentas/gerar_dia_01.gd` (sobrescreve a cena),
+objetivo *Dia do parque* (`scripts/objetivos/objetivo_dia.gd`; rota `dia_01`). Uma trilha no mato
+saindo da área central, com uma curva: o **tronco semicaído** (rastejar por baixo); dali, ao
+longe, a **moita** que se mexe sozinha; o **córrego** fundo com **pedras** (pular); a moita (pular
+dentro) leva a uma pequena clareira, onde o **esquilo** come uma noz, vê o cachorro, se assusta,
+sobe na árvore e quebra um galho, que cai no **raio de sol** e fica dourado (o cajado lendário).
+Pegando, o cachorro abana o rabo e o dono assobia ao longe. Na volta, depois do córrego, o
+**corte da volta** termina o dia (o pedaço que o *fade* corta) e o jogo volta ao parque.
+
+O objetivo *Dia do parque* termina quando o cachorro, com o graveto lendário, entra num **Corte
+da volta** (sem dono na fase). As ações de contexto (categoria **Ações** no editor) mostram só a
+tecla: perto da ponta, olhando para o obstáculo, **F**.
+
+- **Tronco semicaído** (*comprimento*): andando não passa; F rasteja por baixo.
+- **Pedras do córrego** (*quantidade*, *espaçamento*): F pula de pedra em pedra. As pedras não
+  têm colisão: andar para dentro do córrego é cair na água.
+- **Moita (pular dentro)** (*largura*, *chamar atenção*): F pula para dentro e sai do outro lado;
+  com *chamar atenção*, ela se mexe sozinha até alguém atravessar.
+
+Outros objetos novos: **Esquilo na árvore (derruba o galho)** (Bichos; *distância do susto*,
+*altura do galho*: pega o graveto e a árvore mais perto e põe o galho lá em cima, com cara de
+galho comum), **Raio de sol** (Cenário; *raio*, *altura*), **Corte da volta** (Regras;
+*tamanho*) e o **formato** do graveto (reto ou cajado).
 
 A cena é gerada por `ferramentas/gerar_parque.gd` (sobrescreve a cena; as fases dos dias ficam
 em `FASES_DOS_DIAS`):
@@ -606,7 +631,7 @@ scenes/menu.tscn              menu principal (cena inicial)
 scenes/jogo.tscn              jogo: cachorro, câmera, HUD (a fase é carregada por código)
 scenes/editor/editor_fase.tscn  editor de fases (F1)
 scenes/fases/                 fases (conteúdo: terreno + objetos)
-scenes/parque/                área central do parque (gerada por ferramentas/gerar_parque.gd)
+scenes/parque/                área central do parque e os dias (gerados por ferramentas/gerar_parque.gd e gerar_dia_01.gd)
 scenes/modulos/               módulos: trechos de fase para reusar (criados pelo editor)
 scenes/objetos/               objetos que o editor coloca
 scripts/jogo.gd               regras: pegar/largar graveto, perspectiva, vitória

@@ -772,7 +772,8 @@ func _atualizar_rotulo_acao() -> void:
 	if alvo == null:
 		_pilula_acao.hide()
 		return
-	var texto: String = alvo.acao_da_boca(cachorro)
+	# Ações de contexto: só a tecla, sem texto (ver docs/DESIGN.md, "Textos e dicas").
+	var texto: String = "" if alvo is Travessia else alvo.acao_da_boca(cachorro)
 	var rotulo_texto := rotulo_acao.get_node(^"Texto") as Label
 	if rotulo_texto.text != texto or not _pilula_acao.visible:
 		Coleira.mudar_linha(rotulo_acao, Teclas.nome(&"acao"), texto)

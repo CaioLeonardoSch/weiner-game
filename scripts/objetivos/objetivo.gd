@@ -15,6 +15,8 @@ static func criar(tipo: int) -> Objetivo:
 			return ObjetivoPastoreio.new()
 		Fase.OBJETIVO_PARQUE:
 			return ObjetivoParque.new()
+		Fase.OBJETIVO_DIA:
+			return ObjetivoDia.new()
 		_:
 			return ObjetivoGraveto.new()
 

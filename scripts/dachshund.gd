@@ -418,13 +418,7 @@ func deitado() -> bool:
 ## sem colisão e sem o jogador controlar, olhando para `yaw` (radianos; 0 = +X). Com
 ## `esconder`, some no começo (entrou na toca). Aguarde com `await`.
 func atravessar(pontos: PackedVector3Array, duracao: float, yaw: float, esconder := false) -> void:
-	atravessando = true
-	velocity = Vector3.ZERO
-	_embalo = Vector3.ZERO
-	($Colisao as CollisionShape3D).set_deferred("disabled", true)
-	colisao_graveto.set_deferred("disabled", true)
-	_yaw_alvo = yaw
-	modelo.rotation.y = yaw
+	_comecar_travessia(yaw)
 	var total := 0.0
 	var anterior := global_position
 	for ponto in pontos:
@@ -442,6 +436,31 @@ func atravessar(pontos: PackedVector3Array, duracao: float, yaw: float, esconder
 		tween.parallel().tween_callback(hide).set_delay(duracao * 0.6)
 	await tween.finished
 	voxel.velocidade = 0.0
+
+
+## Pula num arco (`altura` m acima da reta) até `ate`, em `duracao` segundos, sem colisão e sem o
+## jogador controlar (ações de contexto: as pedras do córrego, a moita). Aguarde com `await`;
+## no fim de tudo, `terminar_travessia`.
+func saltar(ate: Vector3, altura: float, duracao: float, yaw: float) -> void:
+	_comecar_travessia(yaw)
+	var de := global_position
+	voxel.velocidade = 0.0
+	voxel.no_chao = false
+	var tween := create_tween()
+	tween.tween_method(func(t: float) -> void:
+		global_position = de.lerp(ate, t) + Vector3.UP * altura * 4.0 * t * (1.0 - t), 0.0, 1.0, duracao)
+	await tween.finished
+	voxel.no_chao = true
+
+
+func _comecar_travessia(yaw: float) -> void:
+	atravessando = true
+	velocity = Vector3.ZERO
+	_embalo = Vector3.ZERO
+	($Colisao as CollisionShape3D).set_deferred("disabled", true)
+	colisao_graveto.set_deferred("disabled", true)
+	_yaw_alvo = yaw
+	modelo.rotation.y = yaw
 
 
 ## Fim da travessia: colisão de volta e o novo lugar vira o ponto seguro.

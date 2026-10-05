@@ -53,8 +53,12 @@ parque) começou; o resto ainda não foi codificado. Ordem sugerida:
      bolinha, rolar (T), deitar parado, dois passeantes, as 10 entradas (abertas pelo número de
      fases dos dias concluídas, fechadas por troncos), o assobio ao pegar o graveto, a volta ao
      parque e a saída, e o dia seguinte. Ver *O parque* no README.
-   - **Falta**: as fases dos dias (os dias 1 a 3 usam F01, F03 e F04 da esteira; 4 a 10 sem
-     fase), o *fade* que corta um pedaço do retorno, o cachorro reparar no que mudou, os
+   - **Dia 1 feito (visual provisório)**: `ferramentas/gerar_dia_01.gd`; tronco semicaído,
+     pedras do córrego, moita, o esquilo que derruba o galho no raio de sol, o cajado lendário e
+     o corte da volta (objetivo *Dia do parque*). Com isso começaram as ações de contexto do
+     item 3 (rastejar, pular as pedras, pular na moita).
+   - **Falta**: as fases dos dias 2 a 10 (2 e 3 usam F03 e F04 da esteira; 4 a 10 sem fase), a
+     moita da saída da área central, o cachorro reparar no que mudou, os
      bloqueios naturais de verdade (o urso, a correnteza), o marco de cada região e toda a
      arte e animação (depois da direção visual, item 6).
 5. **Animais novos**: tartaruga, peixe-cuspidor, castor, texugo e urso; personagens que voltam
