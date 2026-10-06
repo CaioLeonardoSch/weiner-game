@@ -13,8 +13,6 @@ const COR_PINTAR := Color(1.0, 0.85, 0.3)
 const COR_SELECAO := Color(1.0, 0.85, 0.2)
 const COR_SOB_MOUSE := Color(1, 1, 1, 0.8)
 const COR_REGRAS := Color(0.35, 0.85, 1.0)
-const COR_SO_ISO := Color(1.0, 0.45, 0.95)
-const COR_SO_3D := Color(0.4, 0.9, 1.0)
 
 var editor: EditorFase
 var camera: Camera3D
@@ -95,7 +93,7 @@ func _desenhar_cursor() -> void:
 		_caixa(editor.caixa_local(selecionado), selecionado.global_transform, COR_SELECAO, 2.0)
 
 
-## Objetos invisíveis no jogo e marcas de visibilidade (só iso / só 3D).
+## Objetos invisíveis no jogo (o início do cachorro) e as ligações dos mecanismos.
 func _desenhar_objetos_especiais() -> void:
 	_desenhar_canais()
 	for objeto in editor.fase.lista_objetos():
@@ -104,12 +102,6 @@ func _desenhar_objetos_especiais() -> void:
 		if objeto is InicioCachorro:
 			_caixa(objeto.caixa_editor(), objeto.global_transform, COR_REGRAS, 1.5)
 			_seta_orientacao(objeto.global_position + Vector3.UP * 0.02, objeto.global_rotation.y, COR_REGRAS)
-		if objeto.visibilidade != ObjetoFase.Visibilidade.SEMPRE:
-			var cor := COR_SO_ISO if objeto.visibilidade == ObjetoFase.Visibilidade.SO_ISO else COR_SO_3D
-			var topo: Vector3 = objeto.global_position + Vector3.UP * (editor.caixa_local(objeto).end.y * objeto.scale.y + 0.15)
-			if not camera.is_position_behind(topo):
-				var p := camera.unproject_position(topo)
-				draw_colored_polygon(PackedVector2Array([p + Vector2(0, -5), p + Vector2(5, 0), p + Vector2(0, 5), p + Vector2(-5, 0)]), cor)
 
 
 ## Linhas tracejadas na cor do canal ligando quem aciona (placas) a quem reage (portões), com a

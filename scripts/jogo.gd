@@ -1,12 +1,8 @@
 extends Node3D
 ## O jogo: carrega a fase escolhida (autoload Fases) e aplica as regras.
 ##
-## Ida em visão isométrica → pega o graveto → transição para 3D (terceira pessoa) →
-## volta até o dono com o graveto. Largar o graveto (`largar_graveto`) volta para a
-## isométrica; pegar de novo volta para o 3D.
-## Objetos "só isométrico" (ex.: a folhagem que tampa o túnel) somem no 3D, e "só 3D"
-## (ex.: árvores da frente, que tapariam a visão iso) só aparecem nele — a mudança de
-## perspectiva literalmente abre (ou fecha) caminhos. F1 abre o editor nesta fase; Esc pausa.
+## A câmera é sempre de terceira pessoa, atrás do cachorro (ver CameraController). F1 abre o
+## editor nesta fase; Esc pausa.
 
 @onready var cachorro: Dachshund = $Dachshund
 @onready var camera_controller: CameraController = $CameraController
@@ -17,7 +13,7 @@ extends Node3D
 var fase: Fase
 ## O graveto na boca (ou o último que esteve nela).
 var graveto: Graveto
-## O primeiro dono da fase (a câmera 3D começa olhando para ele); pode não existir.
+## O primeiro dono da fase; pode não existir.
 var dono: Dono
 ## O que a fase pede para terminar (ver scripts/objetivos/).
 var objetivo: Objetivo
@@ -31,10 +27,6 @@ var _segundos_aviso := 0.0
 ## [texto, segundos, importante].
 var _avisos_na_fila: Array[Array] = []
 var _proxima_fase := ""
-var _tempo_travado := 0.0
-var _dica_virar_mostrada := false
-var _tempo_sem_girar := 0.0
-var _dica_girar_mostrada := false
 var _pausa := MenuPausa.new()
 ## O objetivo da fase ("Leve o graveto ao dono", "Ovelhas no celeiro: 1 / 2"), numa pílula com
 ## a plaquinha no canto de cima à esquerda. Sem texto, a pílula some.
@@ -43,7 +35,7 @@ var _pilula_objetivo := Coleira.pilula_com_peca()
 ## Controles que valem agora (tecla + o que faz), no canto de baixo à direita.
 var controles := VBoxContainer.new()
 var _texto_controles := ""
-## Ação disponível no botão F ("[F] morder o mirante"), embaixo, no centro.
+## Ação disponível no botão F ("[F] morder"), embaixo, no centro.
 var rotulo_acao := Coleira.linha_tecla("F", "", 18)
 var _pilula_acao := Coleira.pilula_com_peca()
 ## Balão curto em cima do cachorro ("Brrr!", "Splash!").
@@ -53,8 +45,6 @@ var _dono_do_balao: Node3D
 var _altura_balao := 0.9
 ## Fim da fase: a plaquinha grande, o título e as opções (pílulas com a tecla).
 var _cartao_fim := VBoxContainer.new()
-## Mirante sendo usado (a câmera gira em volta dele, mostrando a fase da volta).
-var _mirante: Mirante
 ## Fundo semitransparente do aviso (o rótulo `aviso` fica dentro dele).
 var aviso_painel := PanelContainer.new()
 ## Flocos caindo em volta do cachorro (biomas com neve).
@@ -128,11 +118,6 @@ func _ready() -> void:
 	cachorro.sente_frio = fase.frio
 	cachorro.tempo_de_frio = fase.tempo_de_frio
 	atualizar_dica()
-	if fase.terceira_pessoa:
-		fase.ativar(ObjetoFase.Visibilidade.SO_ISO, false)
-		fase.ativar(ObjetoFase.Visibilidade.SO_3D, true)
-	else:
-		fase.preparar_isometrica()
 
 	objetivo = Objetivo.criar(fase.objetivo)
 	var faltando := objetivo.faltando(fase)
@@ -145,19 +130,10 @@ func _ready() -> void:
 	# "Testar daqui" (F2 no editor): começa onde o cursor estava.
 	if Fases.testando and Fases.inicio_do_teste != null:
 		cachorro.posicionar(Fases.inicio_do_teste, inicio.global_rotation.y)
-	camera_controller.configurar(cachorro)
-	if fase.terceira_pessoa:
-		# Atrás do cachorro, olhando para onde ele olha.
-		camera_controller.comecar_em_3d(rad_to_deg(cachorro.modelo.rotation.y) - 90.0)
+	# Atrás do cachorro, olhando para onde ele olha.
+	camera_controller.configurar(cachorro, rad_to_deg(cachorro.modelo.rotation.y) - 90.0)
 	cachorro.voltou_ao_ponto_seguro.connect(_on_cachorro_voltou)
-	cachorro.puxar_falhou.connect(_on_puxar_falhou)
-	cachorro.gelou.connect(func() -> void:
-		mostrar_balao("Brrr!")
-		mostrar_aviso("Brrr! Frio demais — de volta para perto do fogo", 3.0))
-	cachorro.pulo_recusado.connect(func(_motivo: String) -> void: mostrar_aviso("Água funda: salsicha não pula na água", 2.0))
-	for bloco in fase.todos(Empurravel):
-		(bloco as Empurravel).voltou_ao_inicio.connect(
-			mostrar_aviso.bind("O bloco ficou preso no canto e voltou para o lugar"))
+	cachorro.gelou.connect(mostrar_balao.bind("Brrr!"))
 	for zona in fase.todos(ZonaDica):
 		(zona as ZonaDica).ativada.connect(func(texto: String) -> void: mostrar_aviso(_com_teclas(texto), 4.5, true))
 	_preparar_objetivo()
@@ -166,47 +142,23 @@ func _ready() -> void:
 		mostrar_aviso(titulo)
 
 
+## Sem avisos que expliquem o que fazer (ver docs/DESIGN.md, "Textos e dicas"): a fase e o
+## que acontece nela mostram. Os textos que restam são os da própria fase (ponte que cai).
 func _preparar_objetivo() -> void:
 	dono = fase.primeiro(Dono) as Dono
 	for objeto in fase.todos(Graveto):
 		var um_graveto := objeto as Graveto
 		um_graveto.pego.connect(_on_graveto_pego.bind(um_graveto))
-		um_graveto.protegido.connect(func() -> void: mostrar_aviso("Tem um passarinho no graveto!" +
-			("  %s: latir" % Teclas.nome(&"latir") if cachorro.pode_latir else "")))
-		um_graveto.boca_cheia.connect(func() -> void:
-			mostrar_aviso("Boca cheia! %s larga este graveto para pegar outro" % Teclas.nome(&"largar_graveto")))
 	for ponte in fase.todos(Ponte):
 		var aviso := (ponte as Ponte).aviso_ao_quebrar
-		(ponte as Ponte).quebrou.connect(mostrar_aviso.bind(
-			_com_teclas(aviso) if not aviso.is_empty() else "A ponte caiu! A água levou as tábuas", 4.5, true))
-	for tronco in fase.todos(TroncoRolante):
-		(tronco as TroncoRolante).voltou_ao_inicio.connect(
-			mostrar_aviso.bind("O tronco encalhou longe — ele voltou para o lugar", 3.0))
-	for placa in fase.todos(Placa):
-		(placa as Placa).pisada_sem_peso.connect(
-			mostrar_aviso.bind("Placa de pedra: só algo pesado aciona — uma pedra, um tronco", 3.0))
+		if not aviso.is_empty():
+			(ponte as Ponte).quebrou.connect(mostrar_aviso.bind(_com_teclas(aviso), 4.5, true))
 	for objeto in fase.todos(Fogueira):
-		var fogueira := objeto as Fogueira
-		marcas_fogueira[fogueira] = _criar_marca()
-		fogueira.acendeu.connect(mostrar_aviso.bind("A fogueira acendeu! Perto do fogo é quentinho", 3.0))
-		fogueira.cresceu.connect(mostrar_aviso.bind("O fogo cresceu!"))
-		fogueira.recebeu.connect(func(_gravetos: int, faltam: int) -> void:
-			if faltam <= 0:
-				mostrar_aviso("Lenha pronta! Falta o fogo: encoste um graveto aceso", 3.0)
-			else:
-				mostrar_aviso("Mais %d graveto%s para acender a fogueira" % [faltam, "" if faltam == 1 else "s"]))
+		marcas_fogueira[objeto] = _criar_marca()
 	objetivo.preparar(self)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _mirante:
-		# No mirante: F ou Esc saem de uma vez; reiniciar e o editor continuam valendo.
-		if event.is_action_pressed("acao") or event.is_action_pressed("liberar_mouse"):
-			get_viewport().set_input_as_handled()
-			_sair_do_mirante()
-			return
-		if not (event.is_action_pressed("reiniciar") or event.is_action_pressed("alternar_editor")):
-			return
 	if event.is_action_pressed("reiniciar"):
 		get_tree().reload_current_scene()
 	elif event.is_action_pressed("alternar_editor"):
@@ -222,9 +174,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("virar_graveto"):
 		_tentar_virar_graveto()
 	elif event.is_action_pressed("cavar") and not concluida and not cachorro.entrada_bloqueada:
-		_avisar_motivo(cachorro.cavar(), "cavar", "Aqui não tem terra fofa para cavar")
+		cachorro.cavar()
 	elif event.is_action_pressed("latir") and not concluida and not cachorro.entrada_bloqueada:
-		_avisar_motivo(cachorro.latir(), "latir", "")
+		cachorro.latir()
 	elif event.is_action_pressed("rolar") and not concluida and cachorro.pode_brincar:
 		cachorro.rolar()
 	elif concluida and fase and not Fases.testando and event.is_action_pressed("ui_accept"):
@@ -263,68 +215,18 @@ func _process(delta: float) -> void:
 	_atualizar_marcas()
 	_atualizar_rotulo_acao()
 	_atualizar_balao(delta)
-	_pilula_objetivo.visible = not contador.text.is_empty() and not concluida and _mirante == null
+	_pilula_objetivo.visible = not contador.text.is_empty() and not concluida
 	# No cartão de fase concluída, as teclas do cartão bastam.
 	controles.visible = not concluida
-	# Graveto grande emperrado num vão: lembra que dá para virar (uma vez por fase).
-	_tempo_travado = _tempo_travado + delta if cachorro.graveto_travado else 0.0
-	if _tempo_travado > 0.8 and not _dica_virar_mostrada and not cachorro.graveto_ao_comprido:
-		_dica_virar_mostrada = true
-		mostrar_aviso("O graveto não passa atravessado — %s vira ao comprido" % Teclas.nome(&"virar_graveto"))
-	# O graveto bate dos dois lados e o cachorro anda de lado/de ré: explica (uma vez por fase).
-	_tempo_sem_girar = _tempo_sem_girar + delta if cachorro.giro_travado else 0.0
-	if _tempo_sem_girar > 0.8 and not _dica_girar_mostrada:
-		_dica_girar_mostrada = true
-		mostrar_aviso("O graveto bate e não deixa virar — afaste-se um pouco ou %s vira o graveto" % Teclas.nome(&"virar_graveto"))
 
 
 func _on_graveto_pego(quem: Dachshund, pego: Graveto) -> void:
 	graveto = pego
-	if fase.terceira_pessoa:
-		# Sem troca de perspectiva: só vai para a boca.
-		quem.pegar_graveto.call_deferred(graveto)
-		atualizar_dica.call_deferred()
-		objetivo.ao_pegar_graveto(pego)
-		return
-	# Pego ainda durante a transição de largar (a física empurrou o cachorro para dentro
-	# da área, ex.: uma tampa voltando): a câmera só vai para o 3D depois que ela terminar.
-	if camera_controller.estado == CameraController.Estado.TRANSICAO:
-		await camera_controller.transicao_concluida
-	quem.entrada_bloqueada = true
 	# Reparent fora do callback de física da Area3D.
 	quem.pegar_graveto.call_deferred(graveto)
-	camera_controller.yaw_inicial_3d = _yaw_olhando_para_o_dono() + fase.desvio_camera_3d
-	camera_controller.transicionar_para_3d()
-	# Abre as passagens no meio do movimento da câmera, quando a mudança passa despercebida.
-	_agendar(camera_controller.duracao_transicao * 0.5,
-		fase.ativar.bind(ObjetoFase.Visibilidade.SO_ISO, false))
-
-	await camera_controller.transicao_concluida
-	# Os objetos "só 3D" aparecem no fim: no meio do caminho a câmera passaria por eles.
-	fase.ativar(ObjetoFase.Visibilidade.SO_3D, true)
-	quem.entrada_bloqueada = false
-	atualizar_dica()
-	var texto := "Nova perspectiva!"
-	var grande := graveto.comprimento >= 1.1
-	var pesado := graveto.peso >= 1.6
-	if grande and pesado:
-		texto += "\nGraveto grande e pesado (%.1f m) — %s vira ao comprido" % [graveto.comprimento, Teclas.nome(&"virar_graveto")]
-	elif grande:
-		texto += "\nGraveto grande (%.1f m) — %s vira ao comprido" % [graveto.comprimento, Teclas.nome(&"virar_graveto")]
-	elif pesado:
-		texto += "\nGraveto pesado — mais devagar"
-	mostrar_aviso(texto)
-	objetivo.ao_pegar_graveto(pego)
-
-
-## Yaw (graus) da câmera atrás do cachorro, olhando na direção do dono.
-func _yaw_olhando_para_o_dono() -> float:
-	if dono == null:
-		return camera_controller.yaw_inicial_3d
-	var direcao := dono.global_position - cachorro.global_position
-	if Vector2(direcao.x, direcao.z).length() < 0.01:
-		return camera_controller.yaw_inicial_3d
-	return rad_to_deg(atan2(-direcao.x, -direcao.z))
+	atualizar_dica.call_deferred()
+	# Depois de estar na boca (o objetivo confere se já pode entregar).
+	objetivo.ao_pegar_graveto.call_deferred(pego)
 
 
 func _tentar_largar_graveto() -> void:
@@ -334,15 +236,13 @@ func _tentar_largar_graveto() -> void:
 		cachorro.largar_brinquedo().soltar(ponto)
 		atualizar_dica()
 		return
-	if concluida or not cachorro.tem_graveto \
-			or camera_controller.estado != CameraController.Estado.TERCEIRA_PESSOA:
+	if concluida or not cachorro.tem_graveto or cachorro.entrada_bloqueada:
 		return
 	# No ar (caindo de uma beirada) o graveto ficaria flutuando.
 	if not cachorro.is_on_floor():
 		return
 	for zona in fase.todos(ZonaSemLargar):
 		if (zona as ZonaSemLargar).contem(cachorro):
-			mostrar_aviso("Aqui não dá para largar o graveto")
 			return
 
 	cachorro.entrada_bloqueada = true
@@ -367,9 +267,9 @@ func _tentar_largar_graveto() -> void:
 
 
 ## Entrega o graveto da boca a um objeto (F perto da fogueira): o objeto recebe o graveto
-## (`receber_graveto`) e a câmera volta para a isométrica, como ao largar.
+## (`receber_graveto`), como ao largar.
 func entregar_graveto(destino: ObjetoFase) -> void:
-	if concluida or not cachorro.tem_graveto or camera_controller.estado != CameraController.Estado.TERCEIRA_PESSOA:
+	if concluida or not cachorro.tem_graveto:
 		return
 	cachorro.entrada_bloqueada = true
 	var entregue := graveto
@@ -379,24 +279,8 @@ func entregar_graveto(destino: ObjetoFase) -> void:
 	_depois_de_soltar()
 
 
-## O graveto saiu da boca: a câmera volta para a isométrica (ou, só em terceira pessoa, segue).
+## O graveto saiu da boca: o cachorro volta a andar.
 func _depois_de_soltar() -> void:
-	if fase.terceira_pessoa:
-		cachorro.entrada_bloqueada = false
-		atualizar_dica()
-	else:
-		_voltar_para_isometrica()
-
-
-## Sem o graveto na boca: a câmera volta para a isométrica e as passagens da ida voltam.
-func _voltar_para_isometrica() -> void:
-	fase.ativar(ObjetoFase.Visibilidade.SO_3D, false)
-	camera_controller.transicionar_para_iso()
-	# Fecha as passagens de novo no meio do movimento da câmera.
-	_agendar(camera_controller.duracao_transicao * 0.5,
-		fase.ativar.bind(ObjetoFase.Visibilidade.SO_ISO, true))
-
-	await camera_controller.transicao_concluida
 	cachorro.entrada_bloqueada = false
 	atualizar_dica()
 
@@ -408,31 +292,14 @@ static func _plano(v: Vector3) -> Vector3:
 func _tentar_virar_graveto() -> void:
 	if concluida or not cachorro.tem_graveto or cachorro.entrada_bloqueada:
 		return
-	if not cachorro.virar_graveto():
-		mostrar_aviso("Sem espaço para virar o graveto")
-
-
-## Mostra por que a ação não aconteceu (se valer a pena avisar).
-func _avisar_motivo(motivo: String, acao: String, sem_alvo: String) -> void:
-	match motivo:
-		"boca_cheia":
-			mostrar_aviso("Com o graveto na boca não dá para %s" % acao)
-		"nada":
-			if not sem_alvo.is_empty():
-				mostrar_aviso(sem_alvo)
+	cachorro.virar_graveto()
 
 
 ## Controles do canto: só o que vale agora (reiniciar e editor ficam na pausa, com as teclas).
 func atualizar_dica() -> void:
 	var t := Teclas.nome
-	if _mirante:
-		_mostrar_controles([["Mouse", "olhar"], ["%s / Esc" % t.call(&"acao"), "sair do mirante"]])
-		return
 	var andar := "%s%s%s%s" % [t.call(&"mover_frente"), t.call(&"mover_esquerda"), t.call(&"mover_tras"), t.call(&"mover_direita")]
-	var partes: Array = [[andar, "andar"], [t.call(&"correr"), "correr"]]
-	var em_3d := cachorro.tem_graveto or (fase != null and fase.terceira_pessoa)
-	if em_3d:
-		partes.append(["Mouse", "câmera"])
+	var partes: Array = [[andar, "andar"], [t.call(&"correr"), "correr"], ["Mouse", "câmera"]]
 	if cachorro.pode_pular:
 		partes.append([t.call(&"pular"), "pular"])
 	if cachorro.pode_cavar and not cachorro.tem_graveto:
@@ -512,16 +379,6 @@ func _ponto_para_largar() -> Vector3:
 func _abrir_pausa() -> void:
 	_limpar_avisos()
 	_pausa.abrir()
-
-
-func _on_puxar_falhou(motivo: String) -> void:
-	match motivo:
-		"boca_cheia":
-			mostrar_aviso("Com o graveto na boca não dá para puxar")
-		"sem_espaco":
-			mostrar_aviso("Sem espaço atrás para puxar")
-		"sem_espaco_girar":
-			mostrar_aviso("Sem espaço para girar o tronco")
 
 
 ## Caiu e voltou: na água, o balão (ele sai na margem e se sacode, ver Dachshund). Sem texto.
@@ -614,14 +471,6 @@ func _mostrar_erro(texto: String) -> void:
 	cachorro.hide()
 	mensagem.text = texto
 	mensagem.show()
-
-
-## Chama `acao` daqui a `segundos`. Usa tween do próprio nó: se a cena for reiniciada
-## no meio, ele morre junto em vez de chamar um nó já liberado.
-func _agendar(segundos: float, acao: Callable) -> void:
-	var tween := create_tween()
-	tween.tween_interval(segundos)
-	tween.tween_callback(acao)
 
 
 ## O rótulo do aviso vai para dentro de um painel centralizado no topo (a faixa vermelha ou a
@@ -790,11 +639,6 @@ func escurecer(ligar: bool, duracao: float) -> void:
 	await tween.finished
 
 
-## O cachorro foi de um lugar para outro de uma vez (saiu pela outra toca): a câmera vai junto.
-func cachorro_mudou_de_lugar() -> void:
-	camera_controller.recentralizar()
-
-
 # --- HUD (estilo Coleira, ver scripts/ui/coleira.gd) ----------------------------------------
 
 ## Monta as peças do HUD que não estão na cena: objetivo, controles, ação, balão, fim da fase.
@@ -883,43 +727,3 @@ func _desenhar_rabinho_do_balao() -> void:
 	_balao.draw_colored_polygon(PackedVector2Array([base + Vector2(-2, 0), base + Vector2(14, 0),
 		base + Vector2(1, 14)]), Coleira.CONTORNO)
 
-
-# --- Mirante -------------------------------------------------------------------------------
-
-## Morder o mirante: a câmera vai para o 3D em volta dele e mostra a fase como ela fica na
-## volta (só o visual). O cachorro fica parado.
-func entrar_no_mirante(mirante: Mirante) -> void:
-	if _mirante or concluida or camera_controller.estado != CameraController.Estado.ISOMETRICO:
-		return
-	_mirante = mirante
-	cachorro.entrada_bloqueada = true
-	camera_controller.ponto_de_vista = mirante.ponto_de_vista()
-	# Olhando para o graveto lendário (o caminho da fase), de um pouco mais alto.
-	var alvo := mirante.global_position + Vector3.RIGHT
-	for objeto in fase.todos(Graveto):
-		if (objeto as Graveto).lendario and not (objeto as Graveto).ja_pego:
-			alvo = objeto.global_position
-	var direcao := alvo - mirante.global_position
-	camera_controller.yaw_inicial_3d = rad_to_deg(atan2(-direcao.x, -direcao.z))
-	var pitch_normal := camera_controller.pitch_inicial_3d
-	camera_controller.pitch_inicial_3d = -28.0
-	camera_controller.braco.spring_length = 7.0
-	fase.previa_da_volta(true)
-	camera_controller.transicionar_para_3d()
-	await camera_controller.transicao_concluida
-	camera_controller.pitch_inicial_3d = pitch_normal
-	atualizar_dica()
-	mostrar_aviso("Do mirante você vê a fase como ela fica na volta", 3.0)
-
-
-func _sair_do_mirante() -> void:
-	if _mirante == null or camera_controller.estado != CameraController.Estado.TERCEIRA_PESSOA:
-		return
-	camera_controller.transicionar_para_iso()
-	await camera_controller.transicao_concluida
-	camera_controller.ponto_de_vista = null
-	camera_controller.braco.spring_length = camera_controller.distancia_3d
-	fase.previa_da_volta(false)
-	_mirante = null
-	cachorro.entrada_bloqueada = false
-	atualizar_dica()

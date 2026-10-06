@@ -418,7 +418,6 @@ func _pegar_fogo(delta: float) -> void:
 				if _no_fogo >= TEMPO_PARA_PEGAR_FOGO:
 					_no_fogo = 0.0
 					acender(lado)
-					_avisar("A ponta do graveto pegou fogo!")
 				return
 	_no_fogo = 0.0
 
@@ -436,7 +435,6 @@ func _arder(delta: float) -> void:
 	chama -= gasto * delta
 	if chama <= 0.0:
 		apagar()
-		_avisar("O graveto apagou")
 		return
 	_escalar_fogo()
 	for fogueira: Fogueira in get_tree().get_nodes_in_group(&"fogueiras"):
@@ -478,7 +476,6 @@ func _derreter_na_ponta(ponta_acesa: Vector3) -> void:
 		_espera_derreter = 0.3
 		if chama <= 0.0:
 			apagar()
-			_avisar("O graveto apagou")
 		return
 
 
@@ -494,12 +491,6 @@ func _escalar_fogo() -> void:
 	var luz := _fogo.get_node_or_null(^"Luz") as OmniLight3D
 	if luz:
 		luz.light_energy = 0.5 + 0.6 * chama + pulso * 0.15
-
-
-func _avisar(texto: String) -> void:
-	var jogo := get_tree().current_scene
-	if jogo and jogo.has_method(&"mostrar_aviso") and ja_pego:
-		jogo.mostrar_aviso(texto)
 
 
 ## Foi para a fogueira: some da fase (não pesa, não é pego, não é levado por bichos).

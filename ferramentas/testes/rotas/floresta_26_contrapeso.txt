@@ -15,7 +15,7 @@ ir 13.5 -3.5
 esperar 10
 checar jogo.cachorro.tem_graveto
 # O passarinho volta e fecha o portão.
-esperar 300
+esperar 420
 checar not obj("Passaro").voou
 checar not obj("Portao").aberto
 ir 11.8 -2.5 200
@@ -23,7 +23,6 @@ apertar latir
 esperar 20
 checar not obj("Passaro").voou
 apertar largar_graveto
-# (A câmera volta para a isométrica: 1,2 s sem controle.)
 esperar 90
 checar not jogo.cachorro.tem_graveto
 apertar latir

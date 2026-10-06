@@ -2,7 +2,7 @@ class_name CameraEditor
 extends Node3D
 ## Câmera livre do editor de fases: orbita em volta de um foco.
 ## WASD/setas movem o foco; botão do meio orbita (com Shift, arrasta); roda dá zoom.
-## Na pré-visualização isométrica fica ortográfica e travada no ângulo do jogo.
+## Na visão isométrica fica ortográfica e travada, vista de cima.
 
 @export var sensibilidade_orbita := 0.006
 @export var velocidade := 12.0
@@ -14,7 +14,7 @@ var foco := Vector3.ZERO
 var distancia := 22.0
 var yaw := 0.0
 var pitch := deg_to_rad(-65.0)
-## Pré-visualização isométrica: mesma projeção/ângulo da câmera do jogo.
+## Visão isométrica: ortográfica, travada, vista de cima.
 var isometrica := false
 
 @onready var camera: Camera3D = $Camera3D

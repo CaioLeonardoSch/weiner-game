@@ -2,6 +2,8 @@ extends SceneTree
 ## Gera a esteira de fases de teste (uma mecânica por fase), em scenes/fases/.
 ##   godot --headless --path . --script res://ferramentas/gerar_esteira.gd [-- nome ...]
 ## Sem nomes, refaz todas. Sobrescreve as cenas: mudanças feitas no editor se perdem.
+## Sem textos na tela (ver docs/DESIGN.md, "Textos e dicas"): o nome é só o código da fase, e o
+## comentário em cada uma diz o que ela testa.
 
 const OBJ := "res://scenes/objetos/%s.tscn"
 const PASTA := "res://scenes/fases/"
@@ -23,17 +25,6 @@ func caixa(tile: int, x0: int, x1: int, y0: int, y1: int, z0: int, z1: int) -> v
 func obj(nome: String, pos: Vector3, yaw := 0.0) -> ObjetoFase:
 	ocupado[Vector2i(floori(pos.x), floori(pos.z))] = true
 	return fase.adicionar_objeto(load(OBJ % nome), pos, yaw)
-
-
-func dica(pos: Vector3, tamanho: Vector3, texto: String) -> void:
-	var zona := obj("zona_dica", pos) as ZonaDica
-	zona.tamanho = tamanho
-	zona.texto = texto
-
-
-## A dica do começo (em volta do Início).
-func dica_inicial(texto: String) -> void:
-	dica(Vector3(-1.5, 0, -3.5), Vector3(2.4, 1.5, 3.0), texto)
 
 
 func graveto(pos: Vector3, lendario := true, comprimento := 0.8, peso := 1.0, yaw := deg_to_rad(20)) -> Graveto:
@@ -99,8 +90,6 @@ func floresta_em_volta(comprimento: int) -> void:
 		var sorteio := rng.randf()
 		arvore.tipo = Voxel.TipoArvore.PINHEIRO if sorteio < 0.4 else (Voxel.TipoArvore.REDONDA if sorteio < 0.88 else Voxel.TipoArvore.ARBUSTO)
 		arvore.ao_colocar_no_editor(rng)
-		if z >= 1 and x >= -7 and x <= comprimento + 2:
-			arvore.visibilidade = ObjetoFase.Visibilidade.SO_3D
 		for dx in range(-1, 2):
 			for dz in range(-1, 2):
 				ocupado[Vector2i(x + dx, z + dz)] = true
@@ -151,50 +140,24 @@ func _initialize() -> void:
 # === Floresta ==================================================================================
 
 func floresta_01_andar() -> void:
-	base("floresta_01_andar", "F01 — Andar e pegar", 12)
-	dica_inicial("Ande até o graveto dourado, pegue e traga ao dono.")
+	base("floresta_01_andar", "F01", 12)
+	# Ande até o graveto dourado, pegue e traga ao dono.
 	graveto(Vector3(8.5, 0.08, -3.5))
 	salvar(12)
 
 
-## Barranco de mão única (2 m) com um túnel que a câmera isométrica não mostra: o teto cobre o
-## túnel e as bocas ficam de lado para a câmera. Na ida sobe pela rampa dupla e desce do outro
-## lado (o terraço do graveto é meio bloco mais alto, então o túnel não serve de atalho: na saída
-## leste há um degrau); na volta (3D, atrás do cachorro) a boca do túnel aparece na frente dele.
-func floresta_02_perspectiva() -> void:
-	base("floresta_02_perspectiva", "F02 — A outra perspectiva", 16)
-	caixa(Tiles.TERRA, 7, 9, 0, 2, -6, 0)
-	t.set_cell_item(Vector3i(7, 0, -3), -1)
-	t.set_cell_item(Vector3i(8, 0, -3), -1)
-	caixa(Tiles.MEIO_BLOCO, 9, 16, 0, 1, -6, 0)
-	# O degrau fica um passo fora da boca: o teto do túnel não deixa descer direto do terraço.
-	t.set_cell_item(Vector3i(9, 0, -3), -1)
-	for z in [-6, -5]:
-		t.set_cell_item(Vector3i(3, 0, z), Tiles.RAMPA_BAIXA)
-		t.set_cell_item(Vector3i(4, 0, z), Tiles.RAMPA_ALTA)
-		t.set_cell_item(Vector3i(5, 0, z), Tiles.TERRA)
-		t.set_cell_item(Vector3i(6, 0, z), Tiles.TERRA)
-		t.set_cell_item(Vector3i(5, 1, z), Tiles.RAMPA_BAIXA)
-		t.set_cell_item(Vector3i(6, 1, z), Tiles.RAMPA_ALTA)
-	obj("mirante", Vector3(2.5, 0, -1.5))
-	dica_inicial("Na ida a câmera é isométrica; com o graveto na boca, vira 3D — e o que ela mostra muda.")
-	dica(Vector3(2.5, 0, -2.5), Vector3(2.0, 1.5, 3.0), "Mirante: {acao} mostra como a fase fica na volta.")
-	graveto(Vector3(12.5, 0.58, -3.5))
-	salvar(16)
-
-
 func floresta_03_pular() -> void:
-	base("floresta_03_pular", "F03 — Pular", 14, Fase.HABILIDADE_PULAR)
+	base("floresta_03_pular", "F03", 14, Fase.HABILIDADE_PULAR)
 	caixa(Tiles.MEIO_BLOCO, 5, 6, 0, 1, -6, 0)
 	caixa(Tiles.TERRA, 6, 8, 0, 1, -6, 0)
 	caixa(Tiles.MEIO_BLOCO, 8, 9, 0, 1, -6, 0)
-	dica_inicial("{pular} pula: primeiro o meio bloco, depois o bloco inteiro.")
+	# {pular} pula: primeiro o meio bloco, depois o bloco inteiro.
 	graveto(Vector3(10.5, 0.08, -3.5))
 	salvar(14)
 
 
 func floresta_04_rampas() -> void:
-	base("floresta_04_rampas", "F04 — Rampas e escadas", 16)
+	base("floresta_04_rampas", "F04", 16)
 	caixa(Tiles.TERRA, 6, 12, 0, 1, -6, 0)
 	for z in [-6, -5, -4]:
 		t.set_cell_item(Vector3i(4, 0, z), Tiles.RAMPA_BAIXA)
@@ -202,22 +165,22 @@ func floresta_04_rampas() -> void:
 	for z in [-3, -2, -1]:
 		girado(Tiles.ESCADA_ALTA, Vector3i(12, 0, z), Vector3.LEFT)
 		girado(Tiles.ESCADA_BAIXA, Vector3i(13, 0, z), Vector3.LEFT)
-	dica_inicial("O platô é alto demais para pular: suba pela rampa, desça pela escada — e volte.")
+	# O platô é alto demais para pular: suba pela rampa, desça pela escada — e volte.
 	graveto(Vector3(14.5, 0.08, -2.5))
 	salvar(16)
 
 
 func floresta_05_degrau_alto() -> void:
-	base("floresta_05_degrau_alto", "F05 — Degrau alto", 14, Fase.HABILIDADE_PULAR)
+	base("floresta_05_degrau_alto", "F05", 14, Fase.HABILIDADE_PULAR)
 	caixa(Tiles.DEGRAU_ALTO, 6, 10, 0, 1, -6, 0)
-	dica_inicial("Degrau alto: só pulando ({pular}). Com graveto na boca, o pulo não chega.")
+	# Degrau alto: só pulando ({pular}). Com graveto na boca, o pulo não chega.
 	graveto(Vector3(8.5, 0.8, -3.5))
 	salvar(14)
 
 
 ## Rampa lisa: o graveto pesado (1,6) escorrega nela; a escada do lado leste é a saída.
 func floresta_06_rampa_lisa() -> void:
-	base("floresta_06_rampa_lisa", "F06 — Rampa lisa", 16)
+	base("floresta_06_rampa_lisa", "F06", 16)
 	caixa(Tiles.TERRA, 7, 11, 0, 1, -6, 0)
 	for z in range(-6, 0):
 		t.set_cell_item(Vector3i(5, 0, z), Tiles.RAMPA_LISA_BAIXA)
@@ -228,17 +191,17 @@ func floresta_06_rampa_lisa() -> void:
 	for z in [-3, -2, -1]:
 		girado(Tiles.ESCADA_ALTA, Vector3i(11, 0, z), Vector3.LEFT)
 		girado(Tiles.ESCADA_BAIXA, Vector3i(12, 0, z), Vector3.LEFT)
-	dica_inicial("Rampa lisa: com um graveto pesado na boca, o cachorro escorrega nela.")
+	# Rampa lisa: com um graveto pesado na boca, o cachorro escorrega nela.
 	graveto(Vector3(14.5, 0.08, -4.5), true, 1.0, 1.6)
 	salvar(16)
 
 
 func floresta_07_ponte() -> void:
-	base("floresta_07_ponte", "F07 — A ponte", 14)
+	base("floresta_07_ponte", "F07", 14)
 	riacho(6, 7)
 	var ponte := obj("ponte", Vector3(7.0, 0, -3.5)) as Ponte
 	ponte.tamanho = Vector3(2.0, 0.12, 1.4)
-	dica_inicial("Água funda não dá pé: atravesse pela ponte.")
+	# Água funda não dá pé: atravesse pela ponte.
 	graveto(Vector3(10.5, 0.08, -3.5))
 	salvar(14)
 
@@ -246,171 +209,169 @@ func floresta_07_ponte() -> void:
 ## Tábua (ida) e tronco caído como pinguela (volta) sobre um riacho largo (5 m): passagens
 ## estreitas e compridas. O graveto comprido (1,4) faz balançar — devagar e ao comprido.
 func floresta_08_tabua_e_pinguela() -> void:
-	base("floresta_08_tabua_e_pinguela", "F08 — Tábua e pinguela", 19)
+	base("floresta_08_tabua_e_pinguela", "F08", 19)
 	riacho(6, 10)
 	for x in range(6, 11):
 		t.set_cell_item(Vector3i(x, 0, -5), Tiles.TABUA)
 	var pinguela := obj("tronco_caido", Vector3(8.5, 0, -2.5)) as TroncoCaido
 	pinguela.comprimento = 6
 	pinguela.pinguela = true
-	dica_inicial("Tábua e pinguela são estreitas: com carga, o cachorro balança.")
-	dica(Vector3(13.5, 0, -3.5), Vector3(2.0, 1.5, 5.6),
-		"Graveto comprido: devagar ({andar_devagar}) e ao comprido ({virar_graveto}) balança menos.")
+	# Tábua e pinguela são estreitas: com carga, o cachorro balança.
+	# Graveto comprido: devagar ({andar_devagar}) e ao comprido ({virar_graveto}) balança menos.
 	graveto(Vector3(15.5, 0.08, -3.5), true, 1.4, 1.0)
 	salvar(19)
 
 
 func floresta_09_correnteza() -> void:
-	base("floresta_09_correnteza", "F09 — Correnteza e vau", 16)
+	base("floresta_09_correnteza", "F09", 16)
 	for x in [6, 7]:
 		t.set_cell_item(Vector3i(x, -1, -6), Tiles.AGUA)
 		for z in [-5, -4, -3]:
 			girado(Tiles.CORRENTEZA, Vector3i(x, -1, z), Vector3.FORWARD)
 		for z in [-2, -1]:
 			t.set_cell_item(Vector3i(x, -1, z), Tiles.AGUA_RASA)
-	dica_inicial("A correnteza leva quem entra. A água rasa (vau) dá pé.")
+	# A correnteza leva quem entra. A água rasa (vau) dá pé.
 	graveto(Vector3(11.5, 0.08, -3.5))
 	salvar(16)
 
 
 ## Monte de terra fofa (cavar através) e terra fofa no chão (vira buraco).
 func floresta_10_cavar() -> void:
-	base("floresta_10_cavar", "F10 — Cavar", 14, Fase.HABILIDADE_CAVAR)
+	base("floresta_10_cavar", "F10", 14, Fase.HABILIDADE_CAVAR)
 	muro(7, [], 1, Tiles.TERRA_FOFA)
 	caixa(Tiles.TERRA_FOFA, 2, 4, -1, 0, -6, -4)
-	dica_inicial("Terra fofa: de frente para ela, {cavar} cava. No chão, vira um buraco.")
+	# Terra fofa: de frente para ela, {cavar} cava. No chão, vira um buraco.
 	graveto(Vector3(10.5, 0.08, -3.5))
 	salvar(14)
 
 
 func floresta_11_cerca() -> void:
-	base("floresta_11_cerca", "F11 — Debaixo da cerca", 14, Fase.HABILIDADE_CAVAR)
+	base("floresta_11_cerca", "F11", 14, Fase.HABILIDADE_CAVAR)
 	var cerca := obj("cerca", Vector3(6.5, 0, -3.0), PI * 0.5) as Cerca
 	cerca.comprimento = 6
 	cerca.terra_fofa = true
-	dica_inicial("A cerca tem terra fofa embaixo: de frente para ela, {cavar} abre um vão.")
-	dica(Vector3(9.5, 0, -3.5), Vector3(2.0, 1.5, 5.6), "Graveto comprido: pelo vão, só ao comprido ({virar_graveto}).")
+	# A cerca tem terra fofa embaixo: de frente para ela, {cavar} abre um vão.
+	# Graveto comprido: pelo vão, só ao comprido ({virar_graveto}).
 	graveto(Vector3(11.5, 0.08, -3.5), true, 1.3)
 	salvar(14)
 
 
 func floresta_12_enterrado() -> void:
-	base("floresta_12_enterrado", "F12 — Graveto enterrado", 12, Fase.HABILIDADE_CAVAR)
-	dica_inicial("Um montinho de terra... tem algo enterrado. {cavar} de frente para ele.")
+	base("floresta_12_enterrado", "F12", 12, Fase.HABILIDADE_CAVAR)
+	# Um montinho de terra... tem algo enterrado. {cavar} de frente para ele.
 	graveto(Vector3(8.5, 0.08, -3.5)).enterrado = true
 	salvar(12)
 
 
 func floresta_13_empurrar() -> void:
-	base("floresta_13_empurrar", "F13 — Empurrar o bloco", 14)
+	base("floresta_13_empurrar", "F13", 14)
 	riacho(8, 8)
 	obj("bloco_empurravel", Vector3(5.5, 0, -3.5))
-	dica_inicial("Empurre o bloco de pedra para dentro do riacho: ele afunda e vira passagem.")
+	# Empurre o bloco de pedra para dentro do riacho: ele afunda e vira passagem.
 	graveto(Vector3(11.5, 0.08, -3.5))
 	salvar(14)
 
 
 ## O bloco está num canto (cerca viva a leste): só puxando (segure {acao} e ande para trás).
 func floresta_14_puxar() -> void:
-	base("floresta_14_puxar", "F14 — Puxar o bloco", 16)
+	base("floresta_14_puxar", "F14", 16)
 	riacho(10, 10)
 	caixa(Tiles.MATO, 7, 8, 0, 1, -6, -4)
 	obj("bloco_empurravel", Vector3(6.5, 0, -5.5))
-	dica_inicial("O bloco está preso no canto: segure {acao} de frente para ele e ande para trás.")
+	# O bloco está preso no canto: segure {acao} de frente para ele e ande para trás.
 	graveto(Vector3(13.5, 0.08, -3.5))
 	salvar(16)
 
 
 func floresta_15_placa_madeira() -> void:
-	base("floresta_15_placa_madeira", "F15 — Placa de madeira", 16)
+	base("floresta_15_placa_madeira", "F15", 16)
 	muro_com_portao(9, 0)
 	(obj("placa", Vector3(6.5, 0, -5.5)) as Placa).canal = 0
 	graveto(Vector3(3.5, 0.08, -5.5), false, 0.8, 1.0, deg_to_rad(90))
-	dica_inicial("A placa de madeira abre o portão da mesma cor enquanto tiver algo em cima.")
-	dica(Vector3(6.5, 0, -4.5), Vector3(2.0, 1.5, 3.0), "Largue ({largar_graveto}) o graveto comum em cima da placa.")
+	# A placa de madeira abre o portão da mesma cor enquanto tiver algo em cima.
+	# Largue ({largar_graveto}) o graveto comum em cima da placa.
 	graveto(Vector3(13.5, 0.08, -3.5))
 	salvar(16)
 
 
 func floresta_16_placa_pedra() -> void:
-	base("floresta_16_placa_pedra", "F16 — Placa de pedra", 16)
+	base("floresta_16_placa_pedra", "F16", 16)
 	muro_com_portao(10, 2)
 	var placa := obj("placa", Vector3(7.5, 0, -5.5)) as Placa
 	placa.canal = 2
 	placa.tipo = Placa.PEDRA
 	obj("bloco_empurravel", Vector3(5.5, 0, -5.5))
-	dica_inicial("Placa de pedra: só algo pesado aciona — o cachorro não.")
+	# Placa de pedra: só algo pesado aciona — o cachorro não.
 	graveto(Vector3(13.5, 0.08, -3.5))
 	salvar(16)
 
 
 func floresta_17_regra_e() -> void:
-	base("floresta_17_regra_e", "F17 — Duas placas (regra E)", 16)
+	base("floresta_17_regra_e", "F17", 16)
 	var portao := muro_com_portao(10, 1)
 	portao.regra = Portao.REGRA_TODAS
 	for z in [-5.5, -1.5]:
 		(obj("placa", Vector3(6.5, 0, z)) as Placa).canal = 1
 	obj("bloco_empurravel", Vector3(4.5, 0, -1.5))
 	graveto(Vector3(3.5, 0.08, -5.5), false, 0.8, 1.0, deg_to_rad(90))
-	dica_inicial("Regra E: o portão só abre com as duas placas acionadas (veja as lampadinhas).")
+	# Regra E: o portão só abre com as duas placas acionadas (veja as lampadinhas).
 	graveto(Vector3(13.5, 0.08, -3.5))
 	salvar(16)
 
 
 func floresta_18_atraso() -> void:
-	base("floresta_18_atraso", "F18 — Portão com atraso", 16)
+	base("floresta_18_atraso", "F18", 16)
 	var portao := muro_com_portao(9, 5)
 	portao.atraso = 3.0
 	(obj("placa", Vector3(5.5, 0, -5.5)) as Placa).canal = 5
 	(obj("placa", Vector3(12.5, 0, -5.5)) as Placa).canal = 5
-	dica_inicial("Portão com atraso: pise na placa e corra — ele fica aberto uns segundos.")
+	# Portão com atraso: pise na placa e corra — ele fica aberto uns segundos.
 	graveto(Vector3(13.5, 0.08, -2.5))
 	salvar(16)
 
 
 func floresta_19_alavanca() -> void:
-	base("floresta_19_alavanca", "F19 — Alavanca", 16)
+	base("floresta_19_alavanca", "F19", 16)
 	muro_com_portao(9, 4)
 	(obj("alavanca", Vector3(6.5, 0, -5.5)) as Alavanca).canal = 4
-	dica_inicial("Alavanca: {acao} vira para o outro lado — e fica.")
+	# Alavanca: {acao} vira para o outro lado — e fica.
 	graveto(Vector3(13.5, 0.08, -3.5))
 	salvar(16)
 
 
 ## Pegar o graveto derruba a ponte (Gatilho); a volta é empurrando o bloco no riacho.
 func floresta_20_ponte_que_cai() -> void:
-	base("floresta_20_ponte_que_cai", "F20 — A ponte que cai", 18)
+	base("floresta_20_ponte_que_cai", "F20", 18)
 	riacho(8, 8)
 	var ponte := obj("ponte", Vector3(8.5, 0, -4.5)) as Ponte
 	ponte.tamanho = Vector3(1.0, 0.12, 1.4)
 	ponte.tipo = Ponte.Tipo.GATILHO
 	ponte.canal = 4
-	ponte.aviso_ao_quebrar = "A ponte caiu! Empurre a pedra para dentro do riacho."
 	obj("bloco_empurravel", Vector3(10.5, 0, -2.5))
 	var gatilho := obj("gatilho", Vector3(14.5, 0, -3.5)) as Gatilho
 	gatilho.tamanho = Vector3(1.6, 1.5, 1.6)
 	gatilho.quando = 2
 	gatilho.canal = 4
-	dica_inicial("Gatilho: pegar o graveto derruba a ponte.")
+	# Gatilho: pegar o graveto derruba a ponte.
 	graveto(Vector3(14.5, 0.08, -3.5))
 	salvar(18)
 
 
 func floresta_21_ponte_que_cede() -> void:
-	base("floresta_21_ponte_que_cede", "F21 — A ponte que cede", 14)
+	base("floresta_21_ponte_que_cede", "F21", 14)
 	riacho(7, 8)
 	var ponte := obj("ponte", Vector3(8.0, 0, -3.5)) as Ponte
 	ponte.tamanho = Vector3(2.0, 0.12, 1.4)
 	ponte.tipo = Ponte.Tipo.CEDE
 	ponte.tempo_para_ceder = 1.2
-	dica_inicial("Ponte velha: não pare em cima dela!")
+	# Ponte velha: não pare em cima dela!
 	graveto(Vector3(11.5, 0.08, -3.5))
 	salvar(14)
 
 
 ## A alavanca liga a comporta: a água funda do trecho baixa e vira rasa.
 func floresta_22_comporta() -> void:
-	base("floresta_22_comporta", "F22 — Comporta", 16)
+	base("floresta_22_comporta", "F22", 16)
 	riacho(7, 9)
 	caixa(Tiles.AGUA, 7, 10, -1, 0, -8, -6)
 	caixa(Tiles.GRAMA, 7, 10, 0, 1, -7, -6)
@@ -423,102 +384,103 @@ func floresta_22_comporta() -> void:
 	comporta.largura = 3
 	comporta.comprimento = 6
 	(obj("alavanca", Vector3(5.5, 0, -5.5)) as Alavanca).canal = 3
-	dica_inicial("A alavanca abre a comporta: a água funda baixa e dá pé.")
+	# A alavanca abre a comporta: a água funda baixa e dá pé.
 	graveto(Vector3(13.5, 0.08, -3.5))
 	salvar(16)
 
 
 func floresta_23_toca() -> void:
-	base("floresta_23_toca", "F23 — Toca de texugo", 16)
+	base("floresta_23_toca", "F23", 16)
 	muro(8, [], 2)
 	(obj("toca", Vector3(6.0, 0, -3.5), -PI * 0.5) as Toca).canal = 5
 	(obj("toca", Vector3(11.0, 0, -3.5), PI * 0.5) as Toca).canal = 5
-	dica_inicial("A toca leva à outra da mesma cor, por baixo da terra.")
-	dica(Vector3(12.5, 0, -3.5), Vector3(2.0, 1.5, 5.6), "Com o graveto, só ao comprido ({virar_graveto}).")
+	# A toca leva à outra da mesma cor, por baixo da terra.
+	# Com o graveto, só ao comprido ({virar_graveto}).
 	graveto(Vector3(13.5, 0.08, -3.5), true, 1.2)
 	salvar(16)
 
 
 func floresta_24_portinhola() -> void:
-	base("floresta_24_portinhola", "F24 — Portinhola", 16)
+	base("floresta_24_portinhola", "F24", 16)
 	muro(8, [-3], 2)
 	obj("portinhola", Vector3(8.5, 0, -2.5), PI * 0.5)
-	dica_inicial("Portinhola: o cachorro passa; o graveto, só ao comprido ({virar_graveto}).")
+	# Portinhola: o cachorro passa; o graveto, só ao comprido ({virar_graveto}).
 	graveto(Vector3(12.5, 0.08, -3.5), true, 1.2)
 	salvar(16)
 
 
 func floresta_25_passarinho() -> void:
-	base("floresta_25_passarinho", "F25 — Passarinhos", 16, Fase.HABILIDADE_LATIR)
+	base("floresta_25_passarinho", "F25", 16, Fase.HABILIDADE_LATIR)
 	muro(9, [-3])
 	(obj("passaro", Vector3(9.5, 0, -2.5)) as Passaro).bloqueia_passagem = true
 	graveto(Vector3(13.5, 0.08, -3.5))
 	obj("passaro", Vector3(13.5, 0.12, -3.5), PI)
-	dica_inicial("Passarinho no caminho? Um latido ({latir}) e ele voa.")
+	# Passarinho no caminho? Um latido ({latir}) e ele voa.
 	salvar(16)
 
 
 ## Um passarinho pousado na placa segura o portão (invertido) fechado; latiu, ele voa por 5 s.
 func floresta_26_contrapeso() -> void:
-	base("floresta_26_contrapeso", "F26 — O passarinho na placa", 16, Fase.HABILIDADE_LATIR)
+	base("floresta_26_contrapeso", "F26", 16, Fase.HABILIDADE_LATIR)
 	var portao := muro_com_portao(10, 6)
 	portao.inverter = true
 	(obj("placa", Vector3(9.5, 0, -5.5)) as Placa).canal = 6
 	(obj("passaro", Vector3(9.5, 0.1, -5.5), PI * 0.5) as Passaro).volta_depois = 5.0
-	dica_inicial("O passarinho na placa segura o portão fechado. Late ({latir}) e corra!")
-	dica(Vector3(12.5, 0, -3.5), Vector3(2.0, 1.5, 5.6), "Com o graveto não dá para latir: largue ({largar_graveto}) antes.")
+	# O passarinho na placa segura o portão fechado. Late ({latir}) e corra!
+	# Com o graveto não dá para latir: largue ({largar_graveto}) antes.
 	graveto(Vector3(13.5, 0.08, -3.5))
 	salvar(16)
 
 
 func floresta_27_esquilo() -> void:
-	base("floresta_27_esquilo", "F27 — O esquilo", 18, Fase.HABILIDADE_LATIR)
+	base("floresta_27_esquilo", "F27", 18, Fase.HABILIDADE_LATIR)
 	var esquilo := obj("esquilo", Vector3(13.5, 0, -5.0)) as Esquilo
 	graveto(esquilo.position + Vector3(0.6, 0.08, 0.0), true, 0.8, 1.0, deg_to_rad(80))
-	dica_inicial("O esquilo guarda o graveto na porta da toca. Um latido ({latir}) assusta — mas ele volta.")
+	# O esquilo guarda o graveto na porta da toca. Um latido ({latir}) assusta — mas ele volta.
 	salvar(18)
 
 
-## O passarinho só da volta (3D) fecha o vão, onde não dá para largar o graveto; o cão vizinho
-## late de ciúme quando o cachorro passa com o graveto, e o latido dele espanta o passarinho.
+## O passarinho fecha o vão, onde não dá para largar o graveto; um latido e ele voa, mas volta
+## em 4 s. Na volta, com o graveto na boca (sem latir), o cão vizinho late de ciúme quando o
+## cachorro passa perto dele, e o latido dele espanta o passarinho.
 func floresta_28_vizinho() -> void:
-	base("floresta_28_vizinho", "F28 — O cão vizinho", 16, Fase.HABILIDADE_LATIR)
+	base("floresta_28_vizinho", "F28", 16, Fase.HABILIDADE_LATIR)
 	muro(8, [-3])
 	var passaro := obj("passaro", Vector3(8.5, 0, -2.5), PI) as Passaro
 	passaro.bloqueia_passagem = true
-	passaro.visibilidade = ObjetoFase.Visibilidade.SO_3D
+	passaro.volta_depois = 4.0
 	(obj("zona_sem_largar", Vector3(8.5, 0, -2.5)) as ZonaSemLargar).tamanho = Vector3(6.0, 1.2, 6.0)
 	(obj("cerca", Vector3(10.5, 0, -4.5)) as Cerca).comprimento = 3
 	obj("cao_vizinho", Vector3(10.5, 0, -5.5), deg_to_rad(-90)).set("raca", &"border_collie")
-	dica_inicial("O cão vizinho late de ciúme de quem passa com um graveto.")
+	# O cão vizinho late de ciúme de quem passa com um graveto.
 	graveto(Vector3(13.5, 0.08, -2.5))
 	salvar(16)
 
 
 func floresta_29_dono_dormindo() -> void:
-	base("floresta_29_dono_dormindo", "F29 — O dono cochilou", 12, Fase.HABILIDADE_LATIR)
+	base("floresta_29_dono_dormindo", "F29", 12, Fase.HABILIDADE_LATIR)
 	dono().dormindo = true
-	dica_inicial("O dono cochilou! Largue o graveto ({largar_graveto}), late ({latir}) e entregue.")
+	# O dono cochilou! Largue o graveto ({largar_graveto}), late ({latir}) e entregue.
 	graveto(Vector3(8.5, 0.08, -3.5))
 	salvar(12)
 
 
 ## Tronco: empurrado de lado rola; ao comprido desliza — até atravessar o riacho (pinguela).
 func floresta_30_tronco_rola() -> void:
-	base("floresta_30_tronco_rola", "F30 — O tronco rola", 18)
+	base("floresta_30_tronco_rola", "F30", 18)
 	riacho(11, 11)
 	obj("tronco_rolante", Vector3(6.5, 0, -3.5))
-	dica_inicial("O tronco: de lado ele rola, ao comprido desliza. Atravessado no riacho, vira pinguela.")
+	# O tronco: de lado ele rola, ao comprido desliza. Atravessado no riacho, vira pinguela.
 	graveto(Vector3(15.5, 0.08, -2.5))
 	salvar(18)
 
 
 ## Tronco ao longo do riacho: mordendo a ponta ({acao}) e andando de lado, gira 90°.
 func floresta_31_tronco_gira() -> void:
-	base("floresta_31_tronco_gira", "F31 — Girar o tronco", 18)
+	base("floresta_31_tronco_gira", "F31", 18)
 	riacho(11, 11)
 	obj("tronco_rolante", Vector3(8.5, 0, -5.5), -PI * 0.5)
-	dica_inicial("Mordendo a ponta do tronco ({acao}) e andando de lado, ele gira.")
+	# Mordendo a ponta do tronco ({acao}) e andando de lado, ele gira.
 	graveto(Vector3(15.5, 0.08, -3.5))
 	salvar(18)
 
@@ -527,7 +489,7 @@ func floresta_31_tronco_gira() -> void:
 ## desce o rio até onde ele fica fundo: afunda atravessado e vira pinguela. A pé não dá: a
 ## correnteza leva o cachorro para a água funda.
 func floresta_32_tronco_no_rio() -> void:
-	base("floresta_32_tronco_no_rio", "F32 — O tronco no rio", 16)
+	base("floresta_32_tronco_no_rio", "F32", 16)
 	for z in range(-6, 0):
 		for x in range(6, 9):
 			if z <= -3:
@@ -537,17 +499,17 @@ func floresta_32_tronco_no_rio() -> void:
 	# A margem de lá, ao lado da correnteza, é mato: só se chega pela água funda.
 	caixa(Tiles.MATO, 9, 10, 0, 1, -6, -2)
 	obj("tronco_rolante", Vector3(3.5, 0, -5.5))
-	dica_inicial("Empurre o tronco ao comprido para a correnteza: ele boia e desce o rio...")
+	# Empurre o tronco ao comprido para a correnteza: ele boia e desce o rio...
 	graveto(Vector3(12.5, 0.08, -3.5))
 	salvar(16)
 
 
 func floresta_33_chuva() -> void:
-	base("floresta_33_chuva", "F33 — Dia de tempestade", 14)
+	base("floresta_33_chuva", "F33", 14)
 	fase.clima = 5
 	caixa(Tiles.GRAMA_COM_POCAS, 1, 5, -1, 0, -6, 0)
 	caixa(Tiles.LAMA, 6, 9, -1, 0, -6, 0)
-	dica_inicial("Tempestade: chuva, vento, raios. Poças e lama no caminho.")
+	# Tempestade: chuva, vento, raios. Poças e lama no caminho.
 	graveto(Vector3(11.5, 0.08, -3.5))
 	salvar(14)
 
@@ -555,17 +517,17 @@ func floresta_33_chuva() -> void:
 # === Neve ======================================================================================
 
 func neve_01_neve_fofa() -> void:
-	neve("neve_01_neve_fofa", "N01 — Neve fofa", 14)
+	neve("neve_01_neve_fofa", "N01", 14)
 	caixa(Tiles.NEVE_FOFA, 3, 10, -1, 0, -6, 0)
-	dica_inicial("Neve fofa: o cachorro anda devagar, demora a arrancar e a parar.")
+	# Neve fofa: o cachorro anda devagar, demora a arrancar e a parar.
 	graveto(Vector3(11.5, 0.08, -3.5))
 	salvar(14)
 
 
 func neve_02_gelo() -> void:
-	neve("neve_02_gelo", "N02 — Gelo", 16)
+	neve("neve_02_gelo", "N02", 16)
 	caixa(Tiles.GELO, 4, 11, -1, 0, -6, 0)
-	dica_inicial("Gelo: solte a tecla e o cachorro continua deslizando.")
+	# Gelo: solte a tecla e o cachorro continua deslizando.
 	graveto(Vector3(13.5, 0.08, -3.5))
 	salvar(16)
 
@@ -573,43 +535,43 @@ func neve_02_gelo() -> void:
 ## Gelo liso: desliza em linha reta até bater. Entrando na fileira z = -3, para na pedra; dali
 ## para o sul (até o mato baixo) e para o leste, saindo do gelo.
 func neve_03_gelo_liso() -> void:
-	neve("neve_03_gelo_liso", "N03 — Gelo liso", 16)
+	neve("neve_03_gelo_liso", "N03", 16)
 	caixa(Tiles.GELO_LISO, 3, 11, -1, 0, -6, 0)
 	t.set_cell_item(Vector3i(8, 0, -3), Tiles.PEDRA)
 	t.set_cell_item(Vector3i(5, 0, -6), Tiles.PEDRA)
-	dica_inicial("Gelo liso: pisou, desliza em linha reta até bater em algo.")
+	# Gelo liso: pisou, desliza em linha reta até bater em algo.
 	graveto(Vector3(13.5, 0.08, -1.5))
 	salvar(16)
 
 
 func neve_04_monte_de_neve() -> void:
-	neve("neve_04_monte_de_neve", "N04 — Monte de neve", 14, Fase.HABILIDADE_CAVAR)
+	neve("neve_04_monte_de_neve", "N04", 14, Fase.HABILIDADE_CAVAR)
 	muro(7, [], 1, Tiles.MONTE_DE_NEVE)
-	dica_inicial("Monte de neve: {cavar} cava através dele.")
+	# Monte de neve: {cavar} cava através dele.
 	graveto(Vector3(10.5, 0.08, -3.5))
 	salvar(14)
 
 
 func neve_05_frio_e_fogueira() -> void:
-	neve("neve_05_frio_e_fogueira", "N05 — Frio e fogueira", 20)
+	neve("neve_05_frio_e_fogueira", "N05", 20)
 	fase.frio = true
 	fase.tempo_de_frio = 30.0
 	(obj("fogueira", Vector3(8.5, 0, -3.5)) as Fogueira).gravetos_para_acender = 2
 	graveto(Vector3(4.5, 0.08, -5.5), false, 0.8, 1.0, deg_to_rad(90))
 	graveto(Vector3(5.5, 0.08, -1.5), false, 0.8, 1.0, deg_to_rad(90))
-	dica_inicial("Frio: longe do fogo o calor cai. Traga 2 gravetos comuns para a fogueira ({acao}).")
+	# Frio: longe do fogo o calor cai. Traga 2 gravetos comuns para a fogueira ({acao}).
 	graveto(Vector3(17.5, 0.08, -3.5))
 	salvar(20)
 
 
 ## A fogueira acesa derrete a parede de gelo (que não se cava) que fecha a trilha.
 func neve_06_fogo_derrete() -> void:
-	neve("neve_06_fogo_derrete", "N06 — O fogo derrete", 16)
+	neve("neve_06_fogo_derrete", "N06", 16)
 	var fogueira := obj("fogueira", Vector3(6.5, 0, -3.5)) as Fogueira
 	fogueira.gravetos_para_acender = 1
 	muro(8, [], 1, Tiles.BLOCO_DE_GELO)
 	graveto(Vector3(3.5, 0.08, -5.5), false, 0.8, 1.0, deg_to_rad(90))
-	dica_inicial("Gelo não se cava: acenda a fogueira e a parede de gelo derrete.")
+	# Gelo não se cava: acenda a fogueira e a parede de gelo derrete.
 	graveto(Vector3(11.5, 0.08, -3.5))
 	salvar(16)
 
@@ -617,7 +579,7 @@ func neve_06_fogo_derrete() -> void:
 ## Graveto aceso: encoste a ponta do graveto comum na fogueira acesa e leve o fogo à outra
 ## (que só acende com fogo); ela abre o portão.
 func neve_07_graveto_aceso() -> void:
-	neve("neve_07_graveto_aceso", "N07 — Graveto aceso", 18)
+	neve("neve_07_graveto_aceso", "N07", 18)
 	var acesa := obj("fogueira", Vector3(4.5, 0, -5.5)) as Fogueira
 	acesa.gravetos_para_acender = 0
 	# Outro canal: toda fogueira acesa aciona o seu (esta não pode abrir o portão).
@@ -628,14 +590,14 @@ func neve_07_graveto_aceso() -> void:
 	apagada.canal = 0
 	muro_com_portao(12, 0)
 	graveto(Vector3(2.5, 0.08, -2.5), false, 1.0, 1.0, deg_to_rad(90))
-	dica_inicial("Encoste a ponta do graveto comum na fogueira acesa e leve o fogo à outra.")
+	# Encoste a ponta do graveto comum na fogueira acesa e leve o fogo à outra.
 	graveto(Vector3(15.5, 0.08, -3.5))
 	salvar(18)
 
 
 ## Vento forte soprando contra a ida (para -X), em rajadas; pedras servem de abrigo.
 func neve_08_vento() -> void:
-	neve("neve_08_vento", "N08 — Vento forte", 18)
+	neve("neve_08_vento", "N08", 18)
 	var vento := obj("vento", Vector3(15.5, 0, -3.5), -PI * 0.5) as Vento
 	vento.largura = 6
 	vento.comprimento = 14
@@ -645,13 +607,13 @@ func neve_08_vento() -> void:
 	vento.duracao_rajada = 1.6
 	for celula in [Vector3i(11, 0, -5), Vector3i(8, 0, -2), Vector3i(5, 0, -5)]:
 		t.set_cell_item(celula, Tiles.PEDRA)
-	dica_inicial("Vento forte: nas rajadas, abrigue-se atrás das pedras.")
+	# Vento forte: nas rajadas, abrigue-se atrás das pedras.
 	graveto(Vector3(14.5, 0.08, -3.5))
 	salvar(18)
 
 
 func neve_09_pastoreio() -> void:
-	neve("neve_09_pastoreio", "N09 — O rebanho", 20, Fase.HABILIDADE_LATIR)
+	neve("neve_09_pastoreio", "N09", 20, Fase.HABILIDADE_LATIR)
 	fase.objetivo = Fase.OBJETIVO_PASTOREIO
 	fase.raca = &"border_collie"
 	fase.raca_fixa = true
@@ -660,12 +622,12 @@ func neve_09_pastoreio() -> void:
 	(obj("cercado", Vector3(18.5, 0, -3.0), PI) as Cercado).tamanho = Vector2i(3, 6)
 	for p in [Vector3(4.5, 0, -5.0), Vector3(6.0, 0, -3.0), Vector3(4.0, 0, -1.5)]:
 		obj("ovelha", p, rng.randf_range(-PI, PI))
-	dica_inicial("Leve as ovelhas ao cercado: fique atrás delas. Um latido ({latir}) espanta.")
+	# Leve as ovelhas ao cercado: fique atrás delas. Um latido ({latir}) espanta.
 	salvar(20)
 
 
 func neve_10_celeiro() -> void:
-	neve("neve_10_celeiro", "N10 — O celeiro", 20, Fase.HABILIDADE_LATIR)
+	neve("neve_10_celeiro", "N10", 20, Fase.HABILIDADE_LATIR)
 	fase.objetivo = Fase.OBJETIVO_PASTOREIO
 	fase.raca = &"border_collie"
 	fase.raca_fixa = true
@@ -676,5 +638,5 @@ func neve_10_celeiro() -> void:
 	(obj("fogueira", Vector3(10.5, 0, -0.5)) as Fogueira).gravetos_para_acender = 0
 	for p in [Vector3(4.5, 0, -4.5), Vector3(6.0, 0, -2.0)]:
 		obj("ovelha", p, rng.randf_range(-PI, PI))
-	dica_inicial("Frio: leve as ovelhas ao celeiro ({latir} espanta). Perto do fogo e dentro do celeiro é quente.")
+	# Frio: leve as ovelhas ao celeiro ({latir} espanta). Perto do fogo e dentro do celeiro é quente.
 	salvar(20)

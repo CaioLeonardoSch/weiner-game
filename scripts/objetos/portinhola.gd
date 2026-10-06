@@ -28,7 +28,6 @@ const _MADEIRAS := [Color("9a7045"), Color("8b633c"), Color("a67a4c")]
 
 var _aba: Node3D
 var _ocupada := false
-var _aviso_em := -10.0
 
 
 func nome_no_editor() -> String:
@@ -104,25 +103,10 @@ func _tentar_passar(cachorro: Dachshund, lado: int) -> void:
 	if lado == 0 or _ocupada or cachorro.atravessando or (jogo and jogo.get(&"concluida") == true):
 		return
 	if mao_unica and lado < 0:
-		_avisar("A portinhola só abre para o outro lado")
 		return
 	if not cachorro.graveto_passa(true, comprimento_maximo):
-		if not cachorro.graveto_ao_comprido:
-			_avisar("Atravessado o graveto não passa — %s vira ao comprido" % Teclas.nome(&"virar_graveto"))
-		else:
-			_avisar("O graveto é comprido demais para a portinhola")
 		return
 	_passar(cachorro, lado)
-
-
-func _avisar(texto: String) -> void:
-	var agora := Time.get_ticks_msec() / 1000.0
-	if agora - _aviso_em < 2.5:
-		return
-	_aviso_em = agora
-	var jogo := get_tree().current_scene
-	if jogo and jogo.has_method("mostrar_aviso"):
-		jogo.mostrar_aviso(texto, 2.5)
 
 
 ## Quanto tempo o cachorro leva para passar: cresce com o tamanho (altura e largura) da raça.

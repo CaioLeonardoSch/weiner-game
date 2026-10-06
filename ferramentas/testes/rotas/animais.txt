@@ -1,0 +1,22 @@
+# Animais novos (só os movimentos básicos): tartaruga e peixe-cuspidor nadam na água (e o peixe
+# cospe), o castor anda e nada, o texugo passeia e foge do cachorro, o urso passeia devagar.
+fase res://ferramentas/testes/cenas/campo.tscn
+esperar 10
+chamar res://ferramentas/testes/teste_animais.gd preparar
+esperar 600
+# Todo mundo saiu do lugar e ficou onde pode: água para os da água, chão para os do chão.
+checar jogo.get_meta("posicoes")["tartaruga"].distance_to(jogo.get_meta("tartaruga").bicho.global_position) > 0.3
+checar jogo.get_meta("posicoes")["peixe_cuspidor"].distance_to(jogo.get_meta("peixe_cuspidor").bicho.global_position) > 0.3
+checar jogo.get_meta("posicoes")["castor"].distance_to(jogo.get_meta("castor").bicho.global_position) > 0.3
+checar jogo.get_meta("posicoes")["texugo"].distance_to(jogo.get_meta("texugo").bicho.global_position) > 0.3
+checar jogo.get_meta("posicoes")["urso"].distance_to(jogo.get_meta("urso").bicho.global_position) > 0.3
+checar jogo.fase.dentro_da_agua(jogo.get_meta("tartaruga").bicho.global_position + Vector3.DOWN * 0.1)
+checar jogo.fase.dentro_da_agua(jogo.get_meta("peixe_cuspidor").bicho.global_position)
+checar jogo.get_meta("peixe_cuspidor").cuspes > 0
+checar not jogo.fase.dentro_da_agua(jogo.get_meta("urso").bicho.global_position + Vector3.UP * 0.2)
+# O texugo foge do cachorro.
+chamar res://ferramentas/testes/teste_animais.gd cachorro_no_texugo
+esperar 15
+checar jogo.get_meta("texugo").fugindo
+esperar 60
+checar jogo.get_meta("texugo").distancia_do_cachorro() > 2.5

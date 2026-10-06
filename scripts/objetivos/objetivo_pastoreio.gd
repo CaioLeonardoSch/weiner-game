@@ -43,12 +43,10 @@ func processar(_delta: float) -> void:
 				break
 	if not mudou:
 		return
+	# O contador no canto já mostra quantas faltam.
 	_atualizar_contador()
-	var guardadas := _guardadas()
-	if guardadas == ovelhas.size():
+	if _guardadas() == ovelhas.size():
 		jogo.concluir()
-	else:
-		jogo.mostrar_aviso("Béé! %d de %d %s" % [guardadas, ovelhas.size(), _onde])
 
 
 func _guardadas() -> int:

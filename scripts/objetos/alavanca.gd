@@ -46,12 +46,6 @@ func _ready() -> void:
 			_fase.definir_fonte(canal, self, ligada)
 
 
-func definir_ativo(ativo: bool) -> void:
-	super(ativo)
-	if _fase:
-		_fase.definir_fonte(canal, self, ligada and ativo)
-
-
 func acao_da_boca(cachorro: Dachshund) -> String:
 	if cachorro.tem_graveto:
 		return ""

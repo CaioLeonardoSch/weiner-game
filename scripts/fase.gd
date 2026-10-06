@@ -9,8 +9,8 @@ extends Node3D
 ## Dá para editar também no editor do Godot (pintar o GridMap, arrastar objetos).
 ## Rodar esta cena direto (F6 no editor do Godot) abre o jogo nela.
 
-## Habilidades que o cachorro pode usar (flags). Cada fase escolhe as suas: a F02, por
-## exemplo, depende de o cachorro não pular o barranco. Para uma habilidade nova, acrescente
+## Habilidades que o cachorro pode usar (flags). Cada fase escolhe as suas: uma fase pode
+## depender, por exemplo, de o cachorro não pular um barranco. Para uma habilidade nova, acrescente
 ## o nome em @export_flags (no fim) e uma constante com o próximo bit.
 const HABILIDADE_PULAR := 1
 const HABILIDADE_CAVAR := 2
@@ -33,14 +33,8 @@ const OBJETIVO_DIA := 3
 ## Habilidades aprendidas nas fases anteriores (ver Fases.habilidades_anteriores); -1 = ainda
 ## não calculadas (pelo id da fase).
 var habilidades_herdadas := -1
-## Giro extra (graus) da câmera 3D ao pegar o graveto. 0 = olhando do cachorro para o dono.
-@export_range(-90.0, 90.0) var desvio_camera_3d := 0.0
 @export_enum("Trazer o graveto ao dono", "Levar as ovelhas ao abrigo (cercado ou celeiro)",
 	"Área central do parque (não termina)", "Dia do parque (achar o lendário e voltar)") var objetivo := OBJETIVO_GRAVETO
-## Só terceira pessoa: a câmera começa atrás do cachorro e não vai para a isométrica ao largar o
-## graveto (a direção nova do jogo, ver docs/DESIGN.md). Objetos "só isométrico" ficam de fora e
-## os "só 3D" valem desde o começo.
-@export var terceira_pessoa := false
 ## Raça do cachorro nesta fase (id de assets/racas/*.tres): só muda o tamanho. Jogando pelo
 ## menu, vale a raça que o jogador escolheu para a região (Regiao.racas); esta é a do teste no
 ## editor — e a de sempre, com `raca_fixa`.
@@ -157,8 +151,8 @@ func canal_ligado(canal: int, todas: bool) -> bool:
 
 
 ## Um latido em `origem`: os objetos até Dachshund.ALCANCE_LATIDO ouvem (pássaros voam, o dono
-## acorda, um cão vizinho late de volta...). Objetos desativados pela perspectiva (ex.: "só 3D"
-## na isométrica) não ouvem; `quem` latiu não ouve a si mesmo.
+## acorda, um cão vizinho late de volta...). Objetos escondidos não ouvem; `quem` latiu não
+## ouve a si mesmo.
 func espalhar_latido(origem: Vector3, quem: Node) -> void:
 	for objeto in lista_objetos():
 		if objeto != quem and objeto.visible \
@@ -200,29 +194,6 @@ func todos(tipo: Script) -> Array[ObjetoFase]:
 		if is_instance_of(objeto, tipo):
 			lista.append(objeto)
 	return lista
-
-
-## Liga/desliga os objetos com a visibilidade dada (SO_ISO / SO_3D).
-func ativar(visibilidade: ObjetoFase.Visibilidade, ativo: bool) -> void:
-	for objeto in lista_objetos():
-		if objeto.visibilidade == visibilidade:
-			objeto.definir_ativo(ativo)
-
-
-## Só o visual da volta (mirante): esconde o que é "só isométrico" e mostra o "só 3D", sem
-## mexer na física (o cachorro fica parado olhando). `false` volta ao visual da ida.
-func previa_da_volta(ligada: bool) -> void:
-	for objeto in lista_objetos():
-		if objeto.visibilidade == ObjetoFase.Visibilidade.SO_ISO:
-			objeto.visible = not ligada
-		elif objeto.visibilidade == ObjetoFase.Visibilidade.SO_3D:
-			objeto.visible = ligada
-
-
-## Estado da visão isométrica: tampas e afins presentes, coisas "só 3D" escondidas.
-func preparar_isometrica() -> void:
-	ativar(ObjetoFase.Visibilidade.SO_ISO, true)
-	ativar(ObjetoFase.Visibilidade.SO_3D, false)
 
 
 ## ID do tile na posição (global), ou GridMap.INVALID_CELL_ITEM.

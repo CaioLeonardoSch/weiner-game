@@ -1,33 +1,18 @@
-# HUD e controles (issue #13): barra de equilíbrio escondida no começo; mirante sai com um
-# Esc e aceita R; puxar vira até agarrar e avisa por que não puxou; a correnteza não leva o
+# HUD e controles (issue #13): barra de equilíbrio escondida no começo; R reinicia; puxar vira
+# até agarrar e, sem espaço atrás, não puxa (sem texto na tela); a correnteza não leva o
 # cachorro parado à força.
 fase res://ferramentas/testes/cenas/ponte_velha.tscn
+camera 0
 checar not jogo.indicador_equilibrio.visible
 esperar 20
-# Mirante: F morde; um Esc só já sai.
-chamar res://ferramentas/testes/teste_hud.gd colocar_mirante
-teleportar 3.5 0.05 -4.4
-esperar 5
-apertar mover_frente 6
-esperar 20
-apertar acao 2
-esperar 120
-checar jogo._mirante != null
-checar jogo.texto_dos_controles().contains("sair do mirante")
-apertar liberar_mouse 2
-esperar 90
-checar jogo._mirante == null
-checar not jogo.get_tree().paused
-# De novo no mirante: R reinicia a fase.
-apertar acao 2
-esperar 120
-checar jogo._mirante != null
+# R reinicia a fase.
 apertar reiniciar 2
 esperar 30
-checar jogo._mirante == null and jogo.fase != null
-# Puxar contra o portão: vira para o bloco segurando F (chegando de lado) e avisa que não tem
-# espaço atrás.
+checar jogo.fase != null and not jogo.get_tree().paused
+# Puxar contra o portão: vira para o bloco segurando F (chegando de lado); sem espaço atrás,
+# não puxa e não aparece aviso.
 fase res://ferramentas/testes/cenas/campo.tscn
+camera 0
 esperar 20
 chamar res://ferramentas/testes/teste_hud.gd puxar_contra_o_portao
 esperar 5
@@ -37,10 +22,11 @@ esperar 40
 checar absf(jogo.cachorro.modelo.rotation.y) > 3.1
 apertar mover_direita 12
 esperar 15
-checar jogo.aviso_painel.visible and jogo.aviso.text.begins_with("Sem espaço")
+checar not jogo.aviso.text.begins_with("Sem espaço")
 esperar 30
 # Correnteza (Fase 04): parado à força, a água não leva o cachorro.
 fase res://ferramentas/testes/cenas/riacho.tscn
+camera 0
 esperar 20
 teleportar 4.5 0.3 -10.5
 esperar 10

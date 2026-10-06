@@ -19,13 +19,13 @@ escolhe entre as compatíveis com a região (ver *Regiões e biomas*). Para joga
 abra a cena dela e use F6 (rodar cena atual). O progresso (fases concluídas e com que raça,
 raça escolhida por região, pelagens) fica em `user://progresso.cfg`.
 
-A dica no topo da tela mostra só os controles que valem no momento; reiniciar (R) e o editor
+Os controles (canto de baixo, à direita) mostram só os que valem no momento; reiniciar (R) e o editor
 (F1) aparecem na pausa, com as teclas.
 
 | Tecla | Jogo | Editor de fases |
 |---|---|---|
 | WASD / setas | andar | mover a câmera |
-| Mouse | câmera 3D | clique esq. coloca, dir. apaga, meio gira; Cursor: arrastar no vazio gira |
+| Mouse | câmera | clique esq. coloca, dir. apaga, meio gira; Cursor: arrastar no vazio gira |
 | E | largar o graveto | girar (com Q) |
 | Q | virar o graveto (atravessado ↔ ao comprido) | girar (com E) |
 | Ctrl | correr | modificador (Ctrl + roda: tamanho do pincel) |
@@ -33,7 +33,7 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
 | C | cavar terra fofa (se a fase liberar) | — |
 | B | latir (se a fase liberar) | — |
 | T | rolar na grama (na área central do parque) | — |
-| F | ação do que está à frente (morder o mirante, a ponta de um tronco...) | — |
+| F | ação do que está à frente (a ponta de um tronco, uma alavanca...) | — |
 | F (segurando) + trás | puxar o bloco de pedra ou o tronco pela ponta (sem graveto): segurando F perto, o cachorro vira de frente e agarra | — |
 | F (segurando) + lado | mordendo a ponta de um tronco: gira o tronco 90° em volta da outra ponta | — |
 | 1 a 5 | — | ferramentas do terreno: Pincel, Trocar, Linha, Retângulo, Balde |
@@ -44,7 +44,7 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
 | G | — | conta-gotas (pega o tile/objeto sob o cursor) |
 | Shift | andar devagar (equilíbrio) | modificador (trocar tile, girar 15°) |
 | R | reiniciar | subir camada (com F: descer) |
-| Esc | pausa (solta o mouse; ao continuar, prende de novo); no mirante, sai dele | Cursor / cancelar linha / desmarcar |
+| Esc | pausa (solta o mouse; ao continuar, prende de novo) | Cursor / cancelar linha / desmarcar |
 | **F1** | **abrir o editor nesta fase** | **testar a fase** (F1 volta) |
 | F2 | — | testar daqui (o cachorro começa no cursor, em chão firme) |
 | F3 | liga/desliga o pixelado | idem |
@@ -65,8 +65,8 @@ A dica no topo da tela mostra só os controles que valem no momento; reiniciar (
   a nova; se a tecla já era de outra ação, as duas trocam). Os textos do jogo sempre mostram a
   tecla atual; nas *Zonas de dica*, escreva `{nome_da_ação}` (ex.: `{virar_graveto}`).
 
-**Monitores largos** (21:9, 32:9): o 3D ocupa a tela toda sem esticar — a câmera isométrica
-tem altura fixa, então a tela larga mostra mais mundo dos lados — e a interface fica numa
+**Monitores largos** (21:9, 32:9): o 3D ocupa a tela toda sem esticar — a tela larga mostra
+mais mundo dos lados — e a interface fica numa
 **área segura** central de no máximo 16:9 (`scripts/ui/area_segura.gd`). Para nunca aparecer o
 "fim do mundo", o jogo gera em volta de cada fase um **entorno** de grama e floresta
 (`scripts/entorno.gd`, árvores em MultiMesh), que não é salvo na fase.
@@ -156,22 +156,27 @@ depois da direção visual; o que existe agora é a estrutura, com visual provis
 
 `scenes/parque/dia_01.tscn`, gerada por `ferramentas/gerar_dia_01.gd` (sobrescreve a cena),
 objetivo *Dia do parque* (`scripts/objetivos/objetivo_dia.gd`; rota `dia_01`). Uma trilha no mato
-saindo da área central, com uma curva: o **tronco semicaído** (rastejar por baixo); dali, ao
+saindo da área central, com uma curva: o cachorro chega saindo de uma **moita** (a câmera
+mostra a moita sacudindo); o **tronco semicaído** (rastejar por baixo); dali, ao
 longe, a **moita** que se mexe sozinha; o **córrego** fundo com **pedras** (pular); a moita (pular
 dentro) leva a uma pequena clareira, onde o **esquilo** come uma noz, vê o cachorro, se assusta,
 sobe na árvore e quebra um galho, que cai no **raio de sol** e fica dourado (o cajado lendário).
-Pegando, o cachorro abana o rabo e o dono assobia ao longe. Na volta, depois do córrego, o
-**corte da volta** termina o dia (o pedaço que o *fade* corta) e o jogo volta ao parque.
+Nessa cena o jogador não controla o cachorro: a câmera mostra o esquilo, depois o galho, e só
+devolve o controle com o galho no chão, iluminado. Pegando, o cachorro abana o rabo e o dono
+assobia ao longe. Na volta, pulando de novo na moita com o cajado na boca, a tela escurece e o
+cachorro reaparece no parque, já perto do dono.
 
-O objetivo *Dia do parque* termina quando o cachorro, com o graveto lendário, entra num **Corte
-da volta** (sem dono na fase). As ações de contexto (categoria **Ações** no editor) mostram só a
+O objetivo *Dia do parque* começa com o cachorro saindo da moita com *chegada* e termina quando
+ele, com o graveto lendário, pula numa moita (ou entra num **Corte da volta**; sem dono na fase). As ações de contexto (categoria **Ações** no editor) mostram só a
 tecla: perto da ponta, olhando para o obstáculo, **F**.
 
 - **Tronco semicaído** (*comprimento*): andando não passa; F rasteja por baixo.
-- **Pedras do córrego** (*quantidade*, *espaçamento*): F pula de pedra em pedra. As pedras não
-  têm colisão: andar para dentro do córrego é cair na água.
+- **Pedras do córrego** (*quantidade*, *espaçamento*): F (ou Espaço) pula de pedra em pedra.
+  As pedras não têm colisão, mas perto delas uma barreira invisível na beira não deixa o cachorro
+  cair nem andar por cima delas; longe delas, ele cai na água, volta à margem e se sacode.
 - **Moita (pular dentro)** (*largura*, *chamar atenção*): F pula para dentro e sai do outro lado;
-  com *chamar atenção*, ela se mexe sozinha até alguém atravessar.
+  com *chamar atenção*, ela se mexe sozinha até alguém atravessar; com *chegada*, o cachorro
+  começa a fase saindo dela.
 
 Outros objetos novos: **Esquilo na árvore (derruba o galho)** (Bichos; *distância do susto*,
 *altura do galho*: pega o graveto e a árvore mais perto e põe o galho lá em cima, com cara de
@@ -206,7 +211,6 @@ editar uma fase no editor deve levar a mudança para o gerador (ou parar de usá
 | Fase | Mecânica |
 |---|---|
 | F01 Andar e pegar | andar, pegar o graveto, entregar ao dono |
-| F02 A outra perspectiva | a câmera vira 3D ao pegar; o túnel do barranco fica de perfil na isométrica (invisível) e aparece no 3D |
 | F03 Pular | pular um vão e um degrau (a habilidade vem da fase) |
 | F04 Rampas e escadas | o platô é alto demais para pular: sobe pela rampa, desce pela escada |
 | F05 Degrau alto | só pulando; com o graveto na boca o pulo não chega (a volta é descendo) |
@@ -264,27 +268,23 @@ Bugs encontrados nas rotas viram issues no repositório (#27 a #33), e as rotas 
 ## Gravetos, placas e portões
 
 - **Graveto lendário × comum:** o dono só aceita o **lendário** (dourado, com brilho). Os
-  **comuns** (marrons) também trocam a perspectiva ao serem pegos, mas servem de ferramenta
-  (peso numa placa, algo para trocar). Com um graveto na boca não dá para pegar outro — largue
+  **comuns** (marrons) servem de ferramenta (peso numa placa, algo para trocar). Com um graveto na boca não dá para pegar outro — largue
   antes.
 - **Canais são cores:** uma **placa de pressão** aciona tudo da mesma cor enquanto tiver algo em
   cima; um **portão** da mesma cor abre (ou fecha, com *inverter*). Várias placas da mesma cor:
   basta uma acionada. O portão nunca fecha em cima de alguém.
 - **Madeira ou pedra** (como no Minecraft): a placa de **madeira** (tábuas) é acionada por
   qualquer coisa — o cachorro, um graveto largado, uma ovelha, um passarinho, o bloco, o tronco;
-  a de **pedra** (laje cinza) só por algo pesado — o **bloco de pedra** e o **tronco**. Pisando
-  numa de pedra, o jogo avisa que ela precisa de algo pesado. O tronco aciona com qualquer uma das
+  a de **pedra** (laje cinza) só por algo pesado — o **bloco de pedra** e o **tronco**. O tronco aciona com qualquer uma das
   células em cima (o meio ou uma ponta), e o graveto comprido, com qualquer parte dele.
 - **Pontes de madeira:** as tábuas ficam dentro do bloco (do tamanho do vão, rente ao chão). Há
   três tipos (propriedade *Tipo* no painel): **Firme**; **Cede com o tempo** (ponte velha, mais
   escura: quem fica parado em cima mais que *tempo para ceder* segundos faz ela ranger, tremer e
   quebrar); **Quebra num gatilho** (cai quando o canal dela liga). Quebrada, as tábuas caem na
-  água e a correnteza leva. *Aviso ao quebrar* é o texto que aparece na hora.
+  água e a correnteza leva. *Aviso ao quebrar* é um texto opcional para a hora (as fases do jogo não usam).
 - **Gatilho:** uma área invisível (roxa no editor) que liga o canal uma vez, de vez: quando o
   cachorro **entra**, **entra com um graveto** ou quando **um graveto de dentro dela é pego**.
   Ligue com a ferramenta Ligar (ex.: à ponte que cai).
-- **Mirante:** F morde e mostra a fase como fica na volta (sem ligar nem desligar nada); o
-  cachorro fica parado até soltar (F ou Esc).
 - **Botão de ação (F):** objetos que respondem ao F mostram a ação embaixo da tela
   ("F: ..."). Segurar F + andar para trás continua puxando o bloco.
 - **Regra OU / E:** com várias placas da mesma cor, o portão abre com **qualquer uma** acionada
@@ -304,7 +304,7 @@ Bugs encontrados nas rotas viram issues no repositório (#27 a #33), e as rotas 
 - **Portinhola:** parede de tábuas com uma portinhola de cachorro. Todas as raças passam — quanto
   maior o cachorro, mais ele demora para se espremer. O graveto só passa ao comprido (e com
   *comprimento máximo*); com *mão única*, só se entra pela frente (a seta).
-- **No editor:** Placa, Portão, Alavanca, Comporta, Gatilho, Mirante e Vento forte ficam em *Mecanismos*; linhas tracejadas na cor do canal
+- **No editor:** Placa, Portão, Alavanca, Comporta, Gatilho e Vento forte ficam em *Mecanismos*; linhas tracejadas na cor do canal
   ligam as placas aos portões, e o portão que reage a mais de uma placa mostra a regra ("OU" /
   "E"). A validação avisa placa sem portão (e vice-versa) e regra E com uma placa só. Ver
   *Ligando mecanismos* em "Criando fases".
@@ -333,6 +333,12 @@ Bugs encontrados nas rotas viram issues no repositório (#27 a #33), e as rotas 
   volta.
 - **Dono dormindo** (`dormindo`, no painel do Dono): "Zzz" — só recebe o graveto depois de um
   latido (a validação avisa se ninguém pode latir).
+- **Bichos que passeiam** (`scripts/objetos/bicho.gd`; em *Bichos* no editor): andam sozinhos
+  até `raio` m de onde foram colocados, parando entre um passeio e outro. **Tartaruga** (nada
+  devagar na superfície), **Peixe-cuspidor** (nada embaixo d'água; parado, sobe e cospe um jato),
+  **Castor** (anda na terra e nada), **Texugo** (foge correndo quando o cachorro chega a 3 m) e
+  **Urso** (grande, devagar, cheira o chão; tem colisão). Por enquanto só se movimentam — o papel
+  de cada um na história ainda vai ser encaixado.
 - **Som**: o latido é gerado por código (`scripts/som.gd`), com o tom pela altura da raça.
 
 ## Neve, fogo e o celeiro
@@ -459,7 +465,6 @@ Peças gordinhas de fundo creme, contorno marrom-escuro e sombra dura, nas cores
   **Opções → Gráficos**.
 - Contorno escuro nas silhuetas e realce claro nas quinas: `shaders/contorno_pixel.gdshader`
   (quad de tela cheia preso à câmera; força e limiares são `uniform`s).
-- A câmera isométrica é alinhada à grade de pixels, para o cenário não "tremer".
 - Materiais do mundo (`shaders/pixel_mundo.gdshader`): cor chapada + textura de pixels gerada
   pela posição no mundo (8 texels por metro). Cores em `assets/materiais/*.tres`.
 - Use materiais opacos (ou com alpha scissor): o contorno lê a profundidade só do que é opaco.
@@ -469,15 +474,15 @@ Peças gordinhas de fundo creme, contorno marrom-escuro e sombra dura, nas cores
 Cada fase é uma cena em `scenes/fases/` com:
 
 ```
-Fase (scripts/fase.gd: nome, giro da câmera 3D)
+Fase (scripts/fase.gd: nome, habilidades, bioma, clima)
 ├─ Terreno  GridMap (assets/tiles/tiles.tres), células de 1 m; o chão fica na camada -1
 └─ Objetos  instâncias de scenes/objetos/*.tscn
 ```
 
 **Pelo editor do jogo (F1)** — o jeito principal. Escolha um tile ou objeto na paleta à esquerda
 e clique; o **Cursor** (Esc) não coloca nada: seleciona e arrasta objetos, mostra as
-propriedades à direita e, arrastando no vazio, gira a vista (com Shift, arrasta). A visão (V) alterna entre ver tudo, **isométrica** (o que o jogador vê na ida) e **3D**
-(a volta). **Salvar** (Ctrl+S) grava por cima do arquivo da fase. Para criar uma fase nova:
+propriedades à direita e, arrastando no vazio, gira a vista (com Shift, arrasta). A visão (V) alterna entre **livre** e
+**isométrica** (só no editor: o jogo é sempre em terceira pessoa). **Salvar** (Ctrl+S) grava por cima do arquivo da fase. Para criar uma fase nova:
 **Nova** (parte de um modelo) ou abra uma fase existente, mude o nome e use **Salvar como** — o
 arquivo novo leva o nome da fase (`Floresta 34 — A ponte` → `scenes/fases/floresta_34_a_ponte.tscn`).
 As fases são jogadas na ordem das regiões e, dentro de cada região, pelo nome do arquivo — então
@@ -515,7 +520,7 @@ na fase, frio sem fogueira...).
 
 Nas propriedades da fase (nada selecionado) ficam a **região**, o **bioma**, o **objetivo**, a
 **raça** do cachorro (a do teste no editor; pelo menu vale a escolhida entre as da região, a
-não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir; pelo menu somam-se as das fases anteriores) — a F02 depende de o cachorro *não* pular o barranco — e o **frio**. Cada
+não ser com **Sempre com esta raça**), as **habilidades** que a fase libera (pular, cavar, latir; pelo menu somam-se as das fases anteriores) — e o **frio**. Cada
 objetivo pede alguns objetos:
 
 | Objetivo | Precisa de |
@@ -575,19 +580,13 @@ mecanismos (L)**:
 - **Clique direito** solta a peça de todas as ligações. **Esc** cancela.
 - Tudo entra no desfazer (Ctrl+Z). A cor também pode ser trocada à mão, no campo *Canal*.
 
-### A mecânica da perspectiva no editor
+### Câmera e textos
 
-Todo objeto tem **Visibilidade**: *Sempre*, *Só isométrico* ou *Só 3D*. Objetos "só isométrico"
-somem — e perdem a colisão — quando o cachorro pega o graveto (ex.: a *Tampa de folhagem* que
-esconde a boca de um túnel); "só 3D" só aparecem depois (ex.: árvores na frente da trilha, que
-tapariam a visão isométrica). Use a *Zona sem largar* onde largar o graveto deixaria o cachorro
-preso quando as tampas voltarem, e a *Zona de dica* (texto mostrado quando o cachorro entra
-nela) para explicar a virada: com visibilidade "Só 3D" ela só vale na volta — ex.: "A ponte
-sumiu! Empurre a pedra para dentro do riacho".
-
-Cuidado com a câmera isométrica (inclinação de 55°): um bloco de altura *h* esconde uns
-0,7 × *h* metros de chão logo atrás dele. Um muro de 2 m esconde por inteiro uma passagem de 1 m
-que esteja atrás dele — use a *Cerca* (dá para ver através) ou deixe a passagem na frente.
+O jogo é sempre em **terceira pessoa** (a câmera atrás do cachorro, girada pelo mouse); a vista
+isométrica existe só no editor, para montar a fase. As fases do jogo não explicam a solução com
+texto (ver `docs/DESIGN.md`, "Textos e dicas"): a *Zona de dica* (texto mostrado quando o
+cachorro entra nela) fica para as cenas de teste. A *Zona sem largar* marca onde largar o
+graveto deixaria o cachorro sem saída.
 
 ## Criando assets
 
@@ -634,7 +633,7 @@ scenes/fases/                 fases (conteúdo: terreno + objetos)
 scenes/parque/                área central do parque e os dias (gerados por ferramentas/gerar_parque.gd e gerar_dia_01.gd)
 scenes/modulos/               módulos: trechos de fase para reusar (criados pelo editor)
 scenes/objetos/               objetos que o editor coloca
-scripts/jogo.gd               regras: pegar/largar graveto, perspectiva, vitória
+scripts/jogo.gd               regras: pegar/largar graveto, vitória
 scripts/fase.gd               raiz de uma fase (consultas: objetos, tiles, água)
 scripts/biomas.gd             biomas: tiles, céu, luz, entorno, neve caindo
 scripts/clima.gd              clima da fase: chuva, neve, ventania, tempestade
@@ -650,7 +649,7 @@ shaders/, assets/             shaders, materiais, tiles gerados, modelos voxel
 ferramentas/                  geradores (rodar pelo editor do Godot ou linha de comando)
 ```
 
-Camadas de física: 1 `mundo` (terreno), 2 `bordas` (paredes invisíveis; a câmera 3D passa
+Camadas de física: 1 `mundo` (terreno), 2 `bordas` (paredes invisíveis; a câmera passa
 por elas), 3 `objetos`, 4 `cachorro`.
 
 ## Valores fáceis de ajustar
@@ -661,15 +660,13 @@ por elas), 3 `objetos`, 4 `cachorro`.
 | Contorno (cor, força, limiares) | `uniform`s em `shaders/contorno_pixel.gdshader` |
 | Cores dos blocos | `assets/materiais/*.tres` (inspetor do Godot) |
 | Velocidade do cachorro | `velocidade` em `scenes/dachshund.tscn` / `scripts/dachshund.gd` |
-| Câmera isométrica (ângulo, zoom) e 3D | exports de `scripts/camera_controller.gd` |
-| Duração da transição de câmera | `duracao_transicao` em `scripts/camera_controller.gd` |
+| Câmera (distância, FOV, foco das cenas) | exports de `scripts/camera_controller.gd` |
 | Comprimento/peso do graveto | propriedades do Graveto no editor de fases |
 | Altura do pulo, equilíbrio | exports de `scripts/dachshund.gd` (grupo "Equilíbrio") |
 | Habilidades liberadas | propriedades da fase no editor (nada selecionado) |
 | Alcance do latido | `ALCANCE_LATIDO` em `scripts/dachshund.gd` |
 | Força da correnteza, lentidão da água rasa | `correnteza` / `lentidao` em `Tiles.definicoes()` |
 | Tempo segurando para puxar | `DURACAO_PUXAR` em `scripts/dachshund.gd` |
-| Giro inicial da câmera 3D por fase | "Giro da câmera 3D" nas propriedades da fase |
 | Medidas e cores de uma raça | `assets/racas/*.tres` (inspetor do Godot) |
 | Medo e velocidade das ovelhas | constantes no topo de `scripts/objetos/ovelha.gd` |
 | Frio (tempo até gelar) | "Segundos até gelar" nas propriedades da fase |

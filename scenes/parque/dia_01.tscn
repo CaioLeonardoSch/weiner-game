@@ -18,7 +18,6 @@ id = "parque_dia_01"
 nome = "O primeiro graveto"
 habilidades = 4
 objetivo = 3
-terceira_pessoa = true
 raca_fixa = true
 
 [node name="Terreno" type="GridMap" parent="." unique_id=675628167]

@@ -16,8 +16,6 @@ signal pedido_salvar_modulo(nome: String)
 
 const ROTULOS := {
 	&"nome": "Nome",
-	&"desvio_camera_3d": "Giro da câmera 3D (°)",
-	&"visibilidade": "Visibilidade",
 	&"comprimento": "Comprimento (m)",
 	&"tamanho": "Tamanho (m)",
 	&"position": "Posição",
@@ -38,7 +36,6 @@ const ROTULOS := {
 	&"duracao_rajada": "Duração da rajada (s)",
 	&"defasagem": "Atraso do ciclo (s)",
 	&"acende_com_fogo": "Só acende com graveto aceso",
-	&"terceira_pessoa": "Só terceira pessoa (sem isométrica)",
 	&"dia": "Dia",
 	&"caminho_fase": "Fase do dia",
 	&"frase_do_dono": "Frase do dono no começo do dia",
@@ -46,7 +43,6 @@ const ROTULOS := {
 	&"raio": "Raio da volta (m)",
 	&"velocidade": "Velocidade (m/s)",
 }
-const NOMES_VISIBILIDADE := ["Sempre", "Só isométrico", "Só 3D"]
 
 var _alvo: Object
 ## propriedade → Callable que recebe o valor atual e atualiza o controle (sem emitir sinal).
@@ -65,7 +61,6 @@ func mostrar(alvo: Object) -> void:
 	if alvo is ObjetoFase:
 		var objeto := alvo as ObjetoFase
 		_titulo(objeto.nome_no_editor())
-		_campo(&"visibilidade")
 		_campo(&"position")
 		_campo_giro()
 		_campo_escala()
@@ -82,7 +77,6 @@ func mostrar(alvo: Object) -> void:
 		apagar.pressed.connect(pedido_apagar.emit)
 		botoes.add_child(apagar)
 		add_child(botoes)
-		_dica("Legenda: ◆ rosa = só isométrico, ◆ azul = só 3D.")
 	elif alvo is Fase:
 		_titulo("Fase")
 		_campo(&"nome")
@@ -94,9 +88,6 @@ func mostrar(alvo: Object) -> void:
 		_campo(&"raca_fixa")
 		_dica_raca_no_menu(alvo as Fase)
 		_campo(&"habilidades")
-		_campo(&"terceira_pessoa")
-		if not (alvo as Fase).terceira_pessoa:
-			_campo(&"desvio_camera_3d")
 		_campo(&"frio")
 		if (alvo as Fase).frio:
 			_campo(&"tempo_de_frio")
@@ -216,8 +207,6 @@ func _campo(propriedade: StringName) -> void:
 		var nomes := texto_hint.split(",")
 		for i in nomes.size():
 			var nome := nomes[i].get_slice(":", 0)
-			if propriedade == &"visibilidade" and i < NOMES_VISIBILIDADE.size():
-				nome = NOMES_VISIBILIDADE[i]
 			opcoes.add_item(nome, int(nomes[i].get_slice(":", 1)) if ":" in nomes[i] else i)
 		opcoes.item_selected.connect(func(indice: int) -> void: _emitir(propriedade, opcoes.get_item_id(indice)))
 		_atualizadores[propriedade] = func() -> void: opcoes.select(opcoes.get_item_index(_alvo.get(propriedade)))

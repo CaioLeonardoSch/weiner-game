@@ -1,4 +1,4 @@
-# F20 — A ponte que cai: pegar o graveto (Gatilho "graveto pego") derruba a ponte, com aviso; a
+# F20 — A ponte que cai: pegar o graveto (Gatilho "graveto pego") derruba a ponte (sem aviso); a
 # volta é empurrando o bloco para dentro do riacho (empurrar com o graveto na boca).
 fase res://scenes/fases/floresta_20_ponte_que_cai.tscn
 esperar 20
@@ -9,10 +9,7 @@ ir 14.5 -3.5
 esperar 30
 checar jogo.cachorro.tem_graveto
 checar obj("Ponte").quebrada
-# O "Nova perspectiva!" da câmera interrompe o aviso da ponte (da fase), mas ele volta depois.
-checar jogo.aviso.text.begins_with("Nova perspectiva!")
-esperar 150
-checar jogo.aviso_painel.visible and jogo.aviso.text.begins_with("A ponte caiu!")
+checar not jogo.aviso_painel.visible
 ir 12.8 -2.5
 ir 11.7 -2.5
 ir 7.0 -2.5

@@ -19,7 +19,6 @@ id = "parque_area_central"
 nome = "O Parque"
 habilidades = 4
 objetivo = 2
-terceira_pessoa = true
 raca_fixa = true
 
 [node name="Terreno" type="GridMap" parent="." unique_id=1303251109]

@@ -31,9 +31,9 @@ func avisos(_fase: Fase) -> PackedStringArray:
 	return []
 
 
-## O título mostrado ao abrir a fase (padrão: o nome dela).
-func titulo(fase: Fase) -> String:
-	return fase.nome
+## O título mostrado ao abrir a fase (padrão: nenhum; ver docs/DESIGN.md, "Textos e dicas").
+func titulo(_fase: Fase) -> String:
+	return ""
 
 
 func preparar(novo_jogo: Node) -> void:

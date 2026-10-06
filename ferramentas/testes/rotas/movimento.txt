@@ -1,6 +1,7 @@
 # Etapa 4 — rampa lisa (com graveto pesado o cachorro escorrega e não sobe) e degrau alto
 # (0,72 m: só pulando, e com graveto na boca o pulo não chega).
 fase res://ferramentas/testes/cenas/campo.tscn
+camera 0
 esperar 10
 chamar res://ferramentas/testes/teste_movimento.gd preparar
 # Rampa lisa com graveto pesado: não sobe.
@@ -42,7 +43,7 @@ esperar 5
 apertar mover_direita 40
 esperar 40
 checar absf(jogo.cachorro.modelo.rotation.y) < 0.2 and not jogo.cachorro.giro_travado
-# Num corredor, ao comprido, não gira para nenhum lado: anda de ré, mas avisa.
+# Num corredor, ao comprido, não gira para nenhum lado: anda de ré (sem aviso).
 chamar res://ferramentas/testes/teste_movimento.gd tirar_graveto
 chamar res://ferramentas/testes/teste_movimento.gd no_corredor
 esperar 20
@@ -50,4 +51,4 @@ apertar mover_direita 90
 esperar 30
 checar jogo.cachorro.giro_travado and absf(jogo.cachorro.modelo.rotation.y) > 3.0
 esperar 60
-checar jogo.aviso.text.contains("não deixa virar")
+checar not jogo.aviso_painel.visible

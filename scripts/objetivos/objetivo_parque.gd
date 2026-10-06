@@ -148,7 +148,7 @@ func _comeco_do_dia() -> void:
 	dono.global_position = fora
 	dono.olhar_para(lugar)
 	cachorro.posicionar(_ao_lado_do_dono(fora), _yaw_cachorro(lugar - fora))
-	jogo.camera_controller.comecar_em_3d(_yaw_camera())
+	jogo.camera_controller.olhar(_yaw_camera())
 	jogo.escurecer(false, 0.8)
 	await _andar_juntos(lugar)
 	if momento != Momento.CHEGANDO:
@@ -166,7 +166,7 @@ func _comeco_do_dia() -> void:
 	cachorro.terminar_travessia()
 	if momento != Momento.CHEGANDO:
 		return
-	jogo.camera_controller.comecar_em_3d(_yaw_camera())
+	jogo.camera_controller.olhar(_yaw_camera())
 	cachorro.entrada_bloqueada = false
 	momento = Momento.BRINCANDO
 	jogo.atualizar_dica()
@@ -189,7 +189,7 @@ func _fim_do_dia(caminho: String) -> void:
 	vindo.y = 0.0
 	de_onde = chegada - vindo.normalized() * minf(vindo.length(), ULTIMOS_PASSOS)
 	cachorro.posicionar(de_onde, _yaw_cachorro(chegada - de_onde))
-	jogo.camera_controller.comecar_em_3d(_yaw_camera())
+	jogo.camera_controller.olhar(_yaw_camera())
 	jogo.escurecer(false, 0.8)
 	await cachorro.atravessar(PackedVector3Array([chegada]),
 		de_onde.distance_to(chegada) / (cachorro.velocidade * 0.8), _yaw_cachorro(chegada - de_onde))

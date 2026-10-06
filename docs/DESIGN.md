@@ -27,14 +27,15 @@ Marcações: **Decidido** é o que o autor confirmou; *Proposta* é sugestão ai
 ### Câmera
 - **Decidido: só terceira pessoa.** Sai a câmera isométrica e, com ela, a troca de
   perspectiva: o mirante, a *Visibilidade* (só isométrico / só 3D), as tampas de folhagem do
-  túnel e o aviso "Nova perspectiva!".
+  túnel e o aviso "Nova perspectiva!". *Feito*; a vista isométrica ficou só no editor de fases.
 - Cuidados: o graveto atravessado não pode brigar com a câmera em corredores estreitos, e o
   jogador precisa enxergar o puzzle (a câmera recua em pontos-chave, ou o cachorro senta e o
   jogador olha em volta).
 
 ### Textos e dicas
 - **Nenhum texto ensina a solução.** Os textos de dica atuais (`ZonaDica`) e os nomes de fase
-  que entregam a mecânica ("Contrapeso", "Tronco rola", "Gelo liso") saem.
+  que entregam a mecânica ("Contrapeso", "Tronco rola", "Gelo liso") saem. *Feito* nas fases
+  (a `ZonaDica` ficou para as cenas de teste).
 - **Diálogo dá personalidade**: o personagem diz o que sente ou dá uma pista do caminho, nunca
   o que fazer. Frases curtas e poucas (cada uma é uma tradução a mais).
 - **Cães falam por balões** a partir do latido; **humanos murmuram** (um som simples, como em
@@ -208,6 +209,8 @@ Atividades casuais só para divertir, entrando das mais baratas para as mais car
   marcas de arranhão nas árvores, a pegada numa poça no dia de chuva, um dono que perdeu o
   cachorro porque o cachorro sentiu o cheiro da caverna do urso e foi atrás (dia 8, por
   exemplo).
+- *No código*: os cinco animais novos já existem com movimento básico (passear, nadar, fugir,
+  cuspir), sem lugar na história ainda (ver README, "Cavar, empurrar e bichos").
 - **Easter eggs** com o capítulo 2: o border collie e o senhor passeando no parque; uma foto
   dos donos do salsicha na casa da fazenda.
 

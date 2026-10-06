@@ -15,7 +15,7 @@ texturas, céu, entorno, neve caindo), as regiões no menu, o frio e a fogueira 
 gravetos, o celeiro para o rebanho e o editor modular (trechos, copiar/colar entre fases, módulos,
 balde) — ver *Versão de teste*. Do Pacote 1
 (Etapa 10) já existem o botão de ação (F), gravetos lendário e comuns, placas de pressão e
-portões por canal de cor e o mirante (o graveto-ponte saiu: quem vira pinguela agora é o tronco). Também o menu de opções (tela, gráficos,
+portões por canal de cor (o mirante saiu com a isométrica; o graveto-ponte saiu: quem vira pinguela agora é o tronco). Também o menu de opções (tela, gráficos,
 áudio, teclas), a tela para monitores largos e a exportação para Windows, Linux e macOS (ver
 `docs/ANALISE_PACOTE_1.md`).
 
@@ -24,23 +24,32 @@ atual, para a arquitetura não precisar mudar.
 
 Ideia que vale para quase tudo daqui em diante: cada fase escolhe quais **habilidades** o
 cachorro tem (pular, cavar, latir...). Isso deixa as fases antigas corretas quando uma habilidade
-nova entra — a F02, por exemplo, depende de o cachorro *não* pular o barranco de 2 m.
+nova entra — uma fase pode depender, por exemplo, de o cachorro *não* pular um barranco.
 Já é assim: `Fase.habilidades` (flags no painel da fase no editor); o `jogo.gd` liga só essas.
 As raças não têm habilidades nem peso próprios: todas fazem o mesmo, e só o **tamanho** muda
 (colisão, o vão embaixo da cerca, o tempo de passar na portinhola).
 
 ## Nova direção (2026-10) — o que programar
 
-O design mudou depois da análise crítica: ver [docs/DESIGN.md](docs/DESIGN.md). O item 4 (o
-parque) começou; o resto ainda não foi codificado. Ordem sugerida:
+O design mudou depois da análise crítica: ver [docs/DESIGN.md](docs/DESIGN.md). Os itens 1 e 2
+foram feitos, o 4 (o parque) e o 5 (animais) começaram. Ordem sugerida:
 
-1. **Tirar a isométrica**: o jogo fica só em terceira pessoa. Saem a câmera isométrica e a
+1. ✅ **Tirar a isométrica**: o jogo fica só em terceira pessoa. Saem a câmera isométrica e a
    transição (`CameraController`), a *Visibilidade* só isométrico / só 3D (`ObjetoFase`), as
    tampas de folhagem, o mirante, o aviso "Nova perspectiva!" e a F02 como está. Câmera que não
    briga com o graveto em corredores e recua em pontos-chave.
-2. **Textos**: tirar os textos de `ZonaDica` que ensinam a solução e os nomes de fase que
+   - **Feito**: tudo isso saiu; a isométrica ficou só como visão do editor (V: livre /
+     isométrica). Nas fases da esteira o passarinho da F28 passou a voltar depois de 4 s (sem
+     a isométrica, ele não fechava mais o caminho na volta). Câmera que recua em pontos-chave:
+     por enquanto só as cenas com foco (`CameraController.focar`).
+2. ✅ **Textos**: tirar os textos de `ZonaDica` que ensinam a solução e os nomes de fase que
    entregam a mecânica; prompts só com o ícone da tecla; a dica vira o assobio do dono, vindo
    da direção do caminho.
+   - **Feito**: sem textos de dica nas fases (as dicas da esteira viraram comentários no
+     gerador; `ZonaDica` só nas cenas de teste), nomes de fase da esteira são só o código
+     ("F13"), sem título na tela ao abrir (o parque ainda mostra "Dia N"), e sem os avisos que
+     explicavam uma falha (puxar sem espaço, pulo recusado, placa de pedra, virar o graveto).
+   - **Falta**: o assobio do dono e um retorno sem texto para as falhas (som ou animação).
 3. **Ações**: ações de contexto com animação (pular as pedras, pular na moita, rastejar) e a
    ação de força (apertar repetidamente para puxar ou cavar; parou, recomeça). Falhas naturais
    (cair na água, sair se sacudindo).
@@ -53,16 +62,22 @@ parque) começou; o resto ainda não foi codificado. Ordem sugerida:
      bolinha, rolar (T), deitar parado, dois passeantes, as 10 entradas (abertas pelo número de
      fases dos dias concluídas, fechadas por troncos), o assobio ao pegar o graveto, a volta ao
      parque e a saída, e o dia seguinte. Ver *O parque* no README.
-   - **Dia 1 feito (visual provisório)**: `ferramentas/gerar_dia_01.gd`; tronco semicaído,
-     pedras do córrego, moita, o esquilo que derruba o galho no raio de sol, o cajado lendário e
-     o corte da volta (objetivo *Dia do parque*). Com isso começaram as ações de contexto do
+   - **Dia 1 feito (visual provisório)**: chegada saindo de uma moita, a cena do esquilo sem
+     controle (a câmera foca o esquilo e depois o galho), a volta cortada na moita até perto do
+     dono, a barreira perto das pedras e a queda na água (volta à margem e se sacode).
+     `ferramentas/gerar_dia_01.gd`; tronco semicaído, pedras do córrego, moita, o esquilo que
+     derruba o galho no raio de sol, o cajado lendário (objetivo *Dia do parque*). Com isso começaram as ações de contexto do
      item 3 (rastejar, pular as pedras, pular na moita).
    - **Falta**: as fases dos dias 2 a 10 (2 e 3 usam F03 e F04 da esteira; 4 a 10 sem fase), a
-     moita da saída da área central, o cachorro reparar no que mudou, os
+     moita da saída da área central (as entradas ainda são as aberturas no mato), a ação de força, o cachorro reparar no que mudou, os
      bloqueios naturais de verdade (o urso, a correnteza), o marco de cada região e toda a
      arte e animação (depois da direção visual, item 6).
 5. **Animais novos**: tartaruga, peixe-cuspidor, castor, texugo e urso; personagens que voltam
    e aparecem na área central depois de ajudados. Diálogo em balões (cães) e murmúrio (humanos).
+   - **Começou**: os cinco com modelo voxel provisório e movimento básico (`scripts/objetos/bicho.gd`:
+     passeiam dentro de um raio; a tartaruga e o peixe na água, o castor na terra e na água, o
+     texugo foge do cachorro, o peixe cospe um jato, o urso tem colisão). Rota `animais`.
+   - **Falta**: encaixar cada um num dia, as interações da história e a volta à área central.
 6. **Direção de arte, menu e nome**: depois de escolhida a direção visual (conceitos com IA de
    imagem, ver DESIGN.md). O menu novo é original (o atual lembra o Minecraft).
 7. **O resto do capítulo**: dias 4 a 10, missões secundárias, a casa com a parede de gravetos;

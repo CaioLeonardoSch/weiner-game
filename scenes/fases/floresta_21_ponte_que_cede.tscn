@@ -1,706 +1,670 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://scripts/fase.gd" id="1_oqmxj"]
-[ext_resource type="MeshLibrary" path="res://assets/tiles/tiles.tres" id="2_vqg1k"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/parede_invisivel.tscn" id="3_ed0hr"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/inicio_cachorro.tscn" id="4_neh28"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/dono.tscn" id="5_bvmvy"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/ponte.tscn" id="6_r8rej"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/zona_dica.tscn" id="7_3rjik"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/graveto.tscn" id="8_gp1cg"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/flores.tscn" id="9_cjxrw"]
-[ext_resource type="PackedScene" path="res://scenes/objetos/arvore.tscn" id="10_imqfa"]
+[ext_resource type="Script" path="res://scripts/fase.gd" id="1_plrai"]
+[ext_resource type="MeshLibrary" path="res://assets/tiles/tiles.tres" id="2_oqmxj"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/parede_invisivel.tscn" id="3_vqg1k"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/inicio_cachorro.tscn" id="4_ed0hr"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/dono.tscn" id="5_neh28"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/ponte.tscn" id="6_bvmvy"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/graveto.tscn" id="7_r8rej"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/flores.tscn" id="8_3rjik"]
+[ext_resource type="PackedScene" path="res://scenes/objetos/arvore.tscn" id="9_gp1cg"]
 
-[node name="Floresta21PonteQueCede" type="Node3D" unique_id=421248727]
-script = ExtResource("1_oqmxj")
+[node name="Floresta21PonteQueCede" type="Node3D" unique_id=264156455]
+script = ExtResource("1_plrai")
 id = "floresta_21_ponte_que_cede"
-nome = "F21 — A ponte que cede"
+nome = "F21"
 
-[node name="Terreno" type="GridMap" parent="." unique_id=1583744654]
-mesh_library = ExtResource("2_vqg1k")
+[node name="Terreno" type="GridMap" parent="." unique_id=1910390002]
+mesh_library = ExtResource("2_oqmxj")
 cell_size = Vector3(1, 1, 1)
 collision_mask = 0
 data = {
 "cells": PackedInt32Array(-18, 65522, 0, -18, 65523, 0, -18, 65524, 0, -18, 65525, 0, -18, 65526, 0, -18, 65527, 0, -18, 65528, 0, -18, 65529, 0, -18, 65530, 0, -18, 65531, 0, -18, 65532, 0, -18, 65533, 0, -18, 65534, 0, -18, 65535, 0, -18, 0, 0, -18, 1, 0, -18, 2, 0, -18, 3, 0, -18, 4, 0, -18, 5, 0, -18, 6, 0, -18, 7, 0, -17, 65522, 0, -17, 65523, 0, -17, 65524, 0, -17, 65525, 0, -17, 65526, 0, -17, 65527, 0, -17, 65528, 0, -17, 65529, 0, -17, 65530, 0, -17, 65531, 0, -17, 65532, 0, -17, 65533, 0, -17, 65534, 0, -17, 65535, 0, -17, 0, 0, -17, 1, 0, -17, 2, 0, -17, 3, 0, -17, 4, 0, -17, 5, 0, -17, 6, 0, -17, 7, 0, -16, 65522, 0, -16, 65523, 0, -16, 65524, 0, -16, 65525, 0, -16, 65526, 0, -16, 65527, 0, -16, 65528, 0, -16, 65529, 0, -16, 65530, 0, -16, 65531, 0, -16, 65532, 0, -16, 65533, 0, -16, 65534, 0, -16, 65535, 0, -16, 0, 0, -16, 1, 0, -16, 2, 0, -16, 3, 0, -16, 4, 0, -16, 5, 0, -16, 6, 0, -16, 7, 0, -15, 65522, 0, -15, 65523, 0, -15, 65524, 0, -15, 65525, 0, -15, 65526, 0, -15, 65527, 0, -15, 65528, 0, -15, 65529, 0, -15, 65530, 0, -15, 65531, 0, -15, 65532, 0, -15, 65533, 0, -15, 65534, 0, -15, 65535, 0, -15, 0, 0, -15, 1, 0, -15, 2, 0, -15, 3, 0, -15, 4, 0, -15, 5, 0, -15, 6, 0, -15, 7, 0, -14, 65522, 0, -14, 65523, 0, -14, 65524, 0, -14, 65525, 0, -14, 65526, 0, -14, 65527, 0, -14, 65528, 0, -14, 65529, 0, -14, 65530, 0, -14, 65531, 0, -14, 65532, 0, -14, 65533, 0, -14, 65534, 0, -14, 65535, 0, -14, 0, 0, -14, 1, 0, -14, 2, 0, -14, 3, 0, -14, 4, 0, -14, 5, 0, -14, 6, 0, -14, 7, 0, -13, 65522, 0, -13, 65523, 0, -13, 65524, 0, -13, 65525, 0, -13, 65526, 0, -13, 65527, 0, -13, 65528, 0, -13, 65529, 0, -13, 65530, 0, -13, 65531, 0, -13, 65532, 0, -13, 65533, 0, -13, 65534, 0, -13, 65535, 0, -13, 0, 0, -13, 1, 0, -13, 2, 0, -13, 3, 0, -13, 4, 0, -13, 5, 0, -13, 6, 0, -13, 7, 0, -12, 65522, 0, -12, 65523, 0, -12, 65524, 0, -12, 65525, 0, -12, 65526, 0, -12, 65527, 0, -12, 65528, 0, -12, 65529, 0, -12, 65530, 0, -12, 65531, 0, -12, 65532, 0, -12, 65533, 0, -12, 65534, 0, -12, 65535, 0, -12, 0, 0, -12, 1, 0, -12, 2, 0, -12, 3, 0, -12, 4, 0, -12, 5, 0, -12, 6, 0, -12, 7, 0, -11, 65522, 0, -11, 65523, 0, -11, 65524, 0, -11, 65525, 0, -11, 65526, 0, -11, 65527, 0, -11, 65528, 0, -11, 65529, 0, -11, 65530, 0, -11, 65531, 0, -11, 65532, 0, -11, 65533, 0, -11, 65534, 0, -11, 65535, 0, -11, 0, 0, -11, 1, 0, -11, 2, 0, -11, 3, 0, -11, 4, 0, -11, 5, 0, -11, 6, 0, -11, 7, 0, -10, 65522, 0, -10, 65523, 0, -10, 65524, 0, -10, 65525, 0, -10, 65526, 0, -10, 65527, 0, -10, 65528, 0, -10, 65529, 0, -10, 65530, 0, -10, 65531, 0, -10, 65532, 0, -10, 65533, 0, -10, 65534, 0, -10, 65535, 0, -10, 0, 0, -10, 1, 0, -10, 2, 0, -10, 3, 0, -10, 4, 0, -10, 5, 0, -10, 6, 0, -10, 7, 0, -9, 65522, 0, -9, 65523, 0, -9, 65524, 0, -9, 65525, 0, -9, 65526, 0, -9, 65527, 0, -9, 65528, 0, -9, 65529, 0, -9, 65530, 0, -9, 65531, 0, -9, 65532, 0, -9, 65533, 0, -9, 65534, 0, -9, 65535, 0, -9, 0, 0, -9, 1, 0, -9, 2, 0, -9, 3, 0, -9, 4, 0, -9, 5, 0, -9, 6, 0, -9, 7, 0, -8, 65522, 0, -8, 65523, 0, -8, 65524, 0, -8, 65525, 0, -8, 65526, 0, -8, 65527, 0, -8, 65528, 0, -8, 65529, 0, -8, 65530, 0, -8, 65531, 0, -8, 65532, 0, -8, 65533, 0, -8, 65534, 0, -8, 65535, 0, -8, 0, 0, -8, 1, 0, -8, 2, 0, -8, 3, 0, -8, 4, 0, -8, 5, 0, -8, 6, 0, -8, 7, 0, -7, 65522, 0, -7, 65523, 0, -7, 65524, 0, -7, 65525, 0, -7, 65526, 0, -7, 65527, 0, -7, 65528, 0, -7, 65529, 0, -7, 65530, 0, -7, 65531, 0, -7, 65532, 0, -7, 65533, 0, -7, 65534, 0, -7, 65535, 0, -7, 0, 0, -7, 1, 0, -7, 2, 0, -7, 3, 0, -7, 4, 0, -7, 5, 0, -7, 6, 0, -7, 7, 0, -6, 65522, 0, -6, 65523, 0, -6, 65524, 0, -6, 65525, 0, -6, 65526, 0, -6, 65527, 0, -6, 65528, 0, -6, 65529, 0, -6, 65530, 0, -6, 65531, 0, -6, 65532, 0, -6, 65533, 0, -6, 65534, 0, -6, 65535, 0, -6, 0, 0, -6, 1, 0, -6, 2, 0, -6, 3, 0, -6, 4, 0, -6, 5, 0, -6, 6, 0, -6, 7, 0, -5, 65522, 0, -5, 65523, 0, -5, 65524, 0, -5, 65525, 0, -5, 65526, 0, -5, 65527, 0, -5, 65528, 0, -5, 65529, 0, -5, 65530, 0, -5, 65531, 0, -5, 65532, 0, -5, 65533, 0, -5, 65534, 0, -5, 65535, 0, -5, 0, 0, -5, 1, 0, -5, 2, 0, -5, 3, 0, -5, 4, 0, -5, 5, 0, -5, 6, 0, -5, 7, 0, -4, 65522, 0, -4, 65523, 0, -4, 65524, 0, -4, 65525, 0, -4, 65526, 0, -4, 65527, 0, -4, 65528, 0, -4, 65529, 0, -4, 65530, 0, -4, 65531, 0, -4, 65532, 0, -4, 65533, 0, -4, 65534, 0, -4, 65535, 0, -4, 0, 0, -4, 1, 0, -4, 2, 0, -4, 3, 0, -4, 4, 0, -4, 5, 0, -4, 6, 0, -4, 7, 0, -3, 65522, 0, -3, 65523, 0, -3, 65524, 0, -3, 65525, 0, -3, 65526, 0, -3, 65527, 0, -3, 65528, 0, -3, 65529, 0, -3, 65530, 0, -3, 65531, 0, -3, 65532, 0, -3, 65533, 0, -3, 65534, 0, -3, 65535, 0, -3, 0, 0, -3, 1, 0, -3, 2, 0, -3, 3, 0, -3, 4, 0, -3, 5, 0, -3, 6, 0, -3, 7, 0, -2, 65522, 0, -2, 65523, 0, -2, 65524, 0, -2, 65525, 0, -2, 65526, 0, -2, 65527, 0, -2, 65528, 0, -2, 65529, 0, -2, 65530, 0, -2, 65531, 0, -2, 65532, 0, -2, 65533, 0, -2, 65534, 0, -2, 65535, 0, -2, 0, 0, -2, 1, 0, -2, 2, 0, -2, 3, 0, -2, 4, 0, -2, 5, 0, -2, 6, 0, -2, 7, 0, -1, 65522, 0, -1, 65523, 0, -1, 65524, 0, -1, 65525, 0, -1, 65526, 0, -1, 65527, 0, -1, 65528, 0, -1, 65529, 0, -1, 65530, 0, -1, 65531, 0, -1, 65532, 0, -1, 65533, 0, -1, 65534, 0, -1, 65535, 0, -1, 0, 0, -1, 1, 0, -1, 2, 0, -1, 3, 0, -1, 4, 0, -1, 5, 0, -1, 6, 0, -1, 7, 0, -65536, 65522, 0, -65536, 65523, 0, -65536, 65524, 0, -65536, 65525, 0, -65536, 65526, 0, -65536, 65527, 0, -65536, 65528, 0, -65536, 65529, 0, -65536, 65530, 0, -65536, 65531, 0, -65536, 65532, 0, -65536, 65533, 0, -65536, 65534, 0, -65536, 65535, 0, -65536, 0, 0, -65536, 1, 0, -65536, 2, 0, -65536, 3, 0, -65536, 4, 0, -65536, 5, 0, -65536, 6, 0, -65536, 7, 0, -65535, 65522, 0, -65535, 65523, 0, -65535, 65524, 0, -65535, 65525, 0, -65535, 65526, 0, -65535, 65527, 0, -65535, 65528, 0, -65535, 65529, 0, -65535, 65530, 0, -65535, 65531, 0, -65535, 65532, 0, -65535, 65533, 0, -65535, 65534, 0, -65535, 65535, 0, -65535, 0, 0, -65535, 1, 0, -65535, 2, 0, -65535, 3, 0, -65535, 4, 0, -65535, 5, 0, -65535, 6, 0, -65535, 7, 0, -65534, 65522, 0, -65534, 65523, 0, -65534, 65524, 0, -65534, 65525, 0, -65534, 65526, 0, -65534, 65527, 0, -65534, 65528, 0, -65534, 65529, 0, -65534, 65530, 0, -65534, 65531, 0, -65534, 65532, 0, -65534, 65533, 0, -65534, 65534, 0, -65534, 65535, 0, -65534, 0, 0, -65534, 1, 0, -65534, 2, 0, -65534, 3, 0, -65534, 4, 0, -65534, 5, 0, -65534, 6, 0, -65534, 7, 0, -65533, 65522, 0, -65533, 65523, 0, -65533, 65524, 0, -65533, 65525, 0, -65533, 65526, 0, -65533, 65527, 0, -65533, 65528, 0, -65533, 65529, 0, -65533, 65530, 0, -65533, 65531, 0, -65533, 65532, 0, -65533, 65533, 0, -65533, 65534, 0, -65533, 65535, 0, -65533, 0, 0, -65533, 1, 0, -65533, 2, 0, -65533, 3, 0, -65533, 4, 0, -65533, 5, 0, -65533, 6, 0, -65533, 7, 0, -65532, 65522, 0, -65532, 65523, 0, -65532, 65524, 0, -65532, 65525, 0, -65532, 65526, 0, -65532, 65527, 0, -65532, 65528, 0, -65532, 65529, 0, -65532, 65530, 0, -65532, 65531, 0, -65532, 65532, 0, -65532, 65533, 0, -65532, 65534, 0, -65532, 65535, 0, -65532, 0, 0, -65532, 1, 0, -65532, 2, 0, -65532, 3, 0, -65532, 4, 0, -65532, 5, 0, -65532, 6, 0, -65532, 7, 0, -65531, 65522, 0, -65531, 65523, 0, -65531, 65524, 0, -65531, 65525, 0, -65531, 65526, 0, -65531, 65527, 0, -65531, 65528, 0, -65531, 65529, 0, -65531, 65530, 0, -65531, 65531, 0, -65531, 65532, 0, -65531, 65533, 0, -65531, 65534, 0, -65531, 65535, 0, -65531, 0, 0, -65531, 1, 0, -65531, 2, 0, -65531, 3, 0, -65531, 4, 0, -65531, 5, 0, -65531, 6, 0, -65531, 7, 0, -65530, 65522, 0, -65530, 65523, 0, -65530, 65524, 0, -65530, 65525, 0, -65530, 65526, 0, -65530, 65527, 0, -65530, 65528, 0, -65530, 65529, 0, -65530, 65530, 0, -65530, 65531, 0, -65530, 65532, 0, -65530, 65533, 0, -65530, 65534, 0, -65530, 65535, 0, -65530, 0, 0, -65530, 1, 0, -65530, 2, 0, -65530, 3, 0, -65530, 4, 0, -65530, 5, 0, -65530, 6, 0, -65530, 7, 0, -65529, 65522, 0, -65529, 65523, 0, -65529, 65524, 0, -65529, 65525, 0, -65529, 65526, 0, -65529, 65527, 0, -65529, 65528, 0, -65529, 65529, 0, -65529, 65530, 8, -65529, 65531, 8, -65529, 65532, 8, -65529, 65533, 8, -65529, 65534, 8, -65529, 65535, 8, -65529, 0, 0, -65529, 1, 0, -65529, 2, 0, -65529, 3, 0, -65529, 4, 0, -65529, 5, 0, -65529, 6, 0, -65529, 7, 0, -65528, 65522, 0, -65528, 65523, 0, -65528, 65524, 0, -65528, 65525, 0, -65528, 65526, 0, -65528, 65527, 0, -65528, 65528, 0, -65528, 65529, 0, -65528, 65530, 8, -65528, 65531, 8, -65528, 65532, 8, -65528, 65533, 8, -65528, 65534, 8, -65528, 65535, 8, -65528, 0, 0, -65528, 1, 0, -65528, 2, 0, -65528, 3, 0, -65528, 4, 0, -65528, 5, 0, -65528, 6, 0, -65528, 7, 0, -65527, 65522, 0, -65527, 65523, 0, -65527, 65524, 0, -65527, 65525, 0, -65527, 65526, 0, -65527, 65527, 0, -65527, 65528, 0, -65527, 65529, 0, -65527, 65530, 0, -65527, 65531, 0, -65527, 65532, 0, -65527, 65533, 0, -65527, 65534, 0, -65527, 65535, 0, -65527, 0, 0, -65527, 1, 0, -65527, 2, 0, -65527, 3, 0, -65527, 4, 0, -65527, 5, 0, -65527, 6, 0, -65527, 7, 0, -65526, 65522, 0, -65526, 65523, 0, -65526, 65524, 0, -65526, 65525, 0, -65526, 65526, 0, -65526, 65527, 0, -65526, 65528, 0, -65526, 65529, 0, -65526, 65530, 0, -65526, 65531, 0, -65526, 65532, 0, -65526, 65533, 0, -65526, 65534, 0, -65526, 65535, 0, -65526, 0, 0, -65526, 1, 0, -65526, 2, 0, -65526, 3, 0, -65526, 4, 0, -65526, 5, 0, -65526, 6, 0, -65526, 7, 0, -65525, 65522, 0, -65525, 65523, 0, -65525, 65524, 0, -65525, 65525, 0, -65525, 65526, 0, -65525, 65527, 0, -65525, 65528, 0, -65525, 65529, 0, -65525, 65530, 0, -65525, 65531, 0, -65525, 65532, 0, -65525, 65533, 0, -65525, 65534, 0, -65525, 65535, 0, -65525, 0, 0, -65525, 1, 0, -65525, 2, 0, -65525, 3, 0, -65525, 4, 0, -65525, 5, 0, -65525, 6, 0, -65525, 7, 0, -65524, 65522, 0, -65524, 65523, 0, -65524, 65524, 0, -65524, 65525, 0, -65524, 65526, 0, -65524, 65527, 0, -65524, 65528, 0, -65524, 65529, 0, -65524, 65530, 0, -65524, 65531, 0, -65524, 65532, 0, -65524, 65533, 0, -65524, 65534, 0, -65524, 65535, 0, -65524, 0, 0, -65524, 1, 0, -65524, 2, 0, -65524, 3, 0, -65524, 4, 0, -65524, 5, 0, -65524, 6, 0, -65524, 7, 0, -65523, 65522, 0, -65523, 65523, 0, -65523, 65524, 0, -65523, 65525, 0, -65523, 65526, 0, -65523, 65527, 0, -65523, 65528, 0, -65523, 65529, 0, -65523, 65530, 0, -65523, 65531, 0, -65523, 65532, 0, -65523, 65533, 0, -65523, 65534, 0, -65523, 65535, 0, -65523, 0, 0, -65523, 1, 0, -65523, 2, 0, -65523, 3, 0, -65523, 4, 0, -65523, 5, 0, -65523, 6, 0, -65523, 7, 0, -65522, 65522, 0, -65522, 65523, 0, -65522, 65524, 0, -65522, 65525, 0, -65522, 65526, 0, -65522, 65527, 0, -65522, 65528, 0, -65522, 65529, 0, -65522, 65530, 0, -65522, 65531, 0, -65522, 65532, 0, -65522, 65533, 0, -65522, 65534, 0, -65522, 65535, 0, -65522, 0, 0, -65522, 1, 0, -65522, 2, 0, -65522, 3, 0, -65522, 4, 0, -65522, 5, 0, -65522, 6, 0, -65522, 7, 0, -65521, 65522, 0, -65521, 65523, 0, -65521, 65524, 0, -65521, 65525, 0, -65521, 65526, 0, -65521, 65527, 0, -65521, 65528, 0, -65521, 65529, 0, -65521, 65530, 0, -65521, 65531, 0, -65521, 65532, 0, -65521, 65533, 0, -65521, 65534, 0, -65521, 65535, 0, -65521, 0, 0, -65521, 1, 0, -65521, 2, 0, -65521, 3, 0, -65521, 4, 0, -65521, 5, 0, -65521, 6, 0, -65521, 7, 0, -65520, 65522, 0, -65520, 65523, 0, -65520, 65524, 0, -65520, 65525, 0, -65520, 65526, 0, -65520, 65527, 0, -65520, 65528, 0, -65520, 65529, 0, -65520, 65530, 0, -65520, 65531, 0, -65520, 65532, 0, -65520, 65533, 0, -65520, 65534, 0, -65520, 65535, 0, -65520, 0, 0, -65520, 1, 0, -65520, 2, 0, -65520, 3, 0, -65520, 4, 0, -65520, 5, 0, -65520, 6, 0, -65520, 7, 0, -65519, 65522, 0, -65519, 65523, 0, -65519, 65524, 0, -65519, 65525, 0, -65519, 65526, 0, -65519, 65527, 0, -65519, 65528, 0, -65519, 65529, 0, -65519, 65530, 0, -65519, 65531, 0, -65519, 65532, 0, -65519, 65533, 0, -65519, 65534, 0, -65519, 65535, 0, -65519, 0, 0, -65519, 1, 0, -65519, 2, 0, -65519, 3, 0, -65519, 4, 0, -65519, 5, 0, -65519, 6, 0, -65519, 7, 0, -65518, 65522, 0, -65518, 65523, 0, -65518, 65524, 0, -65518, 65525, 0, -65518, 65526, 0, -65518, 65527, 0, -65518, 65528, 0, -65518, 65529, 0, -65518, 65530, 0, -65518, 65531, 0, -65518, 65532, 0, -65518, 65533, 0, -65518, 65534, 0, -65518, 65535, 0, -65518, 0, 0, -65518, 1, 0, -65518, 2, 0, -65518, 3, 0, -65518, 4, 0, -65518, 5, 0, -65518, 6, 0, -65518, 7, 0, -65517, 65522, 0, -65517, 65523, 0, -65517, 65524, 0, -65517, 65525, 0, -65517, 65526, 0, -65517, 65527, 0, -65517, 65528, 0, -65517, 65529, 0, -65517, 65530, 0, -65517, 65531, 0, -65517, 65532, 0, -65517, 65533, 0, -65517, 65534, 0, -65517, 65535, 0, -65517, 0, 0, -65517, 1, 0, -65517, 2, 0, -65517, 3, 0, -65517, 4, 0, -65517, 5, 0, -65517, 6, 0, -65517, 7, 0, -65516, 65522, 0, -65516, 65523, 0, -65516, 65524, 0, -65516, 65525, 0, -65516, 65526, 0, -65516, 65527, 0, -65516, 65528, 0, -65516, 65529, 0, -65516, 65530, 0, -65516, 65531, 0, -65516, 65532, 0, -65516, 65533, 0, -65516, 65534, 0, -65516, 65535, 0, -65516, 0, 0, -65516, 1, 0, -65516, 2, 0, -65516, 3, 0, -65516, 4, 0, -65516, 5, 0, -65516, 6, 0, -65516, 7, 0, -65515, 65522, 0, -65515, 65523, 0, -65515, 65524, 0, -65515, 65525, 0, -65515, 65526, 0, -65515, 65527, 0, -65515, 65528, 0, -65515, 65529, 0, -65515, 65530, 0, -65515, 65531, 0, -65515, 65532, 0, -65515, 65533, 0, -65515, 65534, 0, -65515, 65535, 0, -65515, 0, 0, -65515, 1, 0, -65515, 2, 0, -65515, 3, 0, -65515, 4, 0, -65515, 5, 0, -65515, 6, 0, -65515, 7, 0, -65514, 65522, 0, -65514, 65523, 0, -65514, 65524, 0, -65514, 65525, 0, -65514, 65526, 0, -65514, 65527, 0, -65514, 65528, 0, -65514, 65529, 0, -65514, 65530, 0, -65514, 65531, 0, -65514, 65532, 0, -65514, 65533, 0, -65514, 65534, 0, -65514, 65535, 0, -65514, 0, 0, -65514, 1, 0, -65514, 2, 0, -65514, 3, 0, -65514, 4, 0, -65514, 5, 0, -65514, 6, 0, -65514, 7, 0, -65513, 65522, 0, -65513, 65523, 0, -65513, 65524, 0, -65513, 65525, 0, -65513, 65526, 0, -65513, 65527, 0, -65513, 65528, 0, -65513, 65529, 0, -65513, 65530, 0, -65513, 65531, 0, -65513, 65532, 0, -65513, 65533, 0, -65513, 65534, 0, -65513, 65535, 0, -65513, 0, 0, -65513, 1, 0, -65513, 2, 0, -65513, 3, 0, -65513, 4, 0, -65513, 5, 0, -65513, 6, 0, -65513, 7, 0, -65512, 65522, 0, -65512, 65523, 0, -65512, 65524, 0, -65512, 65525, 0, -65512, 65526, 0, -65512, 65527, 0, -65512, 65528, 0, -65512, 65529, 0, -65512, 65530, 0, -65512, 65531, 0, -65512, 65532, 0, -65512, 65533, 0, -65512, 65534, 0, -65512, 65535, 0, -65512, 0, 0, -65512, 1, 0, -65512, 2, 0, -65512, 3, 0, -65512, 4, 0, -65512, 5, 0, -65512, 6, 0, -65512, 7, 0, -65511, 65522, 0, -65511, 65523, 0, -65511, 65524, 0, -65511, 65525, 0, -65511, 65526, 0, -65511, 65527, 0, -65511, 65528, 0, -65511, 65529, 0, -65511, 65530, 0, -65511, 65531, 0, -65511, 65532, 0, -65511, 65533, 0, -65511, 65534, 0, -65511, 65535, 0, -65511, 0, 0, -65511, 1, 0, -65511, 2, 0, -65511, 3, 0, -65511, 4, 0, -65511, 5, 0, -65511, 6, 0, -65511, 7, 0, 65531, 65529, 3, 65532, 65529, 3, 65533, 65529, 3, 65534, 65529, 3, 65535, 65529, 3, 0, 65529, 3, 1, 65529, 3, 2, 65529, 3, 3, 65529, 3, 4, 65529, 3, 5, 65529, 3, 6, 65529, 3, 7, 65529, 3, 8, 65529, 3, 9, 65529, 3, 10, 65529, 3, 11, 65529, 3, 12, 65529, 3, 13, 65529, 3, 14, 65529, 3, 65531, 65530, 3, 65531, 65531, 3, 65531, 65532, 3, 65531, 65533, 3, 65531, 65534, 3, 65531, 65535, 3, 14, 65530, 3, 14, 65531, 3, 14, 65532, 3, 14, 65533, 3, 14, 65534, 3, 14, 65535, 3, 65531, 0, 7, 65532, 0, 7, 65533, 0, 7, 65534, 0, 7, 65535, 0, 7, 0, 0, 7, 1, 0, 7, 2, 0, 7, 3, 0, 7, 4, 0, 7, 5, 0, 7, 6, 0, 7, 7, 0, 7, 8, 0, 7, 9, 0, 7, 10, 0, 7, 11, 0, 7, 12, 0, 7, 13, 0, 7, 14, 0, 7)
 }
 
-[node name="Objetos" type="Node3D" parent="." unique_id=1823336292]
+[node name="Objetos" type="Node3D" parent="." unique_id=2089785749]
 
-[node name="ParedeInvisivel" parent="Objetos" unique_id=484499572 instance=ExtResource("3_ed0hr")]
+[node name="ParedeInvisivel" parent="Objetos" unique_id=414518722 instance=ExtResource("3_vqg1k")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0.5)
 tamanho = Vector3(21, 4, 1)
 
-[node name="InicioCachorro" parent="Objetos" unique_id=1275908486 instance=ExtResource("4_neh28")]
+[node name="InicioCachorro" parent="Objetos" unique_id=820125588 instance=ExtResource("4_ed0hr")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -2.5)
 
-[node name="Dono" parent="Objetos" unique_id=633464206 instance=ExtResource("5_bvmvy")]
+[node name="Dono" parent="Objetos" unique_id=2133645105 instance=ExtResource("5_neh28")]
 transform = Transform3D(0.49999997, 0, -0.86602545, 0, 1, 0, 0.86602545, 0, 0.49999997, -3.3, 0, -3.3)
 
-[node name="Ponte" parent="Objetos" unique_id=1964811176 instance=ExtResource("6_r8rej")]
+[node name="Ponte" parent="Objetos" unique_id=1833390294 instance=ExtResource("6_bvmvy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -3.5)
 tamanho = Vector3(2, 0.12, 1.4)
 tipo = 1
 tempo_para_ceder = 1.2
 
-[node name="ZonaDica" parent="Objetos" unique_id=1919763597 instance=ExtResource("7_3rjik")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, -3.5)
-texto = "Ponte velha: não pare em cima dela!"
-tamanho = Vector3(2.4, 1.5, 3)
-
-[node name="Graveto" parent="Objetos" unique_id=61540927 instance=ExtResource("8_gp1cg")]
+[node name="Graveto" parent="Objetos" unique_id=1164561128 instance=ExtResource("7_r8rej")]
 transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.9396926, 11.5, 0.08, -3.5)
 
-[node name="Flores" parent="Objetos" unique_id=250415438 instance=ExtResource("9_cjxrw")]
+[node name="Flores" parent="Objetos" unique_id=1083480169 instance=ExtResource("8_3rjik")]
 transform = Transform3D(0.603483, 0, -0.79737586, 0, 1, 0, 0.79737586, 0, 0.603483, -3.2, 0, -5.6)
 variante = 4
 
-[node name="Flores2" parent="Objetos" unique_id=588887916 instance=ExtResource("9_cjxrw")]
+[node name="Flores2" parent="Objetos" unique_id=1731011250 instance=ExtResource("8_3rjik")]
 transform = Transform3D(-0.9350494, 0, -0.35451734, 0, 1, 0, 0.35451734, 0, -0.9350494, -2.3, 0, -0.5)
 variante = 1
 
-[node name="Arvore" parent="Objetos" unique_id=921681478 instance=ExtResource("10_imqfa")]
+[node name="Arvore" parent="Objetos" unique_id=1515537242 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.58619577, 0, 0.7732585, 0, 0.97033715, 0, -0.7732585, 0, 0.58619577, 17.782867, 0, 6.409093)
 tipo = 1
 variante = 1
 
-[node name="Arvore2" parent="Objetos" unique_id=1120468100 instance=ExtResource("10_imqfa")]
+[node name="Arvore2" parent="Objetos" unique_id=590921412 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.555117, 0, 0.84441555, 0, 1.0105407, 0, -0.84441555, 0, 0.555117, 9.416983, 0, 4.238461)
 tipo = 1
 variante = 5
-visibilidade = 2
 
-[node name="Arvore3" parent="Objetos" unique_id=1233128494 instance=ExtResource("10_imqfa")]
+[node name="Arvore3" parent="Objetos" unique_id=54366715 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.12971143, 0, -0.87383986, 0, 0.8834145, 0, 0.87383986, 0, -0.12971143, -6.585817, 0, 5.2386627)
 tipo = 1
 variante = 6
-visibilidade = 2
 
-[node name="Arvore4" parent="Objetos" unique_id=571660532 instance=ExtResource("10_imqfa")]
+[node name="Arvore4" parent="Objetos" unique_id=1374742448 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.7125815, 0, -0.47388715, 0, 0.8557695, 0, 0.47388715, 0, -0.7125815, 6.547405, 0, 6.7633815)
 variante = 1
-visibilidade = 2
 
-[node name="Arvore5" parent="Objetos" unique_id=161287498 instance=ExtResource("10_imqfa")]
+[node name="Arvore5" parent="Objetos" unique_id=435692335 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.1370887, 0, 0.22437108, 0, 1.1590139, 0, -0.22437108, 0, -1.1370887, 23.59991, 0, -2.7670035)
 tipo = 2
 variante = 1
 
-[node name="Arvore6" parent="Objetos" unique_id=639615018 instance=ExtResource("10_imqfa")]
+[node name="Arvore6" parent="Objetos" unique_id=1501585657 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.72329855, 0, 0.6308535, 0, 0.9597587, 0, -0.6308535, 0, 0.72329855, 19.689812, 0, -10.490139)
 tipo = 1
 
-[node name="Arvore7" parent="Objetos" unique_id=1648276483 instance=ExtResource("10_imqfa")]
+[node name="Arvore7" parent="Objetos" unique_id=1209154276 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.5383691, 0, 0.6974305, 0, 0.8810508, 0, -0.6974305, 0, 0.5383691, -10.440347, 0, -5.3858953)
 variante = 6
 
-[node name="Arvore8" parent="Objetos" unique_id=546934830 instance=ExtResource("10_imqfa")]
+[node name="Arvore8" parent="Objetos" unique_id=1892305104 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.1512684, 0, -0.20206806, 0, 1.1688671, 0, 0.20206806, 0, 1.1512684, 24.576813, 0, 0.6231063)
 tipo = 1
 variante = 5
 
-[node name="Arvore9" parent="Objetos" unique_id=1567753944 instance=ExtResource("10_imqfa")]
+[node name="Arvore9" parent="Objetos" unique_id=2103312135 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.88882136, 0, 0.40755555, 0, 0.97780615, 0, -0.40755555, 0, 0.88882136, 0.73359233, 0, -8.794751)
 tipo = 1
 variante = 4
 
-[node name="Arvore10" parent="Objetos" unique_id=1035637775 instance=ExtResource("10_imqfa")]
+[node name="Arvore10" parent="Objetos" unique_id=333327627 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.7662689, 0, -0.90292346, 0, 1.1842461, 0, 0.90292346, 0, -0.7662689, -16.395002, 0, 2.7228842)
 variante = 2
 
-[node name="Arvore11" parent="Objetos" unique_id=1665746068 instance=ExtResource("10_imqfa")]
+[node name="Arvore11" parent="Objetos" unique_id=479682354 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.081039704, 0, -1.0165668, 0, 1.0197918, 0, 1.0165668, 0, -0.081039704, 22.79592, 0, -6.645213)
 tipo = 1
 variante = 2
 
-[node name="Arvore12" parent="Objetos" unique_id=681710174 instance=ExtResource("10_imqfa")]
+[node name="Arvore12" parent="Objetos" unique_id=1875944568 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.97258264, 0, -0.111917794, 0, 0.9790008, 0, 0.111917794, 0, -0.97258264, -13.31609, 0, 7.359009)
 tipo = 1
 
-[node name="Arvore13" parent="Objetos" unique_id=1556724886 instance=ExtResource("10_imqfa")]
+[node name="Arvore13" parent="Objetos" unique_id=1204509706 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.0833893, 0, 0.26787168, 0, 1.1160141, 0, -0.26787168, 0, -1.0833893, 8.780128, 0, -10.698168)
 tipo = 1
 variante = 7
 
-[node name="Arvore14" parent="Objetos" unique_id=260972593 instance=ExtResource("10_imqfa")]
+[node name="Arvore14" parent="Objetos" unique_id=333503763 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.82187194, 0, 0.6541809, 0, 1.0504409, 0, -0.6541809, 0, -0.82187194, -12.238521, 0, -6.536168)
 variante = 2
 
-[node name="Arvore15" parent="Objetos" unique_id=101510207 instance=ExtResource("10_imqfa")]
+[node name="Arvore15" parent="Objetos" unique_id=332618045 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.2793604, 0, 0.8342011, 0, 0.87973505, 0, -0.8342011, 0, -0.2793604, 23.2598, 0, 6.353073)
 variante = 5
 
-[node name="Arvore16" parent="Objetos" unique_id=1045043368 instance=ExtResource("10_imqfa")]
+[node name="Arvore16" parent="Objetos" unique_id=1834025060 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.0258187, 0, -0.32623369, 0, 1.0764444, 0, 0.32623369, 0, 1.0258187, 18.562222, 0, -0.5360007)
 variante = 6
 
-[node name="Arvore17" parent="Objetos" unique_id=1963007857 instance=ExtResource("10_imqfa")]
+[node name="Arvore17" parent="Objetos" unique_id=1715856751 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.92601234, 0, -0.18495886, 0, 0.9443032, 0, 0.18495886, 0, 0.92601234, 13.743697, 0, -10.733026)
 tipo = 1
 variante = 5
 
-[node name="Arvore18" parent="Objetos" unique_id=479003409 instance=ExtResource("10_imqfa")]
+[node name="Arvore18" parent="Objetos" unique_id=936817621 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.20053189, 0, -0.8508104, 0, 0.8741232, 0, 0.8508104, 0, -0.20053189, -6.209719, 0, -12.572999)
 variante = 6
 
-[node name="Arvore19" parent="Objetos" unique_id=560482743 instance=ExtResource("10_imqfa")]
+[node name="Arvore19" parent="Objetos" unique_id=362444990 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.0295764, 0, -0.5936113, 0, 1.1884452, 0, 0.5936113, 0, -1.0295764, 18.638071, 0, -8.232214)
 tipo = 1
 
-[node name="Arvore20" parent="Objetos" unique_id=1146752551 instance=ExtResource("10_imqfa")]
+[node name="Arvore20" parent="Objetos" unique_id=2013084961 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.5341178, 0, 1.0266963, 0, 1.157319, 0, -1.0266963, 0, -0.5341178, 25.265547, 0, 7.6867566)
 variante = 4
 
-[node name="Arvore21" parent="Objetos" unique_id=1959286350 instance=ExtResource("10_imqfa")]
+[node name="Arvore21" parent="Objetos" unique_id=764493972 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.75948316, 0, -0.9225288, 0, 1.1949369, 0, 0.9225288, 0, -0.75948316, 21.459032, 0, -8.414642)
 tipo = 1
 variante = 1
 
-[node name="Arvore22" parent="Objetos" unique_id=1583962819 instance=ExtResource("10_imqfa")]
+[node name="Arvore22" parent="Objetos" unique_id=1284966724 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.019636542, 0, -0.88920647, 0, 0.88942325, 0, 0.88920647, 0, -0.019636542, 13.673718, 0, 4.2267056)
 variante = 4
-visibilidade = 2
 
-[node name="Arvore23" parent="Objetos" unique_id=1589198702 instance=ExtResource("10_imqfa")]
+[node name="Arvore23" parent="Objetos" unique_id=705825666 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.82165456, 0, -0.69426274, 0, 1.0756937, 0, 0.69426274, 0, -0.82165456, 1.671428, 0, 4.6231923)
 tipo = 1
 variante = 1
-visibilidade = 2
 
-[node name="Arvore24" parent="Objetos" unique_id=2037501106 instance=ExtResource("10_imqfa")]
+[node name="Arvore24" parent="Objetos" unique_id=829600181 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.065607, 0, 0.13731247, 0, 1.0744175, 0, -0.13731247, 0, -1.065607, 19.304394, 0, 6.4729023)
 variante = 7
 
-[node name="Arvore25" parent="Objetos" unique_id=1034791254 instance=ExtResource("10_imqfa")]
+[node name="Arvore25" parent="Objetos" unique_id=1674714959 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.62832844, 0, 1.0186951, 0, 1.1968861, 0, -1.0186951, 0, -0.62832844, -7.6134, 0, -9.634696)
 variante = 1
 
-[node name="Arvore26" parent="Objetos" unique_id=74775104 instance=ExtResource("10_imqfa")]
+[node name="Arvore26" parent="Objetos" unique_id=2094752908 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.64666015, 0, 0.8331107, 0, 1.0546292, 0, -0.8331107, 0, 0.64666015, -9.261511, 0, -7.283803)
 tipo = 1
 variante = 5
 
-[node name="Arvore27" parent="Objetos" unique_id=1510186364 instance=ExtResource("10_imqfa")]
+[node name="Arvore27" parent="Objetos" unique_id=485470501 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.1064266, 0, 0.43333808, 0, 1.18826, 0, -0.43333808, 0, 1.1064266, -11.786559, 0, 0.4935068)
 variante = 1
 
-[node name="Arvore28" parent="Objetos" unique_id=1593037927 instance=ExtResource("10_imqfa")]
+[node name="Arvore28" parent="Objetos" unique_id=739227246 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.3948795, 0, -0.8460281, 0, 0.9336452, 0, 0.8460281, 0, 0.3948795, -12.262773, 0, -8.628782)
 variante = 6
 
-[node name="Arvore29" parent="Objetos" unique_id=930503422 instance=ExtResource("10_imqfa")]
+[node name="Arvore29" parent="Objetos" unique_id=145552027 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.1052901, 0, -1.07889, 0, 1.0840155, 0, 1.07889, 0, 0.1052901, 18.31983, 0, -4.471118)
 variante = 5
 
-[node name="Arvore30" parent="Objetos" unique_id=1431066348 instance=ExtResource("10_imqfa")]
+[node name="Arvore30" parent="Objetos" unique_id=1772237822 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.5095083, 0, -0.8620561, 0, 1.0013688, 0, 0.8620561, 0, -0.5095083, -3.270707, 0, 4.432904)
-visibilidade = 2
 
-[node name="Arvore31" parent="Objetos" unique_id=1354509422 instance=ExtResource("10_imqfa")]
+[node name="Arvore31" parent="Objetos" unique_id=716108758 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.8878376, 0, 0.39249846, 0, 0.97072685, 0, -0.39249846, 0, 0.8878376, -2.5785725, 0, -10.303621)
 tipo = 1
 variante = 3
 
-[node name="Arvore32" parent="Objetos" unique_id=845757202 instance=ExtResource("10_imqfa")]
+[node name="Arvore32" parent="Objetos" unique_id=568669597 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.046798192, 0, -0.971882, 0, 0.97300804, 0, 0.971882, 0, 0.046798192, -11.366014, 0, 6.414585)
 variante = 5
 
-[node name="Arvore33" parent="Objetos" unique_id=1205602493 instance=ExtResource("10_imqfa")]
+[node name="Arvore33" parent="Objetos" unique_id=456243445 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.63820165, 0, -0.70176566, 0, 0.9485654, 0, 0.70176566, 0, -0.63820165, 23.37649, 0, 3.5266335)
 tipo = 1
 variante = 7
 
-[node name="Arvore34" parent="Objetos" unique_id=12817825 instance=ExtResource("10_imqfa")]
+[node name="Arvore34" parent="Objetos" unique_id=1687563412 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.0490271, 0, -0.3476472, 0, 1.1051319, 0, 0.3476472, 0, 1.0490271, 25.481163, 0, -10.561443)
 tipo = 1
 
-[node name="Arvore35" parent="Objetos" unique_id=1287653635 instance=ExtResource("10_imqfa")]
+[node name="Arvore35" parent="Objetos" unique_id=1007060740 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.5148074, 0, -1.0327225, 0, 1.1539248, 0, 1.0327225, 0, 0.5148074, -6.5639615, 0, -6.2031574)
 variante = 7
 
-[node name="Arvore36" parent="Objetos" unique_id=786143026 instance=ExtResource("10_imqfa")]
+[node name="Arvore36" parent="Objetos" unique_id=463001052 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.619338, 0, -0.7863072, 0, 1.0009289, 0, 0.7863072, 0, -0.619338, 22.738792, 0, -10.543067)
 tipo = 2
 variante = 1
 
-[node name="Arvore37" parent="Objetos" unique_id=817951079 instance=ExtResource("10_imqfa")]
+[node name="Arvore37" parent="Objetos" unique_id=1996367 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.37230238, 0, 0.7876562, 0, 0.8712126, 0, -0.7876562, 0, 0.37230238, -15.382197, 0, -8.683726)
 variante = 7
 
-[node name="Arvore38" parent="Objetos" unique_id=523791742 instance=ExtResource("10_imqfa")]
+[node name="Arvore38" parent="Objetos" unique_id=2011046127 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.4878372, 0, -0.7199837, 0, 0.86969054, 0, 0.7199837, 0, 0.4878372, 17.506044, 0, -12.295817)
 variante = 1
 
-[node name="Arvore39" parent="Objetos" unique_id=1636443031 instance=ExtResource("10_imqfa")]
+[node name="Arvore39" parent="Objetos" unique_id=127433725 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.1965113, 0, 1.0753949, 0, 1.0932021, 0, -1.0753949, 0, 0.1965113, 19.745304, 0, -12.532908)
 variante = 4
 
-[node name="Arvore40" parent="Objetos" unique_id=439616079 instance=ExtResource("10_imqfa")]
+[node name="Arvore40" parent="Objetos" unique_id=1226732491 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.8564087, 0, -0.34812716, 0, 0.9244611, 0, 0.34812716, 0, -0.8564087, 13.7434845, 0, 2.7787488)
 variante = 1
-visibilidade = 2
 
-[node name="Arvore41" parent="Objetos" unique_id=2134093243 instance=ExtResource("10_imqfa")]
+[node name="Arvore41" parent="Objetos" unique_id=897073229 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.09001986, 0, -0.93048525, 0, 0.9348296, 0, 0.93048525, 0, 0.09001986, -13.577931, 0, -1.6088903)
 variante = 3
 
-[node name="Arvore42" parent="Objetos" unique_id=1341138369 instance=ExtResource("10_imqfa")]
+[node name="Arvore42" parent="Objetos" unique_id=264306002 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.7014091, 0, 0.95092905, 0, 1.1816263, 0, -0.95092905, 0, -0.7014091, -14.399855, 0, 5.368247)
 variante = 5
 
-[node name="Arvore43" parent="Objetos" unique_id=878106920 instance=ExtResource("10_imqfa")]
+[node name="Arvore43" parent="Objetos" unique_id=1451513470 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.11938251, 0, -0.84883773, 0, 0.85719174, 0, 0.84883773, 0, -0.11938251, -8.625722, 0, 7.5769744)
 tipo = 1
 variante = 5
 
-[node name="Arvore44" parent="Objetos" unique_id=1296810308 instance=ExtResource("10_imqfa")]
+[node name="Arvore44" parent="Objetos" unique_id=1445470894 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.0802766, 0, -0.34693065, 0, 1.1346182, 0, 0.34693065, 0, -1.0802766, -15.3507805, 0, 0.6832487)
 variante = 3
 
-[node name="Arvore45" parent="Objetos" unique_id=1743502488 instance=ExtResource("10_imqfa")]
+[node name="Arvore45" parent="Objetos" unique_id=1585769390 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.1177441, 0, 0.19977343, 0, 1.1354564, 0, -0.19977343, 0, -1.1177441, 4.7367516, 0, -10.290051)
 variante = 7
 
-[node name="Arvore46" parent="Objetos" unique_id=746046752 instance=ExtResource("10_imqfa")]
+[node name="Arvore46" parent="Objetos" unique_id=159690889 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.5060449, 0, 0.9351439, 0, 1.0632852, 0, -0.9351439, 0, -0.5060449, 19.755693, 0, -2.5297828)
 tipo = 1
 variante = 4
 
-[node name="Arvore47" parent="Objetos" unique_id=1903241511 instance=ExtResource("10_imqfa")]
+[node name="Arvore47" parent="Objetos" unique_id=971980003 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.16989802, 0, -1.1749066, 0, 1.1871271, 0, 1.1749066, 0, 0.16989802, 25.58236, 0, -12.63935)
 variante = 7
 
-[node name="Arvore48" parent="Objetos" unique_id=1763541693 instance=ExtResource("10_imqfa")]
+[node name="Arvore48" parent="Objetos" unique_id=156363577 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.8880024, 0, 0.24904715, 0, 0.922265, 0, -0.24904715, 0, -0.8880024, -13.527317, 0, -4.6892347)
 tipo = 2
 
-[node name="Arvore49" parent="Objetos" unique_id=1553979429 instance=ExtResource("10_imqfa")]
+[node name="Arvore49" parent="Objetos" unique_id=1063634099 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.12540147, 0, -1.1887864, 0, 1.1953821, 0, 1.1887864, 0, -0.12540147, 8.745014, 0, 7.3109217)
 tipo = 2
 variante = 3
-visibilidade = 2
 
-[node name="Arvore50" parent="Objetos" unique_id=1551773645 instance=ExtResource("10_imqfa")]
+[node name="Arvore50" parent="Objetos" unique_id=1090873313 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.083625175, 0, 0.9503019, 0, 0.9539742, 0, -0.9503019, 0, 0.083625175, 4.632792, 0, 4.488133)
 tipo = 1
 variante = 7
-visibilidade = 2
 
-[node name="Arvore51" parent="Objetos" unique_id=114119859 instance=ExtResource("10_imqfa")]
+[node name="Arvore51" parent="Objetos" unique_id=1846724936 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.66174555, 0, -0.74627304, 0, 0.99741197, 0, 0.74627304, 0, 0.66174555, -6.337537, 0, 7.4355206)
 variante = 7
-visibilidade = 2
 
-[node name="Arvore52" parent="Objetos" unique_id=1491192479 instance=ExtResource("10_imqfa")]
+[node name="Arvore52" parent="Objetos" unique_id=756637252 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.99397695, 0, -0.40718234, 0, 1.0741451, 0, 0.40718234, 0, 0.99397695, 16.479927, 0, -0.46472734)
 tipo = 1
 variante = 2
 
-[node name="Arvore53" parent="Objetos" unique_id=1015291376 instance=ExtResource("10_imqfa")]
+[node name="Arvore53" parent="Objetos" unique_id=39059887 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.6958663, 0, -0.6435427, 0, 0.9478276, 0, 0.6435427, 0, -0.6958663, -16.415052, 0, 4.2114305)
 
-[node name="Arvore54" parent="Objetos" unique_id=150466375 instance=ExtResource("10_imqfa")]
+[node name="Arvore54" parent="Objetos" unique_id=1767027220 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.1084456, 0, -0.056733772, 0, 1.1098967, 0, 0.056733772, 0, -1.1084456, -6.6595373, 0, 2.521475)
 tipo = 1
 variante = 5
-visibilidade = 2
 
-[node name="Arvore55" parent="Objetos" unique_id=669113109 instance=ExtResource("10_imqfa")]
+[node name="Arvore55" parent="Objetos" unique_id=1094322127 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.6839138, 0, 0.8437948, 0, 1.0861528, 0, -0.8437948, 0, -0.6839138, 19.525246, 0, 1.6982439)
 variante = 6
 
-[node name="Arvore56" parent="Objetos" unique_id=63084194 instance=ExtResource("10_imqfa")]
+[node name="Arvore56" parent="Objetos" unique_id=1719751864 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.16131192, 0, -0.83999354, 0, 0.85534245, 0, 0.83999354, 0, -0.16131192, 15.642673, 0, 2.76561)
 tipo = 1
 variante = 2
-visibilidade = 2
 
-[node name="Arvore57" parent="Objetos" unique_id=1865844428 instance=ExtResource("10_imqfa")]
+[node name="Arvore57" parent="Objetos" unique_id=1281780867 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.478952, 0, 0.97191954, 0, 1.0835233, 0, -0.97191954, 0, -0.478952, 4.353186, 0, 2.6422563)
 tipo = 1
 variante = 7
-visibilidade = 2
 
-[node name="Arvore58" parent="Objetos" unique_id=214151371 instance=ExtResource("10_imqfa")]
+[node name="Arvore58" parent="Objetos" unique_id=1127916797 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.53581756, 0, -0.90214294, 0, 1.0492675, 0, 0.90214294, 0, 0.53581756, 11.751655, 0, -12.369819)
 variante = 4
 
-[node name="Arvore59" parent="Objetos" unique_id=1582495986 instance=ExtResource("10_imqfa")]
+[node name="Arvore59" parent="Objetos" unique_id=245180000 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.13486981, 0, 0.96442914, 0, 0.97381383, 0, -0.96442914, 0, -0.13486981, 12.393294, 0, 6.607963)
 variante = 6
-visibilidade = 2
 
-[node name="Arvore60" parent="Objetos" unique_id=559972072 instance=ExtResource("10_imqfa")]
+[node name="Arvore60" parent="Objetos" unique_id=1334666275 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.77023816, 0, -0.51755923, 0, 0.9279733, 0, 0.51755923, 0, 0.77023816, -10.43481, 0, -12.444009)
 variante = 5
 
-[node name="Arvore61" parent="Objetos" unique_id=1698226839 instance=ExtResource("10_imqfa")]
+[node name="Arvore61" parent="Objetos" unique_id=1221422435 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.0132251, 0, -0.0035704444, 0, 1.0132314, 0, 0.0035704444, 0, 1.0132251, -6.592022, 0, -4.680476)
 tipo = 2
 variante = 4
 
-[node name="Arvore62" parent="Objetos" unique_id=1763248235 instance=ExtResource("10_imqfa")]
+[node name="Arvore62" parent="Objetos" unique_id=1587943807 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.16621935, 0, -0.9620372, 0, 0.9762912, 0, 0.9620372, 0, 0.16621935, -0.78058547, 0, 7.210357)
 variante = 4
-visibilidade = 2
 
-[node name="Arvore63" parent="Objetos" unique_id=954168449 instance=ExtResource("10_imqfa")]
+[node name="Arvore63" parent="Objetos" unique_id=743411217 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.6369946, 0, 0.9739254, 0, 1.1637409, 0, -0.9739254, 0, 0.6369946, -8.580079, 0, 2.6870203)
 variante = 2
 
-[node name="Arvore64" parent="Objetos" unique_id=341401139 instance=ExtResource("10_imqfa")]
+[node name="Arvore64" parent="Objetos" unique_id=355573722 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.0457021, 0, -0.5870607, 0, 1.1992218, 0, 0.5870607, 0, -1.0457021, -15.447371, 0, -5.2293043)
 tipo = 1
 variante = 5
 
-[node name="Arvore65" parent="Objetos" unique_id=523850342 instance=ExtResource("10_imqfa")]
+[node name="Arvore65" parent="Objetos" unique_id=2077850389 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.83445436, 0, 0.55185217, 0, 1.0004274, 0, -0.55185217, 0, -0.83445436, 10.254387, 0, 2.380369)
 variante = 4
-visibilidade = 2
 
-[node name="Arvore66" parent="Objetos" unique_id=383772698 instance=ExtResource("10_imqfa")]
+[node name="Arvore66" parent="Objetos" unique_id=1169347752 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.90485275, 0, 0.4200428, 0, 0.99759436, 0, -0.4200428, 0, 0.90485275, -4.6139846, 0, -11.418981)
 tipo = 1
 
-[node name="Arvore67" parent="Objetos" unique_id=2009040443 instance=ExtResource("10_imqfa")]
+[node name="Arvore67" parent="Objetos" unique_id=184013794 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.09625876, 0, 0.8901917, 0, 0.8953809, 0, -0.8901917, 0, -0.09625876, -7.675735, 0, -1.6500314)
 variante = 7
 
-[node name="Arvore68" parent="Objetos" unique_id=1125553922 instance=ExtResource("10_imqfa")]
+[node name="Arvore68" parent="Objetos" unique_id=402168456 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.13337685, 0, -1.1234704, 0, 1.1313599, 0, 1.1234704, 0, -0.13337685, 16.366693, 0, -7.2314396)
 tipo = 1
 variante = 1
 
-[node name="Arvore69" parent="Objetos" unique_id=680816278 instance=ExtResource("10_imqfa")]
+[node name="Arvore69" parent="Objetos" unique_id=787783561 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.563978, 0, -0.7964192, 0, 0.9758866, 0, 0.7964192, 0, -0.563978, -9.680466, 0, 5.3358936)
 tipo = 1
 variante = 1
 
-[node name="Arvore70" parent="Objetos" unique_id=305555046 instance=ExtResource("10_imqfa")]
+[node name="Arvore70" parent="Objetos" unique_id=2130694039 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.6069202, 0, 0.7787231, 0, 0.9873003, 0, -0.7787231, 0, 0.6069202, -3.4463098, 0, 6.75505)
 tipo = 1
 variante = 4
-visibilidade = 2
 
-[node name="Arvore71" parent="Objetos" unique_id=1881514722 instance=ExtResource("10_imqfa")]
+[node name="Arvore71" parent="Objetos" unique_id=2127651457 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.73550117, 0, -0.92104363, 0, 1.1786786, 0, 0.92104363, 0, -0.73550117, 3.31282, 0, 6.2754)
 tipo = 2
 variante = 1
-visibilidade = 2
 
-[node name="Arvore72" parent="Objetos" unique_id=428436934 instance=ExtResource("10_imqfa")]
+[node name="Arvore72" parent="Objetos" unique_id=797483335 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.0459532, 0, -0.52009606, 0, 1.1681259, 0, 0.52009606, 0, 1.0459532, 10.615862, 0, -9.776327)
 variante = 4
 
-[node name="Arvore73" parent="Objetos" unique_id=486571231 instance=ExtResource("10_imqfa")]
+[node name="Arvore73" parent="Objetos" unique_id=867662830 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.8777711, 0, -0.11905824, 0, 0.88580865, 0, 0.11905824, 0, 0.8777711, -9.486875, 0, 0.70530343)
 tipo = 2
 variante = 3
 
-[node name="Arvore74" parent="Objetos" unique_id=1941683293 instance=ExtResource("10_imqfa")]
+[node name="Arvore74" parent="Objetos" unique_id=157144193 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.37944177, 0, -0.9568219, 0, 1.0293125, 0, 0.9568219, 0, 0.37944177, -14.669493, 0, -10.409921)
 variante = 7
 
-[node name="Arvore75" parent="Objetos" unique_id=402549402 instance=ExtResource("10_imqfa")]
+[node name="Arvore75" parent="Objetos" unique_id=507728488 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.54272825, 0, 0.95329916, 0, 1.0969654, 0, -0.95329916, 0, 0.54272825, 6.2318425, 0, -8.447462)
 tipo = 1
 variante = 4
 
-[node name="Arvore76" parent="Objetos" unique_id=369465884 instance=ExtResource("10_imqfa")]
+[node name="Arvore76" parent="Objetos" unique_id=738775109 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.967213, 0, -0.035413608, 0, 0.96786106, 0, 0.035413608, 0, 0.967213, 21.736511, 0, 5.77223)
 tipo = 1
 variante = 3
 
-[node name="Arvore77" parent="Objetos" unique_id=776493060 instance=ExtResource("10_imqfa")]
+[node name="Arvore77" parent="Objetos" unique_id=1570487916 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.7144143, 0, 0.8529073, 0, 1.112582, 0, -0.8529073, 0, 0.7144143, -13.420417, 0, 2.7645655)
 variante = 4
 
-[node name="Arvore78" parent="Objetos" unique_id=97542476 instance=ExtResource("10_imqfa")]
+[node name="Arvore78" parent="Objetos" unique_id=383432510 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.34106535, 0, 1.0115957, 0, 1.0675446, 0, -1.0115957, 0, 0.34106535, -0.3646438, 0, -10.264992)
 variante = 2
 
-[node name="Arvore79" parent="Objetos" unique_id=1990789820 instance=ExtResource("10_imqfa")]
+[node name="Arvore79" parent="Objetos" unique_id=317719650 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.7937081, 0, 0.5829542, 0, 0.9847884, 0, -0.5829542, 0, -0.7937081, 12.323659, 0, -8.245336)
 variante = 4
 
-[node name="Arvore80" parent="Objetos" unique_id=981898316 instance=ExtResource("10_imqfa")]
+[node name="Arvore80" parent="Objetos" unique_id=873960329 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.8200462, 0, 0.6015863, 0, 1.0170456, 0, -0.6015863, 0, -0.8200462, -9.219787, 0, -10.4449415)
 variante = 7
 
-[node name="Arvore81" parent="Objetos" unique_id=220144901 instance=ExtResource("10_imqfa")]
+[node name="Arvore81" parent="Objetos" unique_id=161184607 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.1503732, 0, -1.1198539, 0, 1.1299047, 0, 1.1198539, 0, 0.1503732, -16.380583, 0, -12.571099)
 variante = 1
 
-[node name="Arvore82" parent="Objetos" unique_id=1725942484 instance=ExtResource("10_imqfa")]
+[node name="Arvore82" parent="Objetos" unique_id=1915087684 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.3417272, 0, 1.1172794, 0, 1.168371, 0, -1.1172794, 0, -0.3417272, -12.308839, 0, 4.3336883)
 tipo = 1
 variante = 5
 
-[node name="Arvore83" parent="Objetos" unique_id=206302771 instance=ExtResource("10_imqfa")]
+[node name="Arvore83" parent="Objetos" unique_id=2126596603 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.19462553, 0, 1.1141126, 0, 1.1309845, 0, -1.1141126, 0, -0.19462553, -4.370476, 0, -9.786239)
 variante = 4
 
-[node name="Arvore84" parent="Objetos" unique_id=2044732245 instance=ExtResource("10_imqfa")]
+[node name="Arvore84" parent="Objetos" unique_id=792124128 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.15314801, 0, -1.0065213, 0, 1.0181059, 0, 1.0065213, 0, 0.15314801, 21.682438, 0, 7.356526)
 tipo = 1
 variante = 1
 
-[node name="Arvore85" parent="Objetos" unique_id=1536763830 instance=ExtResource("10_imqfa")]
+[node name="Arvore85" parent="Objetos" unique_id=882844367 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.8813643, 0, 0.61991507, 0, 1.0775424, 0, -0.61991507, 0, -0.8813643, 4.5230303, 0, -8.491405)
 tipo = 1
 variante = 1
 
-[node name="Arvore86" parent="Objetos" unique_id=637172581 instance=ExtResource("10_imqfa")]
+[node name="Arvore86" parent="Objetos" unique_id=122649139 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.71421707, 0, 0.6629126, 0, 0.9744533, 0, -0.6629126, 0, -0.71421707, 17.623472, 0, -10.764582)
 tipo = 2
 variante = 6
 
-[node name="Arvore87" parent="Objetos" unique_id=2101513092 instance=ExtResource("10_imqfa")]
+[node name="Arvore87" parent="Objetos" unique_id=1813189830 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.720235, 0, -0.7652519, 0, 1.0508801, 0, 0.7652519, 0, 0.720235, 18.60357, 0, 4.215719)
 tipo = 2
 variante = 7
 
-[node name="Arvore88" parent="Objetos" unique_id=1886472363 instance=ExtResource("10_imqfa")]
+[node name="Arvore88" parent="Objetos" unique_id=914507707 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.9340805, 0, 0.056275655, 0, 0.9357742, 0, -0.056275655, 0, -0.9340805, -1.211488, 0, 3.7685301)
 tipo = 1
 variante = 7
-visibilidade = 2
 
-[node name="Arvore89" parent="Objetos" unique_id=1449270083 instance=ExtResource("10_imqfa")]
+[node name="Arvore89" parent="Objetos" unique_id=2146691854 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.51651186, 0, -0.7962436, 0, 0.9490987, 0, 0.7962436, 0, 0.51651186, 21.289257, 0, 0.5436819)
 tipo = 1
 variante = 5
 
-[node name="Arvore90" parent="Objetos" unique_id=2039081646 instance=ExtResource("10_imqfa")]
+[node name="Arvore90" parent="Objetos" unique_id=1703136323 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.33546278, 0, -0.8606442, 0, 0.92371196, 0, 0.8606442, 0, -0.33546278, -8.373766, 0, -3.4564066)
 tipo = 1
 variante = 4
 
-[node name="Arvore91" parent="Objetos" unique_id=1375661013 instance=ExtResource("10_imqfa")]
+[node name="Arvore91" parent="Objetos" unique_id=485213159 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.10736288, 0, -0.91417694, 0, 0.9204598, 0, 0.91417694, 0, 0.10736288, 21.43302, 0, 2.4838204)
 variante = 1
 
-[node name="Arvore92" parent="Objetos" unique_id=151072715 instance=ExtResource("10_imqfa")]
+[node name="Arvore92" parent="Objetos" unique_id=1660645639 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.06877371, 0, 1.1316117, 0, 1.1336997, 0, -1.1316117, 0, -0.06877371, 17.757465, 0, -2.3481083)
 variante = 4
 
-[node name="Arvore93" parent="Objetos" unique_id=1283639457 instance=ExtResource("10_imqfa")]
+[node name="Arvore93" parent="Objetos" unique_id=1343881800 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.13033925, 0, -0.87638384, 0, 0.8860231, 0, 0.87638384, 0, 0.13033925, 16.348093, 0, 4.570817)
 tipo = 1
 variante = 2
-visibilidade = 2
 
-[node name="Arvore94" parent="Objetos" unique_id=765284104 instance=ExtResource("10_imqfa")]
+[node name="Arvore94" parent="Objetos" unique_id=1678787584 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.0960416, 0, 0.29896057, 0, 1.1360829, 0, -0.29896057, 0, 1.0960416, 24.78961, 0, -4.437666)
 tipo = 1
 
-[node name="Arvore95" parent="Objetos" unique_id=1465239312 instance=ExtResource("10_imqfa")]
+[node name="Arvore95" parent="Objetos" unique_id=754434207 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.07841898, 0, 0.95752716, 0, 0.96073294, 0, -0.95752716, 0, -0.07841898, -10.613919, 0, 2.7928026)
 variante = 2
 
-[node name="Arvore96" parent="Objetos" unique_id=1339303274 instance=ExtResource("10_imqfa")]
+[node name="Arvore96" parent="Objetos" unique_id=892852039 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.88602877, 0, 0.092107266, 0, 0.89080346, 0, -0.092107266, 0, 0.88602877, -10.306599, 0, -3.6855145)
 tipo = 1
 variante = 7
 
-[node name="Arvore97" parent="Objetos" unique_id=1808503602 instance=ExtResource("10_imqfa")]
+[node name="Arvore97" parent="Objetos" unique_id=1180374424 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.79021025, 0, -0.31891036, 0, 0.8521362, 0, 0.31891036, 0, -0.79021025, 13.264826, 0, -12.202722)
 tipo = 1
 
-[node name="Arvore98" parent="Objetos" unique_id=1449784926 instance=ExtResource("10_imqfa")]
+[node name="Arvore98" parent="Objetos" unique_id=767953108 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.6064067, 0, 0.64435506, 0, 0.88482904, 0, -0.64435506, 0, -0.6064067, 23.707794, 0, -8.344084)
 variante = 4
 
-[node name="Arvore99" parent="Objetos" unique_id=409536146 instance=ExtResource("10_imqfa")]
+[node name="Arvore99" parent="Objetos" unique_id=632879560 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.93239427, 0, -0.0013095709, 0, 0.9323952, 0, 0.0013095709, 0, 0.93239427, 20.349112, 0, -6.3166013)
 variante = 2
 
-[node name="Arvore100" parent="Objetos" unique_id=1005945674 instance=ExtResource("10_imqfa")]
+[node name="Arvore100" parent="Objetos" unique_id=58263075 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.46570194, 0, 0.94797814, 0, 1.0561917, 0, -0.94797814, 0, -0.46570194, -15.287782, 0, -3.2201078)
 tipo = 1
 variante = 3
 
-[node name="Arvore101" parent="Objetos" unique_id=1583330824 instance=ExtResource("10_imqfa")]
+[node name="Arvore101" parent="Objetos" unique_id=1219909959 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.15369236, 0, 0.87503827, 0, 0.88843304, 0, -0.87503827, 0, 0.15369236, -0.643394, 0, 5.646928)
 tipo = 2
-visibilidade = 2
 
-[node name="Arvore102" parent="Objetos" unique_id=865243638 instance=ExtResource("10_imqfa")]
+[node name="Arvore102" parent="Objetos" unique_id=1143152086 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.21315032, 0, 0.9344866, 0, 0.9584875, 0, -0.9344866, 0, -0.21315032, 21.783714, 0, -2.606825)
 variante = 6
 
-[node name="Arvore103" parent="Objetos" unique_id=1154568016 instance=ExtResource("10_imqfa")]
+[node name="Arvore103" parent="Objetos" unique_id=1589419693 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.52836376, 0, -0.75489837, 0, 0.92143357, 0, 0.75489837, 0, -0.52836376, 6.6590977, 0, 4.2982635)
 tipo = 1
 variante = 2
-visibilidade = 2
 
-[node name="Arvore104" parent="Objetos" unique_id=473200969 instance=ExtResource("10_imqfa")]
+[node name="Arvore104" parent="Objetos" unique_id=1620789401 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.4697938, 0, -0.79292357, 0, 0.9216474, 0, 0.79292357, 0, 0.4697938, 2.273624, 0, 2.5144937)
-visibilidade = 2
 
-[node name="Arvore105" parent="Objetos" unique_id=1062025024 instance=ExtResource("10_imqfa")]
+[node name="Arvore105" parent="Objetos" unique_id=1282155896 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.08592812, 0, -0.8889143, 0, 0.8930578, 0, 0.8889143, 0, 0.08592812, 15.361679, 0, 7.7307816)
 variante = 3
-visibilidade = 2
 
-[node name="Arvore106" parent="Objetos" unique_id=627865621 instance=ExtResource("10_imqfa")]
+[node name="Arvore106" parent="Objetos" unique_id=1795063044 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.019649, 0, 0.07977598, 0, 1.022765, 0, -0.07977598, 0, -1.019649, 25.422445, 0, -8.547951)
 tipo = 1
 variante = 1
 
-[node name="Arvore107" parent="Objetos" unique_id=1504977192 instance=ExtResource("10_imqfa")]
+[node name="Arvore107" parent="Objetos" unique_id=2010785332 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.8890979, 0, 0.48602444, 0, 1.0132694, 0, -0.48602444, 0, 0.8890979, -14.720464, 0, -12.62051)
 tipo = 1
 variante = 2
 
-[node name="Arvore108" parent="Objetos" unique_id=1808743842 instance=ExtResource("10_imqfa")]
+[node name="Arvore108" parent="Objetos" unique_id=967602587 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.6789069, 0, 0.5637521, 0, 0.8824574, 0, -0.5637521, 0, -0.6789069, 6.3395743, 0, 2.5089893)
 tipo = 1
 variante = 6
-visibilidade = 2
 
-[node name="Arvore109" parent="Objetos" unique_id=24274099 instance=ExtResource("10_imqfa")]
+[node name="Arvore109" parent="Objetos" unique_id=1400489262 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.93903214, 0, -0.42847285, 0, 1.0321678, 0, 0.42847285, 0, -0.93903214, 20.411478, 0, -4.2001815)
 tipo = 2
 variante = 6
 
-[node name="Arvore110" parent="Objetos" unique_id=1803776065 instance=ExtResource("10_imqfa")]
+[node name="Arvore110" parent="Objetos" unique_id=310696137 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.10197073, 0, 0.9747353, 0, 0.9800546, 0, -0.9747353, 0, -0.10197073, -4.3037357, 0, 2.5062099)
 tipo = 1
 variante = 2
-visibilidade = 2
 
-[node name="Arvore111" parent="Objetos" unique_id=239122929 instance=ExtResource("10_imqfa")]
+[node name="Arvore111" parent="Objetos" unique_id=1896574690 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.1444195, 0, -1.0788946, 0, 1.0885175, 0, 1.0788946, 0, -0.1444195, -16.518837, 0, 7.4967947)
 
-[node name="Arvore112" parent="Objetos" unique_id=1270216799 instance=ExtResource("10_imqfa")]
+[node name="Arvore112" parent="Objetos" unique_id=1671409041 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.90714824, 0, 0.5319741, 0, 1.0516247, 0, -0.5319741, 0, -0.90714824, -12.282225, 0, -12.501781)
 variante = 6
 
-[node name="Arvore113" parent="Objetos" unique_id=623197421 instance=ExtResource("10_imqfa")]
+[node name="Arvore113" parent="Objetos" unique_id=1581745445 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.84693927, 0, -0.7571401, 0, 1.1360314, 0, 0.7571401, 0, 0.84693927, 15.73925, 0, -11.681097)
 variante = 6
 
-[node name="Arvore114" parent="Objetos" unique_id=1796705569 instance=ExtResource("10_imqfa")]
+[node name="Arvore114" parent="Objetos" unique_id=512949874 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-1.1275321, 0, 0.18797281, 0, 1.1430933, 0, -0.18797281, 0, -1.1275321, -12.468969, 0, -10.409874)
 tipo = 1
 variante = 5
 
-[node name="Arvore115" parent="Objetos" unique_id=163610228 instance=ExtResource("10_imqfa")]
+[node name="Arvore115" parent="Objetos" unique_id=900047333 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.0056839, 0, -0.23327845, 0, 1.0323851, 0, 0.23327845, 0, 1.0056839, -6.2705135, 0, 0.21089165)
 variante = 4
 
-[node name="Arvore116" parent="Objetos" unique_id=725424085 instance=ExtResource("10_imqfa")]
+[node name="Arvore116" parent="Objetos" unique_id=1695654540 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.8688202, 0, 0.5850913, 0, 1.0474638, 0, -0.5850913, 0, 0.8688202, 16.394808, 0, -5.736715)
 tipo = 1
 variante = 7
 
-[node name="Arvore117" parent="Objetos" unique_id=927319443 instance=ExtResource("10_imqfa")]
+[node name="Arvore117" parent="Objetos" unique_id=1020291410 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.5788321, 0, -0.9348704, 0, 1.0995587, 0, 0.9348704, 0, -0.5788321, 2.6508498, 0, -8.44762)
 tipo = 2
 variante = 1
 
-[node name="Arvore118" parent="Objetos" unique_id=1460436243 instance=ExtResource("10_imqfa")]
+[node name="Arvore118" parent="Objetos" unique_id=1603362961 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.43579075, 0, -0.99884033, 0, 1.0897686, 0, 0.99884033, 0, -0.43579075, 22.217535, 0, -12.693154)
 variante = 4
 
-[node name="Arvore119" parent="Objetos" unique_id=1880485369 instance=ExtResource("10_imqfa")]
+[node name="Arvore119" parent="Objetos" unique_id=955998194 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.40818098, 0, 0.9452184, 0, 1.029587, 0, -0.9452184, 0, -0.40818098, 4.2943015, 0, -12.683881)
 variante = 6
 
-[node name="Arvore120" parent="Objetos" unique_id=1055367633 instance=ExtResource("10_imqfa")]
+[node name="Arvore120" parent="Objetos" unique_id=570249612 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.8806973, 0, -0.6442909, 0, 1.0912097, 0, 0.6442909, 0, 0.8806973, 25.60414, 0, 5.2368336)
 tipo = 2
 variante = 4
 
-[node name="Arvore121" parent="Objetos" unique_id=1151205656 instance=ExtResource("10_imqfa")]
+[node name="Arvore121" parent="Objetos" unique_id=1584893929 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.40921375, 0, 0.9256886, 0, 1.0121044, 0, -0.9256886, 0, -0.40921375, -0.47567666, 0, -12.756744)
 variante = 6
 
-[node name="Arvore122" parent="Objetos" unique_id=1528567486 instance=ExtResource("10_imqfa")]
+[node name="Arvore122" parent="Objetos" unique_id=810029843 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.6104361, 0, -0.89176166, 0, 1.0806808, 0, 0.89176166, 0, -0.6104361, 25.479837, 0, -6.3286114)
 tipo = 2
 variante = 5
 
-[node name="Arvore123" parent="Objetos" unique_id=2107241756 instance=ExtResource("10_imqfa")]
+[node name="Arvore123" parent="Objetos" unique_id=2122767277 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.43446413, 0, -0.828876, 0, 0.93583894, 0, 0.828876, 0, -0.43446413, 7.5747595, 0, -12.64121)
 tipo = 2
 variante = 7
 
-[node name="Arvore124" parent="Objetos" unique_id=329096954 instance=ExtResource("10_imqfa")]
+[node name="Arvore124" parent="Objetos" unique_id=76262027 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.72295475, 0, -0.8507732, 0, 1.116458, 0, 0.8507732, 0, -0.72295475, -8.603883, 0, -5.4652076)
 tipo = 1
 variante = 2
 
-[node name="Arvore125" parent="Objetos" unique_id=142803018 instance=ExtResource("10_imqfa")]
+[node name="Arvore125" parent="Objetos" unique_id=1243200595 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.020473897, 0, 1.0310551, 0, 1.0312583, 0, -1.0310551, 0, 0.020473897, 10.616163, 0, 6.7305894)
 tipo = 1
-visibilidade = 2
 
-[node name="Arvore126" parent="Objetos" unique_id=384321120 instance=ExtResource("10_imqfa")]
+[node name="Arvore126" parent="Objetos" unique_id=1855008295 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.81843877, 0, -0.7625016, 0, 1.1185932, 0, 0.7625016, 0, -0.81843877, -13.522715, 0, 0.2727792)
 tipo = 1
 variante = 5
 
-[node name="Arvore127" parent="Objetos" unique_id=935693559 instance=ExtResource("10_imqfa")]
+[node name="Arvore127" parent="Objetos" unique_id=1223268901 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.8813944, 0, -0.7462324, 0, 1.1548674, 0, 0.7462324, 0, 0.8813944, 1.31731, 0, -12.68748)
 tipo = 1
 variante = 3
 
-[node name="Arvore128" parent="Objetos" unique_id=1364979392 instance=ExtResource("10_imqfa")]
+[node name="Arvore128" parent="Objetos" unique_id=887548903 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.7785856, 0, 0.43935874, 0, 0.89399755, 0, -0.43935874, 0, -0.7785856, -1.2449248, 0, -8.614516)
 variante = 2
 
-[node name="Arvore129" parent="Objetos" unique_id=898658093 instance=ExtResource("10_imqfa")]
+[node name="Arvore129" parent="Objetos" unique_id=1998203905 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(1.1211112, 0, 0.01062364, 0, 1.1211615, 0, -0.01062364, 0, 1.1211112, 17.436367, 0, 1.7293634)
 variante = 1
 
-[node name="Arvore130" parent="Objetos" unique_id=1247253554 instance=ExtResource("10_imqfa")]
+[node name="Arvore130" parent="Objetos" unique_id=1098060849 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.035691325, 0, 1.1885357, 0, 1.1890715, 0, -1.1885357, 0, -0.035691325, 8.307679, 0, 2.5698638)
 tipo = 1
 variante = 5
-visibilidade = 2
 
-[node name="Arvore131" parent="Objetos" unique_id=647430639 instance=ExtResource("10_imqfa")]
+[node name="Arvore131" parent="Objetos" unique_id=425819107 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.33825704, 0, -0.8033492, 0, 0.8716581, 0, 0.8033492, 0, 0.33825704, 14.411226, 0, -8.256751)
 tipo = 1
 variante = 1
 
-[node name="Arvore132" parent="Objetos" unique_id=1846469409 instance=ExtResource("10_imqfa")]
+[node name="Arvore132" parent="Objetos" unique_id=242128116 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.9087893, 0, -0.39552858, 0, 0.99113107, 0, 0.39552858, 0, 0.9087893, 1.6632675, 0, -10.224116)
 variante = 4
 
-[node name="Arvore133" parent="Objetos" unique_id=1825070152 instance=ExtResource("10_imqfa")]
+[node name="Arvore133" parent="Objetos" unique_id=954268572 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.25578323, 0, 0.8216702, 0, 0.86056197, 0, -0.8216702, 0, -0.25578323, 0.7341147, 0, 2.2481363)
 tipo = 1
 variante = 4
-visibilidade = 2
 
-[node name="Arvore134" parent="Objetos" unique_id=1894848647 instance=ExtResource("10_imqfa")]
+[node name="Arvore134" parent="Objetos" unique_id=2094021425 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(-0.85232556, 0, 0.79043335, 0, 1.16243, 0, -0.79043335, 0, -0.85232556, 25.430153, 0, 3.6138291)
 tipo = 1
 
-[node name="Arvore135" parent="Objetos" unique_id=152478049 instance=ExtResource("10_imqfa")]
+[node name="Arvore135" parent="Objetos" unique_id=1773650266 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.5430075, 0, -0.8760785, 0, 1.0307137, 0, 0.8760785, 0, 0.5430075, 25.312433, 0, -1.3393503)
 variante = 3
 
-[node name="Arvore136" parent="Objetos" unique_id=1127628308 instance=ExtResource("10_imqfa")]
+[node name="Arvore136" parent="Objetos" unique_id=266020965 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.16979104, 0, 0.98172784, 0, 0.9963025, 0, -0.98172784, 0, 0.16979104, -15.225168, 0, -1.694984)
 
-[node name="Arvore137" parent="Objetos" unique_id=898318479 instance=ExtResource("10_imqfa")]
+[node name="Arvore137" parent="Objetos" unique_id=2040483302 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.69323385, 0, -0.72566044, 0, 1.0035717, 0, 0.72566044, 0, 0.69323385, 1.5634401, 0, 6.5686817)
 variante = 4
-visibilidade = 2
 
-[node name="Arvore138" parent="Objetos" unique_id=1336019388 instance=ExtResource("10_imqfa")]
+[node name="Arvore138" parent="Objetos" unique_id=1886794172 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.9798361, 0, 0.0073932316, 0, 0.979864, 0, -0.0073932316, 0, 0.9798361, 6.3352714, 0, -10.355706)
 tipo = 2
 variante = 6
 
-[node name="Arvore139" parent="Objetos" unique_id=297968908 instance=ExtResource("10_imqfa")]
+[node name="Arvore139" parent="Objetos" unique_id=1600430589 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.83231115, 0, 0.4909916, 0, 0.96634084, 0, -0.4909916, 0, 0.83231115, -10.384184, 0, -1.6851271)
 
-[node name="Arvore140" parent="Objetos" unique_id=1235551473 instance=ExtResource("10_imqfa")]
+[node name="Arvore140" parent="Objetos" unique_id=1697044853 instance=ExtResource("9_gp1cg")]
 transform = Transform3D(0.68980545, 0, -0.8834092, 0, 1.1208227, 0, 0.8834092, 0, 0.68980545, 9.241233, 0, -12.4202795)
 tipo = 2
 variante = 4

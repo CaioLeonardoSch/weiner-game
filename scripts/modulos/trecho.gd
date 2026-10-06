@@ -9,7 +9,7 @@ extends RefCounted
 ##
 ## Coordenadas: X e Z contam a partir do canto do retângulo (coluna 0 a largura-1, 0 a
 ## profundidade-1); Y é a camada de verdade (o chão fica na -1). Os objetos guardam a cena, o
-## transform (posição relativa ao mesmo canto), a visibilidade e as propriedades do painel.
+## transform (posição relativa ao mesmo canto) e as propriedades do painel.
 ## O Início do cachorro (único na fase) fica de fora.
 
 ## Colunas em X e em Z.
@@ -17,7 +17,7 @@ var largura := 1
 var profundidade := 1
 ## [Vector3i posição, int item, Basis orientação]
 var celulas: Array = []
-## {cena: String, transform: Transform3D, visibilidade: int, propriedades: Dictionary}
+## {cena: String, transform: Transform3D, propriedades: Dictionary}
 var objetos: Array[Dictionary] = []
 
 
@@ -74,8 +74,7 @@ static func _dados_do_objeto(objeto: ObjetoFase, canto: Vector3) -> Dictionary:
 		propriedades[nome] = objeto.get(nome)
 	var transformacao := objeto.transform
 	transformacao.origin -= canto
-	return {cena = objeto.scene_file_path, transform = transformacao,
-		visibilidade = objeto.visibilidade, propriedades = propriedades}
+	return {cena = objeto.scene_file_path, transform = transformacao, propriedades = propriedades}
 
 
 func vazio() -> bool:
@@ -142,7 +141,6 @@ func aplicar_em(fase: Fase, origem: Vector3i) -> Dictionary:
 			continue
 		var objeto := fase.adicionar_objeto(cena, Vector3.ZERO)
 		objeto.transform = (dados.transform as Transform3D).translated(deslocamento)
-		objeto.visibilidade = dados.visibilidade
 		for nome in dados.propriedades:
 			objeto.set(nome, dados.propriedades[nome])
 		criados.append(objeto)

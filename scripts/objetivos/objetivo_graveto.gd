@@ -59,12 +59,13 @@ func _conferir() -> void:
 	var cachorro: Dachshund = jogo.cachorro
 	if not cachorro.tem_graveto or jogo.concluida:
 		return
+	# Sem explicar o que fazer: o dono só reage (ver docs/DESIGN.md, "Textos e dicas").
 	if dono.dormindo:
-		jogo.mostrar_aviso("Zzz... O dono está dormindo. Um latido acorda ele — mas com o graveto na boca não dá para latir.", 3.5)
+		jogo.mostrar_balao("Zzz...", 2.0, dono, 2.1)
 	elif cachorro.graveto.lendario:
 		jogo.concluir()
 	else:
-		jogo.mostrar_aviso("Esse não! O dono quer o graveto lendário — o dourado.")
+		jogo.mostrar_balao("Esse não!", 2.0, dono, 2.1)
 
 
 static func _lendarios(fase: Fase) -> Array:

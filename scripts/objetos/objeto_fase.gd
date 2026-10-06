@@ -8,14 +8,7 @@ extends Node3D
 ## Sobrescreva `nome_no_editor()`, `categoria_no_editor()`, `ao_colocar_no_editor()` (para
 ## sortear variações) e, para expor parâmetros no painel do editor, `propriedades_editaveis()`
 ## (nomes de variáveis @export).
-##
-## A `visibilidade` liga o objeto à mecânica central do jogo, a mudança de perspectiva:
-## um objeto "só isométrico" some (e perde a colisão) quando o cachorro pega o graveto;
-## um "só 3D" só existe depois disso.
 
-enum Visibilidade { SEMPRE, SO_ISO, SO_3D }
-
-@export var visibilidade := Visibilidade.SEMPRE
 
 
 func nome_no_editor() -> String:
@@ -26,7 +19,7 @@ func categoria_no_editor() -> String:
 	return "Cenário"
 
 
-## Variáveis (além de visibilidade, giro e escala) que o painel do editor mostra.
+## Variáveis (além de giro e escala) que o painel do editor mostra.
 func propriedades_editaveis() -> Array[StringName]:
 	return []
 
@@ -43,7 +36,7 @@ func ao_ouvir_latido(_origem: Vector3) -> void:
 
 
 ## Botão de ação (F): o que o cachorro faz com este objeto quando ele está à frente do focinho
-## (ex.: "morder o mirante", "pegar o graveto"), ou "" se nada. `executar_acao` faz a ação.
+## (ex.: "pegar o graveto"), ou "" se nada. `executar_acao` faz a ação.
 ## Objetos com ação entram no grupo "com_acao" (é onde o cachorro procura).
 func acao_da_boca(_cachorro: Dachshund) -> String:
 	return ""
@@ -170,9 +163,3 @@ func caixa_editor() -> AABB:
 		return AABB(Vector3(-0.3, 0.0, -0.3), Vector3(0.6, 0.6, 0.6))
 	return caixa
 
-
-## Ativa/desativa o objeto. Desativado ele some e também sai da física
-## (process_mode desativado remove corpos e áreas da simulação).
-func definir_ativo(ativo: bool) -> void:
-	visible = ativo
-	process_mode = Node.PROCESS_MODE_INHERIT if ativo else Node.PROCESS_MODE_DISABLED

@@ -42,7 +42,6 @@ func _initialize() -> void:
 	fase.id = "parque_area_central"
 	fase.name = "AreaCentral"
 	fase.objetivo = Fase.OBJETIVO_PARQUE
-	fase.terceira_pessoa = true
 	fase.habilidades = Fase.HABILIDADE_LATIR
 	fase.raca = &"salsicha"
 	fase.raca_fixa = true

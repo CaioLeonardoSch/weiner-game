@@ -84,7 +84,6 @@ func _montar_fundo(caminho: String) -> void:
 	add_child(fase)
 	_fundo.append(fase)
 	fase.process_mode = Node.PROCESS_MODE_DISABLED
-	fase.preparar_isometrica()
 	Biomas.aplicar_ambiente(get_node_or_null(^"Ambiente"), fase.bioma)
 	var entorno := Entorno.new()
 	add_child(entorno)

@@ -9,12 +9,12 @@ checar jogo.cachorro.global_position.x > 11.5
 ir 13.5 -3.5
 esperar 10
 checar jogo.cachorro.tem_graveto
-# Atravessado, a toca não deixa entrar (e avisa).
+# Atravessado, a toca não deixa entrar, sem texto na tela.
 ir 12.5 -3.5
 rumo 11.0 -3.5 60
 esperar 60
 checar jogo.cachorro.global_position.x > 11.5
-checar jogo.aviso.text.contains("ao comprido")
+checar not jogo.aviso_painel.visible
 # Já olhando para a toca, longe o bastante para virar o graveto.
 ir 14.5 -3.5
 ir 13.5 -3.5

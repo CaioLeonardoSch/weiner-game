@@ -244,7 +244,7 @@ func _physics_process(delta: float) -> void:
 	horizontal += _empurrao_do_balanco(delta, horizontal)
 	horizontal = _rampa_lisa(horizontal)
 	var arrasto := _efeito_do_piso()
-	# Parado à força (câmera em transição, mirante, fase concluída): a água não leva o cachorro
+	# Parado à força (numa cena, fase concluída): a água não leva o cachorro
 	# embora sem ele poder reagir.
 	if entrada_bloqueada:
 		arrasto = Vector3.ZERO

@@ -23,7 +23,6 @@ const DURACAO_ENTRAR := 0.45
 const DURACAO_SAIR := 0.45
 const TEMPO_EMBAIXO := 0.35
 
-var _aviso_em := -10.0
 var _ocupada := false
 
 
@@ -119,25 +118,10 @@ func _tentar_entrar(cachorro: Dachshund) -> void:
 		return
 	var outra := par()
 	if outra == null:
-		_avisar("Esta toca não leva a lugar nenhum")
 		return
 	if not cachorro.graveto_passa(so_ao_comprido, comprimento_maximo):
-		if so_ao_comprido and not cachorro.graveto_ao_comprido:
-			_avisar("Atravessado o graveto não entra na toca — %s vira ao comprido" % Teclas.nome(&"virar_graveto"))
-		else:
-			_avisar("O graveto é comprido demais para esta toca")
 		return
 	_atravessar(cachorro, outra)
-
-
-func _avisar(texto: String) -> void:
-	var agora := Time.get_ticks_msec() / 1000.0
-	if agora - _aviso_em < 2.5:
-		return
-	_aviso_em = agora
-	var jogo := get_tree().current_scene
-	if jogo and jogo.has_method("mostrar_aviso"):
-		jogo.mostrar_aviso(texto, 2.5)
 
 
 func _atravessar(cachorro: Dachshund, outra: Toca) -> void:
@@ -156,8 +140,6 @@ func _atravessar(cachorro: Dachshund, outra: Toca) -> void:
 		await jogo.escurecer(true, 0.2)
 	var saindo := outra.ponto_de_dentro() + Vector3.UP * altura
 	cachorro.global_position = saindo
-	if jogo and jogo.has_method("cachorro_mudou_de_lugar"):
-		jogo.cachorro_mudou_de_lugar()
 	await get_tree().create_timer(TEMPO_EMBAIXO).timeout
 	if jogo and jogo.has_method("escurecer"):
 		jogo.escurecer(false, 0.25)

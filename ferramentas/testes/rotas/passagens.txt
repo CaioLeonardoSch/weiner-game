@@ -3,6 +3,7 @@
 # está; o portão E mostra lampadinhas e o portão com atraso demora a fechar; a comporta baixa a
 # água e ela volta; o pássaro com "volta depois" pousa de novo no mesmo lugar.
 fase res://ferramentas/testes/cenas/campo.tscn
+camera 0
 esperar 10
 # Toca: andando para dentro do buraco, sai do outro lado da cerca.
 chamar res://ferramentas/testes/teste_passagens.gd preparar_tocas

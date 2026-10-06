@@ -193,12 +193,6 @@ func _acender() -> void:
 	acendeu.emit()
 
 
-func definir_ativo(ligado: bool) -> void:
-	super(ligado)
-	if _fase and acesa:
-		_fase.definir_fonte(canal, self, ligado)
-
-
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint() or not acesa:
 		return

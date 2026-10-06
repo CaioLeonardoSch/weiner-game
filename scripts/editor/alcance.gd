@@ -18,7 +18,7 @@ extends RefCounted
 ## - a portinhola deixa passar pelo meio (na volta, só se o graveto não for comprido demais para
 ##   ela; a mão única não entra);
 ## - as tocas da mesma cor ligam as duas entradas.
-## Ida: sem graveto, com os objetos "só isométrico"; volta: com o graveto e os "só 3D".
+## Ida: sem graveto; volta: com o graveto.
 ## É uma estimativa (gelo liso, vento e correnteza não entram): o resultado é só um aviso.
 
 ## Subida (m) que o cachorro vence andando.
@@ -159,9 +159,8 @@ func chega_perto(alcancados: Dictionary, ponto: Vector3) -> bool:
 
 ## Colisões (StaticBody3D) dos objetos que ficam no caminho nesta metade do trajeto.
 func _juntar_caixas() -> void:
-	var ausente := ObjetoFase.Visibilidade.SO_ISO if com_graveto else ObjetoFase.Visibilidade.SO_3D
 	for objeto in fase.lista_objetos():
-		if objeto.visibilidade == ausente or not _barra(objeto):
+		if not _barra(objeto):
 			continue
 		if objeto is Portinhola and _passa_pela_portinhola(objeto as Portinhola):
 			_juntar_laterais_da_portinhola(objeto as Portinhola)
@@ -294,7 +293,6 @@ func _montar_colunas() -> void:
 
 ## Células de água funda que uma comporta baixa (vira rasa), se algo aciona o canal dela.
 func _aguas_das_comportas() -> Dictionary:
-	var ausente := ObjetoFase.Visibilidade.SO_ISO if com_graveto else ObjetoFase.Visibilidade.SO_3D
 	var canais_acionados := {}
 	for objeto in fase.lista_objetos():
 		if objeto.papel_no_canal() == "aciona":
@@ -302,7 +300,7 @@ func _aguas_das_comportas() -> Dictionary:
 	var celulas := {}
 	for objeto in fase.todos(Comporta):
 		var comporta := objeto as Comporta
-		if comporta.encher or comporta.visibilidade == ausente or not canais_acionados.has(comporta.canal):
+		if comporta.encher or not canais_acionados.has(comporta.canal):
 			continue
 		for celula in comporta.celulas_do_trecho(fase.terreno):
 			celulas[celula] = true
@@ -341,12 +339,11 @@ func _bordas(faixa: Dictionary) -> Dictionary:
 
 
 func _ligar_tocas() -> void:
-	var ausente := ObjetoFase.Visibilidade.SO_ISO if com_graveto else ObjetoFase.Visibilidade.SO_3D
 	var graveto := fase.primeiro(Graveto) as Graveto
 	for objeto in fase.todos(Toca):
 		var toca := objeto as Toca
 		var outra := toca.par()
-		if outra == null or toca.visibilidade == ausente or outra.visibilidade == ausente:
+		if outra == null:
 			continue
 		if com_graveto and graveto and toca.comprimento_maximo > 0.0 and graveto.comprimento > toca.comprimento_maximo:
 			continue

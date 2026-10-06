@@ -39,7 +39,6 @@ func _initialize() -> void:
 	fase.id = "parque_dia_01"
 	fase.name = "Dia01"
 	fase.objetivo = Fase.OBJETIVO_DIA
-	fase.terceira_pessoa = true
 	fase.habilidades = Fase.HABILIDADE_LATIR
 	fase.raca = &"salsicha"
 	fase.raca_fixa = true

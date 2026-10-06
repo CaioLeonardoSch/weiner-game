@@ -79,7 +79,7 @@ static func _giro(checar: Callable) -> void:
 	trecho.profundidade = 1
 	trecho.celulas = [[Vector3i(2, 0, 0), Tiles.RAMPA_BAIXA, Basis.IDENTITY]]
 	trecho.objetos = [{cena = "res://scenes/objetos/pedra.tscn", transform = Transform3D(Basis.IDENTITY, Vector3(2.5, 0, 0.5)),
-		visibilidade = 0, propriedades = {}}]
+		propriedades = {}}]
 	var girado := trecho.girado(1)
 	checar.call("girado 90°: 1×3", girado.largura == 1 and girado.profundidade == 3)
 	# +X vira -Z: a ponta (x = 2) vai para z = 0.

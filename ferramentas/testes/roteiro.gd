@@ -9,6 +9,8 @@ extends SceneTree
 ##   esperar N               espera N quadros (60 por segundo)
 ##   apertar <ação> [N]      segura a ação por N quadros (padrão 2) — não espera
 ##   teleportar x y z        põe o cachorro nesse ponto
+##   camera graus            gira a câmera (0 = olhando para -Z: "direita" anda para +X), para
+##                           rotas que apertam as teclas de movimento direto
 ##   ir x z [N]              anda até (x, z) como um jogador (teclas em relação à câmera) e
 ##                           espera chegar (a 0,2 m) ou até N quadros (padrão 600)
 ##   ir_devagar x z [N]      o mesmo, segurando "andar devagar"
@@ -125,6 +127,8 @@ func _process(_d: float) -> bool:
 			"teleportar":
 				var c := current_scene.get_node("Dachshund") as CharacterBody3D
 				c.global_position = Vector3(float(p[1]), float(p[2]), float(p[3]))
+			"camera":
+				current_scene.camera_controller.olhar(float(p[1]))
 			"ir", "ir_devagar", "rumo":
 				_indo = Vector2(float(p[1]), float(p[2]))
 				_indo_quadros = int(p[3]) if p.size() > 3 else 600

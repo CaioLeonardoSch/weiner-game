@@ -24,9 +24,10 @@ extends Node3D
 enum Modo { SELECAO, TERRENO, OBJETO, LIGAR, TRECHO, COLAR }
 ## Ferramentas do terreno.
 enum Ferramenta { PINCEL, TROCAR, LINHA, RETANGULO, BALDE }
-enum Visao { TUDO, ISO, TERCEIRA }
+## A câmera do editor: livre ou isométrica (travada, vista de cima).
+enum Visao { LIVRE, ISO }
 
-const NOMES_VISAO := ["tudo", "isométrica", "3D"]
+const NOMES_VISAO := ["livre", "isométrica"]
 const NOMES_FERRAMENTA := ["Pincel", "Trocar", "Linha", "Retângulo", "Balde"]
 const ICONES_FERRAMENTA := ["pincel", "trocar", "linha", "retangulo", "balde"]
 ## Maior lado do pincel (células).
@@ -67,7 +68,7 @@ var entrada_objeto: Dictionary
 ## Prévia do objeto que será colocado (não faz parte da fase).
 var fantasma: ObjetoFase
 var camada := 0
-var visao := Visao.TUDO
+var visao := Visao.LIVRE
 
 # Estado do cursor, recalculado a cada quadro.
 var alvo_valido := false
@@ -337,17 +338,12 @@ func _confirmar_se_modificado(acao: Callable) -> void:
 	confirmar.popup_centered()
 
 
-## Empacota a fase no estado "limpo" (tudo visível, processamento normal) para salvar/testar.
+## Empacota a fase no estado "limpo" (processamento normal) para salvar/testar.
 func _empacotar() -> PackedScene:
-	var visao_antes := visao
-	visao = Visao.TUDO
-	_aplicar_visao()
 	fase.process_mode = Node.PROCESS_MODE_INHERIT
 	var cena := PackedScene.new()
 	var erro := cena.pack(fase)
 	fase.process_mode = Node.PROCESS_MODE_DISABLED
-	visao = visao_antes
-	_aplicar_visao()
 	if erro != OK:
 		_avisar("Erro ao empacotar a fase: %s" % error_string(erro))
 		return null
@@ -565,7 +561,8 @@ func _restaurar_estado(estado: Dictionary) -> void:
 	orientacao = estado.orientacao
 	ferramenta = estado.get("ferramenta", ferramenta)
 	tamanho_pincel = estado.get("tamanho_pincel", tamanho_pincel)
-	visao = estado.visao
+	# (Antes havia uma terceira visão, a "3D": vira a livre.)
+	visao = estado.visao if estado.visao < Visao.size() else Visao.LIVRE
 	_aplicar_visao()
 	match estado.modo:
 		Modo.OBJETO:
@@ -1551,7 +1548,6 @@ func _clique_linha_objetos() -> void:
 	for ponto in pontos_linha_objetos:
 		var objeto := fase.adicionar_objeto(entrada_objeto.cena, ponto, 0.0)
 		objeto.transform = Transform3D(fantasma.transform.basis, ponto + Vector3.UP * _altura_extra(fantasma))
-		objeto.visibilidade = fantasma.visibilidade
 		for propriedade in fantasma.propriedades_editaveis():
 			objeto.set(propriedade, fantasma.get(propriedade))
 		colocados.append(objeto)
@@ -1587,7 +1583,6 @@ func _continuar_linha_objetos() -> void:
 		var novo := entrada_objeto.cena.instantiate() as ObjetoFase
 		novo.process_mode = Node.PROCESS_MODE_DISABLED
 		add_child(novo)
-		novo.visibilidade = fantasma.visibilidade
 		for propriedade in fantasma.propriedades_editaveis():
 			novo.set(propriedade, fantasma.get(propriedade))
 		_fantasmas_linha.append(novo)
@@ -1778,7 +1773,6 @@ func _colocar_objeto() -> void:
 		return
 	var objeto := fase.adicionar_objeto(entrada_objeto.cena, fantasma.position, 0.0)
 	objeto.transform = fantasma.transform
-	objeto.visibilidade = fantasma.visibilidade
 	for propriedade in fantasma.propriedades_editaveis():
 		objeto.set(propriedade, fantasma.get(propriedade))
 	_registrar_adicao(objeto, "Colocar %s" % objeto.nome_no_editor())
@@ -1811,7 +1805,6 @@ func _espalhar_um(ponto: Vector3) -> void:
 	var jitter := Vector3(rng.randf_range(-0.25, 0.25), 0.0, rng.randf_range(-0.25, 0.25))
 	var objeto := fase.adicionar_objeto(entrada_objeto.cena, ponto + jitter, 0.0)
 	objeto.transform = Transform3D(fantasma.transform.basis, ponto + jitter + Vector3.UP * _altura_extra(fantasma))
-	objeto.visibilidade = fantasma.visibilidade
 	for propriedade in fantasma.propriedades_editaveis():
 		objeto.set(propriedade, fantasma.get(propriedade))
 	_espalhados.append(objeto)
@@ -1834,7 +1827,7 @@ func _terminar_espalhar() -> void:
 
 
 ## Conta-gotas (G): escolhe o objeto ou o tile que está sob o cursor, com as mesmas
-## propriedades (variante, visibilidade, giro).
+## propriedades (variante, giro).
 func _conta_gotas() -> void:
 	var mouse := get_viewport().get_mouse_position()
 	var origem := camera.project_ray_origin(mouse)
@@ -1844,7 +1837,6 @@ func _conta_gotas() -> void:
 		for entrada in _catalogo:
 			if entrada.caminho == objeto.scene_file_path:
 				_escolher_objeto(entrada)
-				fantasma.visibilidade = objeto.visibilidade
 				fantasma.rotation = objeto.rotation
 				fantasma.scale = objeto.scale
 				for propriedade in objeto.propriedades_editaveis():
@@ -1899,7 +1891,6 @@ func _duplicar_selecionado() -> void:
 	var original := selecionado
 	var copia := fase.adicionar_objeto(load(original.scene_file_path), original.position, 0.0)
 	copia.transform = original.transform.translated(Vector3(1.0, 0.0, 0.0))
-	copia.visibilidade = original.visibilidade
 	for propriedade in original.propriedades_editaveis():
 		copia.set(propriedade, original.get(propriedade))
 	_registrar_adicao(copia, "Duplicar %s" % original.nome_no_editor())
@@ -1933,7 +1924,7 @@ func _alterar_propriedade(alvo: Object, propriedade: StringName, valor: Variant)
 	undo.commit_action()
 	if alvo == fase and propriedade == &"nome":
 		campo_nome.text = fase.nome
-	elif alvo == fase and propriedade in [&"raca", &"raca_fixa", &"regiao", &"frio", &"terceira_pessoa"]:
+	elif alvo == fase and propriedade in [&"raca", &"raca_fixa", &"regiao", &"frio"]:
 		# A dica das habilidades nativas depende da raça (e o frio mostra mais campos): remonta.
 		inspetor.mostrar.call_deferred(fase)
 
@@ -2307,7 +2298,7 @@ func _avisos_de_mecanismos() -> PackedStringArray:
 	return avisos
 
 
-# --- Visão (pré-visualização da perspectiva) ---------------------------------------------
+# --- Visão (câmera livre ou isométrica) -------------------------------------------------
 
 func _proxima_visao() -> void:
 	visao = ((visao + 1) % Visao.size()) as Visao
@@ -2315,19 +2306,13 @@ func _proxima_visao() -> void:
 	_avisar("Visão: %s" % NOMES_VISAO[visao])
 
 
-## Tudo: mostra todos os objetos. Isométrica: como o jogador vê na ida (câmera travada,
-## objetos "só 3D" escondidos). 3D: como na volta (objetos "só isométrico" escondidos).
 func _aplicar_visao() -> void:
 	if fase == null:
 		return
-	fase.ativar(ObjetoFase.Visibilidade.SO_ISO, visao != Visao.TERCEIRA)
-	fase.ativar(ObjetoFase.Visibilidade.SO_3D, visao != Visao.ISO)
 	camera_editor.isometrica = visao == Visao.ISO
 	if is_node_ready():
 		botao_visao.text = "Visão: %s (V)" % NOMES_VISAO[visao]
 		_atualizar_status()
-	if selecionado and not selecionado.visible:
-		_selecionar(null)
 
 
 # --- Interface ---------------------------------------------------------------------------
@@ -2359,9 +2344,6 @@ func _on_versao_mudou() -> void:
 	_aplicar_ambiente()
 	_caixas.clear()
 	inspetor.atualizar_valores()
-	# Objeto recolocado (desfazer "Apagar") ou com a visibilidade trocada tem de seguir a
-	# visão atual (ex.: um "só 3D" não pode aparecer na visão isométrica).
-	_aplicar_visao()
 	_atualizar_status()
 
 

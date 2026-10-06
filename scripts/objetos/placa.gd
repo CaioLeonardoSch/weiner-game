@@ -59,13 +59,6 @@ func _ready() -> void:
 			_fase.definir_fonte(canal, self, false)
 
 
-func definir_ativo(ligado: bool) -> void:
-	super(ligado)
-	# Sumiu (placa "só isométrico" na volta, por exemplo): solta o canal.
-	if not ligado and ativa:
-		_mudar(false)
-
-
 ## Tem em cima algo que aciona esta placa? (Madeira: qualquer coisa; pedra: só o pesado.)
 func acionada_por_algo() -> bool:
 	if tipo == MADEIRA and _cachorro_sobre():
