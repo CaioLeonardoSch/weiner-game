@@ -1,9 +1,9 @@
 extends SceneTree
 ## Gera o Dia 1 do parque, "O primeiro graveto" (scenes/parque/dia_01.tscn; ver docs/DESIGN.md):
-## uma trilha no mato saindo da área central, com uma curva; um tronco semicaído para rastejar
-## por baixo; dali, ao longe, a moita que se mexe; um córrego fundo com pedras; a moita, que leva
-## a uma pequena clareira com o esquilo, a árvore, o raio de sol e o galho (o cajado lendário).
-## Na volta, depois do córrego, o corte da volta termina o dia.
+## o cachorro sai da moita da chegada para uma trilha no mato, com uma curva; um tronco semicaído
+## para rastejar por baixo; dali, ao longe, a moita que se mexe; um córrego fundo com pedras; a
+## moita, que leva a uma pequena clareira com o esquilo, a árvore, o raio de sol e o galho (o
+## cajado lendário). Na volta, pular na moita da clareira com o galho termina o dia.
 ##   godot --headless --path . --script res://ferramentas/gerar_dia_01.gd
 ## Sobrescreve a cena: mudanças feitas no editor se perdem.
 ## Provisório até a arte do parque: as formas, as distâncias e o visual.
@@ -18,7 +18,6 @@ const Z1 := 12
 ## O x do meio da trilha depois da curva, e o z de cada lugar (a trilha vai para o -Z).
 const TRILHA_X := 6.5
 const Z_TRONCO := -26.0
-const Z_CORTE := -31.0
 const Z_CORREGO := -37.5
 const Z_MOITA := -46.5
 const CENTRO_CLAREIRA := Vector3(6.5, 0.0, -53.5)
@@ -127,12 +126,13 @@ static func _meio_da_trilha(z: int) -> float:
 
 
 func _objetos() -> void:
-	# Começo: o cachorro acabou de sair da área central, olhando trilha adentro (-Z).
-	obj("inicio_cachorro", Vector3(0.5, 0.0, 1.0), PI * 0.5)
+	# Começo: o cachorro sai da moita da chegada (vindo da área central) trilha adentro (-Z).
+	obj("inicio_cachorro", Vector3(0.5, 0.0, 0.5), PI * 0.5)
+	var chegada := obj("moita_passagem", Vector3(0.5, 0.0, 3.5)) as MoitaPassagem
+	chegada.largura = 3.0
+	chegada.chegada = true
 	var tronco := obj("tronco_semicaido", Vector3(TRILHA_X, 0.0, Z_TRONCO)) as TroncoSemicaido
 	tronco.comprimento = 4.5
-	var corte := obj("corte_da_volta", Vector3(TRILHA_X, 0.0, Z_CORTE)) as CorteDaVolta
-	corte.tamanho = Vector3(3.6, 2.0, 1.0)
 	var pedras := obj("pedras_corrego", Vector3(TRILHA_X, 0.0, Z_CORREGO)) as PedrasCorrego
 	pedras.quantidade = 3
 	pedras.espacamento = 1.1

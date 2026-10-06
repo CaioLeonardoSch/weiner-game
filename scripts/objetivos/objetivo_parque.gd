@@ -22,6 +22,8 @@ const TROTE_SOLTO := 4.5
 const ARREMESSO_MINIMO := 7.0
 const ARREMESSO_MAXIMO := 12.0
 const ARREMESSO_ABERTURA := 0.9
+## Na volta de um dia, de quão longe (m) do dono o cachorro aparece.
+const ULTIMOS_PASSOS := 3.0
 
 var momento := Momento.CHEGANDO
 var cachorro: Dachshund
@@ -170,8 +172,9 @@ func _comeco_do_dia() -> void:
 	jogo.atualizar_dica()
 
 
-## Volta de uma fase concluída: o cachorro sai da região do dia e chega ao dono, que levanta,
-## põe a guia, e os dois vão embora pela saída. Aí começa o dia seguinte.
+## Volta de uma fase concluída: o cachorro aparece já perto do banco, vindo da região do dia, e
+## chega ao dono, que levanta, põe a guia, e os dois vão embora pela saída. Aí começa o dia
+## seguinte.
 func _fim_do_dia(caminho: String) -> void:
 	cachorro.entrada_bloqueada = true
 	await jogo.escurecer(true, 0.0)
@@ -181,6 +184,10 @@ func _fim_do_dia(caminho: String) -> void:
 		if entrada.caminho_fase == caminho:
 			de_onde = entrada.to_global(Vector3(0.0, 0.0, 2.0))
 	var chegada := banco.to_global(Vector3(0.0, 0.0, 1.4))
+	# O resto do caminho o fade cortou: só os últimos passos.
+	var vindo := chegada - de_onde
+	vindo.y = 0.0
+	de_onde = chegada - vindo.normalized() * minf(vindo.length(), ULTIMOS_PASSOS)
 	cachorro.posicionar(de_onde, _yaw_cachorro(chegada - de_onde))
 	jogo.camera_controller.comecar_em_3d(_yaw_camera())
 	jogo.escurecer(false, 0.8)

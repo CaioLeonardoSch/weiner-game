@@ -56,9 +56,11 @@ esperar 90
 checar jogo.get_node("/root/Fases").caminho_atual == "res://scenes/parque/area_central.tscn"
 checar jogo.get_node("/root/Fases").concluida("res://scenes/parque/dia_01.tscn")
 checar jogo.objetivo.momento == 3
+# O cachorro aparece já perto do dono (o resto do caminho o fade cortou).
+checar jogo.cachorro.global_position.distance_to(obj("Banco").global_position) < 4.5
 checar obj("EntradaDia", 0).aberta
 checar obj("EntradaDia", 1).aberta
-esperar 1000
+esperar 650
 # O dia seguinte.
 checar jogo.objetivo.dia == 2
 checar jogo.objetivo.momento == 0

@@ -2,6 +2,15 @@
 # seguro); a água rasa (vau) dá pé.
 fase res://scenes/fases/floresta_09_correnteza.tscn
 esperar 20
+# Caiu na água: sai na margem e se sacode (parado enquanto isso), sem texto na tela.
+eval jogo.cachorro._voltar_ao_ponto_seguro("agua")
+esperar 5
+checar jogo.cachorro.voxel.sacudida > 0.3
+checar jogo.cachorro._brincando
+checar not jogo.aviso.text.begins_with("Splash")
+esperar 60
+checar jogo.cachorro.voxel.sacudida == 0.0
+checar not jogo.cachorro._brincando
 ir 5.3 -4.0
 rumo 7.0 -4.0 40
 esperar 30

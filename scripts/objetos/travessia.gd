@@ -45,6 +45,11 @@ func ponta_perto(cachorro: Dachshund) -> int:
 	return melhor
 
 
+## O pulo (Espaço) também faz esta ação (as pedras do córrego)?
+func com_pulo() -> bool:
+	return false
+
+
 func acao_da_boca(cachorro: Dachshund) -> String:
 	if _ocupada or ponta_perto(cachorro) < 0:
 		return ""

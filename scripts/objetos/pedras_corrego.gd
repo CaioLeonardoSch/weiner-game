@@ -3,7 +3,10 @@ class_name PedrasCorrego
 extends Travessia
 ## Pedras atravessando um córrego fundo (ao longo do Z local, de margem a margem). Na margem,
 ## olhando para as pedras, F faz o cachorro pular de pedra em pedra até a outra margem.
-## As pedras não têm colisão: andando, o cachorro cai na água (e volta para a margem).
+## Na margem, perto das pedras, Espaço também faz o cachorro pular por elas.
+## As pedras não têm colisão, mas perto delas uma barreira invisível na beira da água não deixa o
+## cachorro cair (nem passar andando por cima delas); longe das pedras, ele cai (e volta para a
+## margem).
 ## Ponha sobre água funda (o tile Água): a margem fica a `espacamento` da primeira pedra.
 
 ## Quantas pedras.
@@ -25,6 +28,8 @@ const COR := Color(0.55, 0.55, 0.52)
 const ALTURA_PULO := 0.35
 const DURACAO_PULO := 0.4
 const PAUSA := 0.15
+## Largura (m, em X) da beira bloqueada dos dois lados, em volta das pedras.
+const LARGURA_BEIRA := 3.0
 
 
 func nome_no_editor() -> String:
@@ -48,6 +53,10 @@ func _ready() -> void:
 ## Meio comprimento (m) do caminho, da pedra do meio até a margem.
 func _meio() -> float:
 	return (quantidade - 1) * 0.5 * espacamento + espacamento
+
+
+func com_pulo() -> bool:
+	return true
 
 
 func caminho_local() -> PackedVector3Array:
@@ -77,6 +86,10 @@ func _montar() -> void:
 		pedra.position = caminho[i] + Vector3(0.0, -0.3, 0.0)
 		pedra.rotation.y = i * 0.9
 		add_child(pedra)
+	# A beira da água, dos dois lados: entre a margem e a pedra da ponta.
+	for lado in [-1.0, 1.0]:
+		var beira: float = lado * (_meio() - espacamento * 0.5)
+		Travessia.caixa_solida(self, Vector3(LARGURA_BEIRA, 1.0, 0.2), Vector3(0.0, 0.5, beira))
 
 
 func _animar(cachorro: Dachshund, pontos: PackedVector3Array) -> void:

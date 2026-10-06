@@ -6,6 +6,8 @@ extends ObjetoFase
 ## perto do esquilo (até ALCANCE): ponha o graveto onde ele deve cair — no começo da fase ele vai
 ## para a árvore (com cara de galho comum) e só fica dourado ao cair, se for lendário.
 ## A árvore é a mais perto do esquilo (até ALCANCE).
+## É uma cena: o jogador não controla o cachorro, e a câmera mostra o esquilo e depois o galho;
+## com o galho no chão, iluminado, o controle volta.
 
 ## O cachorro a menos disso (m) assusta o esquilo.
 @export_range(2.0, 12.0, 0.5) var distancia_susto := 5.0
@@ -17,6 +19,10 @@ const ALCANCE := 8.0
 const VELOCIDADE := 4.0
 const DURACAO_SUBIDA := 0.8
 const DURACAO_QUEDA := 0.75
+## Segundos com a câmera no galho lá em cima antes de ele quebrar, e no chão, iluminado, antes
+## de o controle voltar.
+const OLHANDO_O_GALHO := 0.7
+const OLHANDO_NO_CHAO := 1.3
 
 var _bicho: Node3D
 var _noz: MeshInstance3D
@@ -108,6 +114,11 @@ func _process(delta: float) -> void:
 ## "!", corre até a árvore e sobe; lá em cima o galho quebra e cai. Some na copa.
 func _assustar(cachorro: Dachshund) -> void:
 	_assustado = true
+	var jogo := get_tree().current_scene
+	var camera := jogo.get(&"camera_controller") as CameraController if jogo else null
+	cachorro.entrada_bloqueada = true
+	if camera:
+		camera.focar(_bicho)
 	var modelo := _bicho.get_node(^"Modelo") as Node3D
 	modelo.rotation.z = 0.0
 	_olhar(cachorro.global_position)
@@ -129,10 +140,19 @@ func _assustar(cachorro: Dachshund) -> void:
 	tween = create_tween()
 	tween.tween_property(_bicho, "global_position:y", tronco.y + altura_galho, DURACAO_SUBIDA)
 	await tween.finished
-	_quebrar_galho()
+	var tem_galho := galho != null and is_instance_valid(galho) and galho.com_bicho == self
+	if camera and tem_galho:
+		camera.focar(galho)
+		await get_tree().create_timer(OLHANDO_O_GALHO).timeout
 	tween = create_tween()
 	tween.tween_property(_bicho, "global_position:y", tronco.y + altura_galho + 1.2, 0.5)
 	tween.tween_callback(_bicho.hide)
+	if tem_galho:
+		await _quebrar_galho()
+		await get_tree().create_timer(OLHANDO_NO_CHAO).timeout
+	if camera:
+		await camera.soltar_foco()
+	cachorro.entrada_bloqueada = false
 
 
 func _quebrar_galho() -> void:

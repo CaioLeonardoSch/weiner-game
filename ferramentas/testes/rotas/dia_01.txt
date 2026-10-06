@@ -1,9 +1,22 @@
-# Dia 1 do parque, "O primeiro graveto": rastejar sob o tronco, pular as pedras do córrego, pular
-# dentro da moita; na clareira o esquilo se assusta, sobe na árvore e o galho (o cajado lendário)
-# cai na luz e fica dourado; o cachorro pega, abana o rabo e volta: moita, pedras e o corte da
-# volta termina o dia. Ações de contexto: perto da ponta, olhando para o obstáculo, F.
+# Dia 1 do parque, "O primeiro graveto": o cachorro sai da moita da chegada; rastejar sob o tronco,
+# pular as pedras do córrego, pular dentro da moita; na clareira o esquilo se assusta, sobe na
+# árvore e o galho (o cajado lendário) cai na luz e fica dourado — uma cena, sem o jogador
+# controlar; o cachorro pega, abana o rabo e volta: pular na moita com o galho termina o dia.
+# Ações de contexto: perto da ponta, olhando para o obstáculo, F.
 fase res://scenes/parque/dia_01.tscn
+# A chegada: a câmera mostra a moita, o cachorro sai dela e anda até o Início.
 esperar 20
+checar jogo.cachorro.atravessando
+checar jogo.camera_controller.em_cena()
+checar obj("MoitaPassagem", 0).chegada
+esperar 180
+checar not jogo.cachorro.atravessando
+checar jogo.cachorro.visible
+checar not jogo.camera_controller.em_cena()
+checar jogo.cachorro.global_position.distance_to(obj("InicioCachorro").global_position) < 0.3
+# Sem o nome da fase na tela. Sem o galho na boca, não se volta pela moita da chegada.
+checar not jogo.aviso_painel.visible
+checar obj("MoitaPassagem", 0).acao_da_boca(jogo.cachorro) == ""
 checar jogo.objetivo is ObjetivoDia
 checar jogo.contador.text == ""
 # O galho começa na árvore, com cara de galho comum.
@@ -28,13 +41,20 @@ checar not jogo.cachorro.atravessando
 checar jogo.cachorro.global_position.z < -26.5
 checar jogo.cachorro.voxel.deitado == 0.0
 # A moita, lá na frente, se mexe sozinha.
-checar obj("MoitaPassagem").chamar_atencao
+checar obj("MoitaPassagem", 1).chamar_atencao
 # O corte da volta, sem o graveto: nada acontece.
 ir 6.5 -34.9 300
 checar not jogo.concluida
+# Perto das pedras a beira é bloqueada: andando para a água, o cachorro não cai.
+ir 6.5 -38 90
+checar jogo.cachorro.global_position.z > -36.2
+checar jogo.cachorro.is_on_floor()
+ir 6.5 -34.6 60
+ir 6.5 -35.1 30
 esperar 10
 checar jogo.cachorro.objeto_da_acao() is PedrasCorrego
-apertar acao
+# O pulo (Espaço) também atravessa as pedras.
+apertar pular
 esperar 220
 checar not jogo.cachorro.atravessando
 checar jogo.cachorro.global_position.z < -39.5
@@ -52,9 +72,18 @@ checar not jogo.cachorro.atravessando
 checar jogo.cachorro.global_position.z < -48.8
 # A câmera vem para o lado da clareira (a moita não esconde o cachorro).
 checar jogo.camera_controller.camera.global_position.z < -46.5
-# O esquilo se assusta e sobe; o galho cai no raio de sol e fica dourado.
-esperar 160
+# O esquilo se assusta e sobe; o galho cai no raio de sol e fica dourado. É uma cena: o jogador não
+# controla o cachorro e a câmera mostra o esquilo, depois o galho.
+esperar 30
 checar obj("EsquiloDoGalho")._assustado
+checar jogo.cachorro.entrada_bloqueada
+checar jogo.camera_controller.foco == obj("EsquiloDoGalho")._bicho
+esperar 160
+checar jogo.camera_controller.foco == obj("Graveto")
+checar jogo.cachorro.entrada_bloqueada
+esperar 200
+checar not jogo.cachorro.entrada_bloqueada
+checar not jogo.camera_controller.em_cena()
 checar obj("Graveto").com_bicho == null
 checar not obj("Graveto").disfarcado
 checar obj("Graveto").formato == 1
@@ -65,21 +94,13 @@ checar jogo.cachorro.tem_graveto
 checar jogo.cachorro.graveto.lendario
 checar jogo.cachorro.voxel.alegria > 0.0
 checar not jogo.concluida
-# A volta: a moita e as pedras, agora com o graveto na boca.
+# A volta: pular na moita com o galho na boca termina o dia (o fade corta o resto do caminho).
 ir 6.5 -48.2 400
 esperar 10
 checar jogo.cachorro.objeto_da_acao() is MoitaPassagem
 apertar acao
-esperar 190
-checar jogo.cachorro.global_position.z > -44.0
-ir 6.5 -40.1 300
-esperar 10
-checar jogo.cachorro.objeto_da_acao() is PedrasCorrego
-apertar acao
-esperar 220
-checar jogo.cachorro.global_position.z > -35.5
-checar jogo.cachorro.tem_graveto
-# O corte da volta termina o dia.
-ir 6.5 -30 200
-esperar 10
+esperar 40
+checar not jogo.concluida
+esperar 30
+checar not jogo.cachorro.visible
 checar jogo.concluida

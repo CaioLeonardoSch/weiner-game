@@ -213,7 +213,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		Fases.abrir_editor()
 	elif event.is_action_pressed("liberar_mouse"):
 		_abrir_pausa()
-	elif event.is_action_pressed("acao") and not concluida:
+	elif event.is_action_pressed("acao") and not concluida and not cachorro.entrada_bloqueada:
 		var alvo := cachorro.objeto_da_acao()
 		if alvo:
 			alvo.executar_acao(cachorro)
@@ -524,12 +524,10 @@ func _on_puxar_falhou(motivo: String) -> void:
 			mostrar_aviso("Sem espaço para girar o tronco")
 
 
+## Caiu e voltou: na água, o balão (ele sai na margem e se sacode, ver Dachshund). Sem texto.
 func _on_cachorro_voltou(motivo: String) -> void:
 	if motivo == "agua":
 		mostrar_balao("Splash!")
-		mostrar_aviso("Splash! %s não nada..." % (cachorro.raca.nome if cachorro.raca else "Salsicha"))
-	elif motivo == "queda":
-		mostrar_aviso("Opa! Caiu...")
 
 
 func concluir() -> void:

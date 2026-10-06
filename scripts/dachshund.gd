@@ -210,6 +210,8 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= _gravidade * delta
 	else:
 		pulando = false
+		if not entrada_bloqueada and Input.is_action_just_pressed("pular") and _pular_pela_acao():
+			return
 		if pode_pular and not entrada_bloqueada and Input.is_action_just_pressed("pular"):
 			if _agua_funda_na_frente():
 				pulo_recusado.emit("agua")
@@ -383,11 +385,15 @@ func rolar() -> bool:
 	return true
 
 
-## Se sacode (depois de rolar, de sair da água): o corpo chacoalha e voa um pouco de sujeira.
-func sacudir() -> void:
+## Se sacode (depois de rolar, de sair da água): o corpo chacoalha e voa um pouco de sujeira (ou,
+## `molhado`, de água).
+func sacudir(molhado := false) -> void:
 	_brincando = true
 	voxel.sacudida = 1.0
-	Efeitos.terra(get_parent(), global_position + Vector3.UP * 0.35)
+	if molhado:
+		Efeitos.respingo(get_parent(), global_position + Vector3.UP * 0.35)
+	else:
+		Efeitos.terra(get_parent(), global_position + Vector3.UP * 0.35)
 	var tween := create_tween()
 	tween.tween_property(voxel, "sacudida", 0.0, 0.7).set_ease(Tween.EASE_IN)
 	await tween.finished
@@ -656,6 +662,15 @@ func objeto_da_acao() -> ObjetoFase:
 			melhor = objeto
 			melhor_distancia = distancia
 	return melhor
+
+
+## Perto de uma ação de contexto que se faz pulando (as pedras do córrego), o pulo faz a ação.
+func _pular_pela_acao() -> bool:
+	var alvo := objeto_da_acao()
+	if alvo is Travessia and (alvo as Travessia).com_pulo():
+		alvo.executar_acao(self)
+		return true
+	return false
 
 
 ## Bloco empurrável logo à frente do focinho (ou null).
@@ -1292,6 +1307,8 @@ func _guardar_ponto_seguro() -> void:
 
 
 func _voltar_ao_ponto_seguro(motivo: String) -> void:
+	if motivo == "agua":
+		Efeitos.respingo(get_parent(), global_position + Vector3.UP * 0.1)
 	global_position = _pontos_seguros[0] + Vector3.UP * 0.2
 	velocity = Vector3.ZERO
 	balanco = 0.0
@@ -1299,4 +1316,7 @@ func _voltar_ao_ponto_seguro(motivo: String) -> void:
 	_pontos_seguros.clear()
 	_pontos_seguros.append(ponto)
 	_saiu_do_terreno = false
+	# Saiu da água na margem: se sacode antes de seguir.
+	if motivo == "agua":
+		sacudir(true)
 	voltou_ao_ponto_seguro.emit(motivo)

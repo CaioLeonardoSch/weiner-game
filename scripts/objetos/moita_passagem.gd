@@ -5,6 +5,12 @@ extends Travessia
 ## faz o cachorro pular para dentro (a moita sacode) e sair do outro lado.
 ## Com `chamar_atencao`, a moita se mexe sozinha de tempos em tempos até alguém atravessar —
 ## vista de longe, chama o cachorro para lá.
+## Com `chegada`, é a moita por onde o cachorro chega à fase: ele começa dentro dela e sai para o
+## lado do Início do cachorro (ver `chegar`); só se volta por ela com o graveto lendário na boca.
+## Num dia do parque, entrar numa moita com o lendário na boca termina a fase (ObjetivoDia).
+
+## O cachorro sumiu dentro da moita (atravessando).
+signal cachorro_dentro(cachorro: Dachshund)
 
 ## Largura (m, em X) da moita: cubra a abertura no mato.
 @export_range(1.0, 4.0, 0.5) var largura := 2.0:
@@ -13,6 +19,8 @@ extends Travessia
 		_montar()
 ## Mexe sozinha (de tempos em tempos) até o cachorro atravessar.
 @export var chamar_atencao := false
+## A moita da chegada: o cachorro começa a fase saindo dela.
+@export var chegada := false
 
 ## Profundidade (m, em Z) e altura (m) da moita.
 const FUNDO := 1.4
@@ -35,7 +43,7 @@ func nome_no_editor() -> String:
 
 
 func propriedades_editaveis() -> Array[StringName]:
-	return [&"largura", &"chamar_atencao"]
+	return [&"largura", &"chamar_atencao", &"chegada"]
 
 
 func caixa_editor() -> AABB:
@@ -52,6 +60,35 @@ func _ready() -> void:
 func caminho_local() -> PackedVector3Array:
 	var ponta := FUNDO * 0.5 + 0.6
 	return PackedVector3Array([Vector3(0, 0, -ponta), Vector3(0, 0.25, 0), Vector3(0, 0, ponta)])
+
+
+func acao_da_boca(cachorro: Dachshund) -> String:
+	if chegada and not (cachorro.tem_graveto and cachorro.graveto and cachorro.graveto.lendario):
+		return ""
+	return super(cachorro)
+
+
+## O começo da fase: o cachorro está dentro da moita, que sacode, e ele sai pulando para o lado de
+## `destino` e anda até lá. Aguarde com `await`.
+func chegar(cachorro: Dachshund, destino: Vector3) -> void:
+	_ocupada = true
+	var pontos := PackedVector3Array()
+	for ponto in caminho_local():
+		pontos.append(to_global(ponto))
+	if pontos[0].distance_to(destino) < pontos[2].distance_to(destino):
+		pontos.reverse()
+	var yaw := Travessia.yaw_para(destino - pontos[1])
+	await cachorro.atravessar(PackedVector3Array([pontos[1]]), 0.01, yaw)
+	cachorro.hide()
+	await get_tree().create_timer(0.5).timeout
+	mexer(0.6)
+	await get_tree().create_timer(0.5).timeout
+	cachorro.show()
+	await cachorro.saltar(pontos[2], 0.35, 0.35, yaw)
+	await cachorro.atravessar(PackedVector3Array([destino]), pontos[2].distance_to(destino) / 2.5, yaw)
+	cachorro.terminar_travessia()
+	_ja_atravessaram = true
+	_ocupada = false
 
 
 func _process(delta: float) -> void:
@@ -116,7 +153,13 @@ func _animar(cachorro: Dachshund, pontos: PackedVector3Array) -> void:
 	await cachorro.saltar(pontos[1], 0.45, 0.35, yaw)
 	cachorro.hide()
 	mexer(0.7)
+	cachorro_dentro.emit(cachorro)
 	await get_tree().create_timer(0.7).timeout
+	var jogo := get_tree().current_scene
+	if jogo and jogo.get(&"concluida") == true:
+		# Fim do dia: a tela escurece com ele ainda na moita.
+		mexer(1.5)
+		await get_tree().create_timer(3.0).timeout
 	cachorro.show()
 	await cachorro.saltar(pontos[2], 0.35, 0.35, yaw)
 	# Uns passos para longe da moita: a câmera vem junto e não fica colada nas costas dele.
